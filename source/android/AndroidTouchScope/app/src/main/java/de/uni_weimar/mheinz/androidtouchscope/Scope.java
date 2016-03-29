@@ -45,6 +45,17 @@ public class Scope
         mActivity.registerReceiver(mUsbReceiver, filter);
     }
 
+    public void readWave()
+    {
+        if(mScopeSocket == null)
+            return;
+
+        mScopeSocket.write(":STOP");
+        mScopeSocket.write(":WAV:POIN:MODE NOR");
+        mScopeSocket.write(":WAV:DATA? CHAN1");
+        mScopeSocket.read(1000);
+    }
+
     private boolean isRigolScope(UsbDevice device)
     {
         String man = device.getManufacturerName();
@@ -61,7 +72,7 @@ public class Scope
     {
         if(mScopeSocket != null)
         {
-            mScopeSocket.close();
+            mScopeSocket.stop();
             mScopeSocket = null;
         }
         if(mConnection != null)
@@ -96,6 +107,7 @@ public class Scope
                 try
                 {
                     mScopeSocket = new ScopeSocket(mConnection,mInterface);
+                    mScopeSocket.start();
                     return true;
                 }
                 catch (IllegalArgumentException ex)

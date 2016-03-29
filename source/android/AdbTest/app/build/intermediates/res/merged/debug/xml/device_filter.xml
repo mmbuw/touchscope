@@ -16,4 +16,4 @@
 <resources>
     <usb-device class="255" subclass="66" protocol="1" />
 </resources>
-<!-- From: file:/G:/Class/bauhaus/Touch%20Scope/touchscope/source/android/AdbTest/app/src/main/res/xml/device_filter.xml -->
+<!-- From: file:/home/mheinz/TouchScope/touchscope/source/android/AdbTest/app/src/main/res/xml/device_filter.xml -->

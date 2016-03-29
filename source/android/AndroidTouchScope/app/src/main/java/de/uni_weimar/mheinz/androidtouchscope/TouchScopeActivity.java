@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 
 public class TouchScopeActivity extends Activity
@@ -20,6 +21,17 @@ public class TouchScopeActivity extends Activity
         setContentView(R.layout.activity_touch_scope);
 
         mScope = new Scope(this);
+    }
+
+    public void onTestRead(View v)
+    {
+        new Thread(new Runnable()
+        {
+            public void run()
+            {
+                mScope.readWave();
+            }
+        }).start();
     }
 
     @Override
