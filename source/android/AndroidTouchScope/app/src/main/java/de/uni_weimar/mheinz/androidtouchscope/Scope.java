@@ -54,6 +54,8 @@ public class Scope
         mScopeSocket.write(":WAV:POIN:MODE NOR");
         mScopeSocket.write(":WAV:DATA? CHAN1");
         mScopeSocket.read(1000);
+        mScopeSocket.write(":RUN");
+        mScopeSocket.write(":KEY:FORC");
     }
 
     private boolean isRigolScope(UsbDevice device)

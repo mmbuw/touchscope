@@ -10,4 +10,5 @@
 
 ## helpful links
 [build android kernel module](https://rechtzeit.wordpress.com/2011/03/21/77/)
+
 [python with sudo](http://esmithy.net/2015/05/05/rundebug-as-root-in-pycharm/)
