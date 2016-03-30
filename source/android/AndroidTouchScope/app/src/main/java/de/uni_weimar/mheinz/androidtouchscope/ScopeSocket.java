@@ -8,8 +8,10 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.LinkedList;
 
 public class ScopeSocket
 {
@@ -20,17 +22,21 @@ public class ScopeSocket
     private final int USBTMC_SIZE_IOBUFFER = 2048;
 
     /* Default USB timeout (in milliseconds) */
-    private final int USBTMC_TIMEOUT = 10;
+    private final int USBTMC_TIMEOUT = 5000;
     private static final String TAG = "Scope";
 
-
-    UsbDeviceConnection mConnection = null;
-    UsbEndpoint mEndpointOut = null;
-    UsbEndpoint mEndpointIn = null;
+    private UsbDeviceConnection mConnection = null;
+    private UsbEndpoint mEndpointOut = null;
+    private UsbEndpoint mEndpointIn = null;
+    private final LinkedList<UsbRequest> mInRequestPool = new LinkedList<UsbRequest>();
 
     private final Object io_lock = new Object();
-    private final ReaderThread mReaderThread = new ReaderThread();
+    private final Object reader_lock = new Object();
+    private int read_bits = 0; //locked by reader_lock
+    private int read_offset = 0; //locked by reader_lock
+    private boolean read_ready = false;
 
+    private final ReaderThread mReaderThread = new ReaderThread();
     private byte mTag = (byte)1;
 
     public ScopeSocket(UsbDeviceConnection connection, UsbInterface usbInterface)
@@ -69,6 +75,31 @@ public class ScopeSocket
         }
     }
 
+    private UsbRequest getInRequest()
+    {
+        synchronized(mInRequestPool)
+        {
+            if(mInRequestPool.isEmpty())
+            {
+                UsbRequest request = new UsbRequest();
+                request.initialize(mConnection, mEndpointIn);
+                return request;
+            }
+            else
+            {
+                return mInRequestPool.removeFirst();
+            }
+        }
+    }
+
+    private void returnInRequest(UsbRequest request)
+    {
+        synchronized(mInRequestPool)
+        {
+            mInRequestPool.add(request);
+        }
+    }
+
     public int write(String command)
     {
         byte[] buf = command.getBytes();
@@ -83,6 +114,7 @@ public class ScopeSocket
         {
             while(remaining > 0)
             {
+                int retval = 0;
                 if(remaining > USBTMC_SIZE_IOBUFFER - 12)
                 {
                     this_part = USBTMC_SIZE_IOBUFFER - 12;
@@ -113,8 +145,13 @@ public class ScopeSocket
                 for(int i = 12 + this_part; i < n_bytes; ++i)
                     buffer.put(i,(byte)0);
 
-                int retval = mConnection.bulkTransfer(
-                        mEndpointOut, buffer.array(), n_bytes, USBTMC_TIMEOUT);
+                do
+                {
+                    retval = mConnection.bulkTransfer(mEndpointOut, buffer.array(), n_bytes, USBTMC_TIMEOUT);
+                    if(retval < 0)
+                        break;
+                    n_bytes -= retval;
+                } while(n_bytes > 0);
 
                 mTag++;
                 if(mTag == 0)
@@ -137,9 +174,9 @@ public class ScopeSocket
     public int read(int length)
     {
         int remaining = length;
-        int done = 0;
         int this_part;
 
+        ByteBuffer wholeBuffer = ByteBuffer.allocate(length);
 
         synchronized(io_lock)
         {
@@ -170,8 +207,8 @@ public class ScopeSocket
                 int retval = mConnection.bulkTransfer(mEndpointOut, buffer.array(), 12, USBTMC_TIMEOUT);
 
                 mTag++;
-                if(mTag == 0)
-                    mTag++;
+                if(mTag <= 0)
+                    mTag = 1;
 
                 if(retval < 0)
                 {
@@ -179,17 +216,40 @@ public class ScopeSocket
                     return retval;
                 }
 
-                UsbRequest request = new UsbRequest();
-                request.initialize(mConnection, mEndpointIn);
-                request.setClientData(buffer);
+                ReaderMessage message = new ReaderMessage(wholeBuffer, length,
+                                                          buffer, this_part);
+
+                UsbRequest request = getInRequest();
+                request.setClientData(message);
+
+                while(read_ready == false)
+                {
+                    try
+                    {
+                        Thread.sleep(500);
+                    }
+                    catch(InterruptedException ex)
+                    {
+                        ex.printStackTrace();
+                    }
+                }
+
                 if(!request.queue(buffer, USBTMC_SIZE_IOBUFFER))
                 {
                     //TODO: some error handle
                     return 0;
                 }
 
-                remaining -= this_part;
-                done += this_part;
+                synchronized(reader_lock)
+                {
+                     if(read_bits == -1 ) //end-fo-message received from device
+                        remaining = 0;
+                    else
+                        remaining -= read_bits;
+
+                    if(remaining <= 0)
+                        read_offset = 0;
+                }
             }
         }
 
@@ -212,27 +272,83 @@ public class ScopeSocket
                         return;
                 }
 
-                UsbRequest request = mConnection.requestWait();
-
-                Log.i(TAG,"got request");
-
-                if(request != null)
+                synchronized(reader_lock)
                 {
-                    ByteBuffer buffer = (ByteBuffer)request.getClientData();
+                    read_ready = true;
+
+                    UsbRequest request = mConnection.requestWait();
+
+                    try
+                    {
+                        Thread.sleep(500);
+                    }
+                    catch(InterruptedException ex)
+                    {
+                        ex.printStackTrace();
+                    }
+
+
+                    if(request == null)
+                        break;
+
+                    Log.i(TAG, "got request");
+
+                    ReaderMessage message = (ReaderMessage) request.getClientData();
                     request.setClientData(null);
 
-                    if(buffer != null)
+                    if(message != null)
                     {
-                        int n_characters = buffer.getInt(4);
+                        read_bits = message.partBuffer.getInt(4);
+                        int partSize = message.partSize;
+                        if(read_bits > partSize)
+                            read_bits = partSize;
+                        for(int j = 12; j < read_bits + 12; j++, read_offset++)
+                            message.wholeBuffer.put(read_offset, message.partBuffer.get(j));
+
+                        if(USBTMC_SIZE_IOBUFFER >= read_bits + 12 &&
+                            message.partBuffer.get(8) == 0x01) // end of message bit
+                        {
+                            read_bits = -1;
+                        }
+
+                        try
+                        {
+                            Log.i(TAG, new String(message.wholeBuffer.array(), "UTF-8"));
+                        }
+                        catch(UnsupportedEncodingException e)
+                        {
+                            e.printStackTrace();
+                        }
                     }
+
+                    if(request.getEndpoint() == mEndpointIn)
+                        returnInRequest(request);
+
+                    read_ready = false;
                 }
             }
-
         }
 
         public void postStop()
         {
             mStop = true;
+        }
+    }
+
+    private class ReaderMessage
+    {
+        public final ByteBuffer wholeBuffer;
+        public final ByteBuffer partBuffer;
+        public final int wholeSize;
+        public final int partSize;
+
+        public ReaderMessage(ByteBuffer wholeBuffer, int wholeSize,
+                             ByteBuffer partBuffer, int partSize)
+        {
+            this.wholeBuffer = wholeBuffer;
+            this.partBuffer = partBuffer;
+            this.wholeSize = wholeSize;
+            this.partSize = partSize;
         }
     }
 }

@@ -53,7 +53,12 @@ public class Scope
         mScopeSocket.write(":STOP");
         mScopeSocket.write(":WAV:POIN:MODE NOR");
         mScopeSocket.write(":WAV:DATA? CHAN1");
-        mScopeSocket.read(1000);
+        mScopeSocket.read(600);
+       // mScopeSocket.read(600);
+
+        mScopeSocket.write(":CHAN1:SCAL?");
+        mScopeSocket.read(20);
+
         mScopeSocket.write(":RUN");
         mScopeSocket.write(":KEY:FORC");
     }
@@ -88,6 +93,12 @@ public class Scope
         }
         mDevice = null;
         mInterface = null;
+    }
+
+    public void onDestroy()
+    {
+        mActivity.unregisterReceiver(mUsbReceiver);
+        close();
     }
 
     private boolean setDevice(UsbDevice device)

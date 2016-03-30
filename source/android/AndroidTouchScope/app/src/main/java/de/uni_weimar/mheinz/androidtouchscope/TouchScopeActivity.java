@@ -23,6 +23,14 @@ public class TouchScopeActivity extends Activity
         mScope = new Scope(this);
     }
 
+    @Override
+    public void onDestroy()
+    {
+        if(mScope != null)
+            mScope.close();
+        super.onDestroy();
+    }
+
     public void onTestRead(View v)
     {
         new Thread(new Runnable()
