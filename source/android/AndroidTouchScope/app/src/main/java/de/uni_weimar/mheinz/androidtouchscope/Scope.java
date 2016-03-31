@@ -16,24 +16,28 @@ public class Scope
 {
     private static final String TAG = "Scope";
 
-    Activity mActivity = null;
+    private Activity mActivity = null;
+    private int mVendorId = 0;
+    private int mProductId = 0;
 
-    UsbManager mUsbManager = null;
-    UsbDevice mDevice = null;
-    UsbDeviceConnection mConnection = null;
-    UsbInterface mInterface = null;
+    private UsbManager mUsbManager = null;
+    private UsbDevice mDevice = null;
+    private UsbDeviceConnection mConnection = null;
+    private UsbInterface mInterface = null;
 
-    ScopeSocket mScopeSocket = null;
+    private ScopeSocket mScopeSocket = null;
 
-    public Scope(Activity activity)
+    public Scope(Activity activity, int vendorId, int productId)
     {
         mActivity = activity;
+        mVendorId = vendorId;
+        mProductId = productId;
 
         mUsbManager = (UsbManager) mActivity.getSystemService(Context.USB_SERVICE);
 
         for (UsbDevice device : mUsbManager.getDeviceList().values())
         {
-            if(isRigolScope(device))
+            if(isCorrectScope(device))
             {
                 setDevice(device);
             }
@@ -45,43 +49,25 @@ public class Scope
         mActivity.registerReceiver(mUsbReceiver, filter);
     }
 
-    public void readWave()
-    {
-        if(mScopeSocket == null)
-            return;
-
-        mScopeSocket.write(":STOP");
-        mScopeSocket.write(":WAV:POIN:MODE NOR");
-        mScopeSocket.write(":WAV:DATA? CHAN1");
-        mScopeSocket.read(600);
-       // mScopeSocket.read(600);
-
-        mScopeSocket.write(":CHAN1:SCAL?");
-        mScopeSocket.read(20);
-
-        mScopeSocket.write(":RUN");
-        mScopeSocket.write(":KEY:FORC");
-    }
-
-    private boolean isRigolScope(UsbDevice device)
+    private boolean isCorrectScope(UsbDevice device)
     {
         String man = device.getManufacturerName();
         String prod = device.getProductName();
         String deviceName = device.getDeviceName();
-        int deviceId = device.getDeviceId();
-        Log.i(TAG, "Attached device: " + man + " " + prod + " " + deviceName + "--" + deviceId);
+        int vendorId = device.getVendorId();
+        int productId = device.getProductId();
 
-        return man.trim().equalsIgnoreCase("Rigol Technologies") &&
-                prod.trim().equalsIgnoreCase("DS1000 SERIES");
+        Log.i(TAG, "Attached device: " + man + " " + prod + " " + deviceName + "::"
+                + vendorId + "--" + productId);
+
+        return vendorId == mVendorId && productId == mProductId;
+
     }
 
     public void close()
     {
-        if(mScopeSocket != null)
-        {
-            mScopeSocket.stop();
-            mScopeSocket = null;
-        }
+        mScopeSocket = null;
+
         if(mConnection != null)
         {
             if(mInterface != null)
@@ -95,11 +81,35 @@ public class Scope
         mInterface = null;
     }
 
-    public void onDestroy()
+    public void terminate()
     {
         mActivity.unregisterReceiver(mUsbReceiver);
         close();
     }
+
+    public int write(String command)
+    {
+        if(mScopeSocket == null)
+            return 0;
+
+        return mScopeSocket.write(command);
+    }
+
+    public byte[] read(int length)
+    {
+        if(mScopeSocket == null)
+            return null;
+
+        return mScopeSocket.read(length);
+    }
+
+    /*public int clear()
+    {
+        if(mScopeSocket == null)
+            return 0;
+
+        return mScopeSocket.clear();
+    }*/
 
     private boolean setDevice(UsbDevice device)
     {
@@ -120,7 +130,6 @@ public class Scope
                 try
                 {
                     mScopeSocket = new ScopeSocket(mConnection,mInterface);
-                    mScopeSocket.start();
                     return true;
                 }
                 catch (IllegalArgumentException ex)
@@ -154,7 +163,7 @@ public class Scope
             if(UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action))
             {
                 UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                if (isRigolScope(device))
+                if (isCorrectScope(device))
                 {
                     Log.i(TAG,"attaching device");
                     setDevice(device);

@@ -11,6 +11,7 @@ import android.util.Log;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class ScopeSocket
@@ -23,7 +24,14 @@ public class ScopeSocket
 
     /* Default USB timeout (in milliseconds) */
     private final int USBTMC_TIMEOUT = 5000;
-    private static final String TAG = "Scope";
+    /*private final int USBTMC_MAX_READS_TO_CLEAR_BULK_IN = 100;
+    private final int USBTMC_REQUEST_INITIATE_CLEAR = 5;
+    private final int USB_RECIP_INTERFACE = 0x01;
+    private final int USBTMC_STATUS_SUCCESS = 0x01;
+    private final int USBTMC_REQUEST_CHECK_CLEAR_STATUS = 6;
+    private final int USBTMC_STATUS_PENDING = 0x02;*/
+
+    private static final String TAG = "ScopeSocket";
 
     private UsbDeviceConnection mConnection = null;
     private UsbEndpoint mEndpointOut = null;
@@ -31,12 +39,6 @@ public class ScopeSocket
     private final LinkedList<UsbRequest> mInRequestPool = new LinkedList<UsbRequest>();
 
     private final Object io_lock = new Object();
-    private final Object reader_lock = new Object();
-    private int read_bits = 0; //locked by reader_lock
-    private int read_offset = 0; //locked by reader_lock
-    private boolean read_ready = false;
-
-    private final ReaderThread mReaderThread = new ReaderThread();
     private byte mTag = (byte)1;
 
     public ScopeSocket(UsbDeviceConnection connection, UsbInterface usbInterface)
@@ -60,19 +62,6 @@ public class ScopeSocket
 
         if(mEndpointIn == null || mEndpointOut == null)
             throw new IllegalArgumentException("not all endpoints found");
-    }
-
-    public void start()
-    {
-        mReaderThread.start();
-    }
-
-    public void stop()
-    {
-        synchronized(mReaderThread)
-        {
-            mReaderThread.postStop();
-        }
     }
 
     private UsbRequest getInRequest()
@@ -171,10 +160,11 @@ public class ScopeSocket
         return buf.length;
     }
 
-    public int read(int length)
+    public byte[] read(int length)
     {
         int remaining = length;
         int this_part;
+        int done = 0;
 
         ByteBuffer wholeBuffer = ByteBuffer.allocate(length);
 
@@ -213,142 +203,156 @@ public class ScopeSocket
                 if(retval < 0)
                 {
                     //TODO:  some error handle
-                    return retval;
+                    return null;
                 }
-
-                ReaderMessage message = new ReaderMessage(wholeBuffer, length,
-                                                          buffer, this_part);
 
                 UsbRequest request = getInRequest();
-                request.setClientData(message);
-
-                while(read_ready == false)
-                {
-                    try
-                    {
-                        Thread.sleep(500);
-                    }
-                    catch(InterruptedException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                }
+                request.setClientData(buffer);
 
                 if(!request.queue(buffer, USBTMC_SIZE_IOBUFFER))
                 {
                     //TODO: some error handle
-                    return 0;
+                    return null;
                 }
 
-                synchronized(reader_lock)
+                request = mConnection.requestWait();
+                buffer = (ByteBuffer) request.getClientData();
+                request.setClientData(null);
+
+                if(buffer != null)
                 {
-                     if(read_bits == -1 ) //end-fo-message received from device
+                    int n_characters = buffer.getInt(4);
+                    if(n_characters > this_part)
+                        n_characters = this_part;
+                    for(int j = 12; j < n_characters + 12; j++, done++)
+                        wholeBuffer.put(done, buffer.get(j));
+
+                    if(USBTMC_SIZE_IOBUFFER >= n_characters + 12 &&
+                            buffer.get(8) == 0x01) // end of message bit
+                    {
                         remaining = 0;
+                    }
                     else
-                        remaining -= read_bits;
-
-                    if(remaining <= 0)
-                        read_offset = 0;
+                    {
+                        remaining -= n_characters;
+                    }
                 }
+
+                returnInRequest(request);
             }
-        }
 
-        return length;
-    }
-
-    private class ReaderThread extends Thread
-    {
-        private boolean mStop;
-
-        public void run()
-        {
-            mStop = false;
-
-            while(true)
+            try
             {
-                synchronized(this)
-                {
-                    if(mStop)
-                        return;
-                }
-
-                synchronized(reader_lock)
-                {
-                    read_ready = true;
-
-                    UsbRequest request = mConnection.requestWait();
-
-                    try
-                    {
-                        Thread.sleep(500);
-                    }
-                    catch(InterruptedException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-
-
-                    if(request == null)
-                        break;
-
-                    Log.i(TAG, "got request");
-
-                    ReaderMessage message = (ReaderMessage) request.getClientData();
-                    request.setClientData(null);
-
-                    if(message != null)
-                    {
-                        read_bits = message.partBuffer.getInt(4);
-                        int partSize = message.partSize;
-                        if(read_bits > partSize)
-                            read_bits = partSize;
-                        for(int j = 12; j < read_bits + 12; j++, read_offset++)
-                            message.wholeBuffer.put(read_offset, message.partBuffer.get(j));
-
-                        if(USBTMC_SIZE_IOBUFFER >= read_bits + 12 &&
-                            message.partBuffer.get(8) == 0x01) // end of message bit
-                        {
-                            read_bits = -1;
-                        }
-
-                        try
-                        {
-                            Log.i(TAG, new String(message.wholeBuffer.array(), "UTF-8"));
-                        }
-                        catch(UnsupportedEncodingException e)
-                        {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if(request.getEndpoint() == mEndpointIn)
-                        returnInRequest(request);
-
-                    read_ready = false;
-                }
+                Log.i(TAG, new String(wholeBuffer.array(), "UTF-8"));
+            }
+            catch(UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
             }
         }
 
-        public void postStop()
-        {
-            mStop = true;
-        }
+        return Arrays.copyOfRange(wholeBuffer.array(),0,done);
     }
 
-    private class ReaderMessage
+    /*public int clear()
     {
-        public final ByteBuffer wholeBuffer;
-        public final ByteBuffer partBuffer;
-        public final int wholeSize;
-        public final int partSize;
+        int rv = 0;
+        int max_size = 0;
 
-        public ReaderMessage(ByteBuffer wholeBuffer, int wholeSize,
-                             ByteBuffer partBuffer, int partSize)
+        ByteBuffer buffer = ByteBuffer.allocate(USBTMC_SIZE_IOBUFFER);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        rv = mConnection.controlTransfer(
+                UsbConstants.USB_DIR_IN | UsbConstants.USB_TYPE_CLASS | USB_RECIP_INTERFACE,
+                USBTMC_REQUEST_INITIATE_CLEAR,
+                0, 0, buffer.array(), 1, USBTMC_TIMEOUT);
+
+        if(rv < 0)
         {
-            this.wholeBuffer = wholeBuffer;
-            this.partBuffer = partBuffer;
-            this.wholeSize = wholeSize;
-            this.partSize = partSize;
+            //TODO: error handle
+            return rv;
         }
-    }
+
+        if(buffer.get(0) != USBTMC_STATUS_SUCCESS)
+        {
+            //TODO: error handle
+            return -1;
+        }
+
+        max_size = mEndpointIn.getMaxPacketSize();
+        if(max_size == 0)
+        {
+            // TODO: error handle
+            return -1;
+        }
+
+        // check clear status
+        while(true)
+        {
+            rv = mConnection.controlTransfer(
+                    UsbConstants.USB_DIR_IN | UsbConstants.USB_TYPE_CLASS | USB_RECIP_INTERFACE,
+                    USBTMC_REQUEST_CHECK_CLEAR_STATUS,
+                    0, 0, buffer.array(), 2, USBTMC_TIMEOUT);
+
+            if(rv < 0)
+            {
+                //TODO: error handle
+                return rv;
+            }
+
+            if(buffer.get(0) == USBTMC_STATUS_SUCCESS)
+            {
+                break;
+            }
+
+            if(buffer.get(0) != USBTMC_STATUS_PENDING)
+            {
+                //TODO: error handle
+                return -1;
+            }
+
+            if(buffer.get(1) == 1)
+            {
+                int n = 0;
+                do
+                {
+                    UsbRequest request = getInRequest();
+                    request.setClientData(buffer);
+
+                    if(!request.queue(buffer, USBTMC_SIZE_IOBUFFER))
+                    {
+                        //TODO: some error handle
+                        return -1;
+                    }
+                    request = mConnection.requestWait();
+                    n++;
+                    returnInRequest(request);
+                } while(rv == max_size && n < USBTMC_MAX_READS_TO_CLEAR_BULK_IN);
+            }
+            if(rv == max_size)
+            {
+                // TODO: error handle
+                return 0;
+            }
+        }
+
+        /// clear halt
+        int endp = mEndpointOut.getEndpointNumber();//.getAddress();
+        endp = ((endp) >> 15) & 0xf;
+        if((endp & UsbConstants.USB_DIR_IN) > 0)
+            endp |= UsbConstants.USB_DIR_IN;
+
+        rv = mConnection.controlTransfer(
+                0x02, // USB_RECIP_ENDPOINT
+                0x01, // USB_REQ_CLEAR_FEATURE
+                0, //USB_ENDPOINT_HALT
+                endp,
+                null, 0, USBTMC_TIMEOUT);
+
+        if(rv < 0)
+            return rv;
+
+
+        return rv;
+    }*/
 }

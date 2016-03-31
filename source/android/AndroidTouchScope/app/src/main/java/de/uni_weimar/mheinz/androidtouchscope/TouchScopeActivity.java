@@ -12,7 +12,7 @@ public class TouchScopeActivity extends Activity
 {
     private static final String TAG = "TouchScopeActivity";
 
-    Scope mScope = null;
+    RigolScope mRigolScope = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -20,14 +20,14 @@ public class TouchScopeActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_touch_scope);
 
-        mScope = new Scope(this);
+        mRigolScope = new RigolScope(this);
     }
 
     @Override
     public void onDestroy()
     {
-        if(mScope != null)
-            mScope.close();
+        if(mRigolScope != null)
+            mRigolScope.terminate();
         super.onDestroy();
     }
 
@@ -37,7 +37,7 @@ public class TouchScopeActivity extends Activity
         {
             public void run()
             {
-                mScope.readWave();
+                mRigolScope.readWave();
             }
         }).start();
     }
