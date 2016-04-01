@@ -13,17 +13,24 @@
     tools:context="de.uni_weimar.mheinz.androidtouchscope.TouchScopeActivity"
     tools:showIn="@layout/activity_touch_scope">
 
-    <TextView
+    <de.uni_weimar.mheinz.androidtouchscope.ScopeView
+        android:id="@+id/scopeView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:background="#000"
+        android:paddingBottom="40dp"
+        android:paddingLeft="20dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/testRead"
+        android:layout_alignParentTop="true"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Read Wave"
         android:id="@+id/testRead"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="onTestRead"/>
+        android:onClick="onTestRead"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
 </RelativeLayout>

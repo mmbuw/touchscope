@@ -64,6 +64,19 @@ public class ScopeSocket
             throw new IllegalArgumentException("not all endpoints found");
     }
 
+    public void close()
+    {
+        synchronized(mInRequestPool)
+        {
+            while(!mInRequestPool.isEmpty())
+            {
+                UsbRequest request = mInRequestPool.removeFirst();
+                request.cancel();
+                request.close();
+            }
+        }
+    }
+
     private UsbRequest getInRequest()
     {
         synchronized(mInRequestPool)
@@ -241,14 +254,14 @@ public class ScopeSocket
                 returnInRequest(request);
             }
 
-            try
+            /*try
             {
                 Log.i(TAG, new String(wholeBuffer.array(), "UTF-8"));
             }
             catch(UnsupportedEncodingException e)
             {
                 e.printStackTrace();
-            }
+            }*/
         }
 
         return Arrays.copyOfRange(wholeBuffer.array(),0,done);

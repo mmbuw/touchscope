@@ -26,12 +26,18 @@ public class Scope
     private UsbInterface mInterface = null;
 
     private ScopeSocket mScopeSocket = null;
+    private OnDeviceStart mOnDeviceStart;
 
     public Scope(Activity activity, int vendorId, int productId)
     {
         mActivity = activity;
         mVendorId = vendorId;
         mProductId = productId;
+    }
+
+    public void open(OnDeviceStart onDeviceStart)
+    {
+        mOnDeviceStart = onDeviceStart;
 
         mUsbManager = (UsbManager) mActivity.getSystemService(Context.USB_SERVICE);
 
@@ -49,24 +55,19 @@ public class Scope
         mActivity.registerReceiver(mUsbReceiver, filter);
     }
 
-    private boolean isCorrectScope(UsbDevice device)
-    {
-        String man = device.getManufacturerName();
-        String prod = device.getProductName();
-        String deviceName = device.getDeviceName();
-        int vendorId = device.getVendorId();
-        int productId = device.getProductId();
-
-        Log.i(TAG, "Attached device: " + man + " " + prod + " " + deviceName + "::"
-                + vendorId + "--" + productId);
-
-        return vendorId == mVendorId && productId == mProductId;
-
-    }
-
     public void close()
     {
-        mScopeSocket = null;
+        mActivity.unregisterReceiver(mUsbReceiver);
+        closeConnection();
+    }
+
+    private void closeConnection()
+    {
+        if(mScopeSocket != null)
+        {
+            mScopeSocket.close();
+            mScopeSocket = null;
+        }
 
         if(mConnection != null)
         {
@@ -81,10 +82,18 @@ public class Scope
         mInterface = null;
     }
 
-    public void terminate()
+    private boolean isCorrectScope(UsbDevice device)
     {
-        mActivity.unregisterReceiver(mUsbReceiver);
-        close();
+        String man = device.getManufacturerName();
+        String prod = device.getProductName();
+        String deviceName = device.getDeviceName();
+        int vendorId = device.getVendorId();
+        int productId = device.getProductId();
+
+        Log.i(TAG, "Attached device: " + man + " " + prod + " " + deviceName + "::" + vendorId + "--" + productId);
+
+        return vendorId == mVendorId && productId == mProductId;
+
     }
 
     public int write(String command)
@@ -113,7 +122,7 @@ public class Scope
 
     private boolean setDevice(UsbDevice device)
     {
-        close();
+        closeConnection();
 
         if (device == null)
             return false;
@@ -130,24 +139,27 @@ public class Scope
                 try
                 {
                     mScopeSocket = new ScopeSocket(mConnection,mInterface);
+                    if(mOnDeviceStart != null)
+                        mOnDeviceStart.start();
+
                     return true;
                 }
                 catch (IllegalArgumentException ex)
                 {
                     Log.d(TAG,"Socket failed");
-                    close();
+                    closeConnection();
                 }
             }
             else
             {
                 Log.d(TAG,"claim interface failed");
-                close();
+                closeConnection();
             }
         }
         else
         {
             Log.d(TAG,"open device failed");
-            close();
+            closeConnection();
         }
 
         return false;
@@ -175,9 +187,14 @@ public class Scope
                 if (device != null && device.equals(mDevice))
                 {
                     Log.i(TAG,"detaching device");
-                    close();
+                    closeConnection();
                 }
             }
         }
     };
+
+    public interface OnDeviceStart
+    {
+        void start();
+    }
 }
