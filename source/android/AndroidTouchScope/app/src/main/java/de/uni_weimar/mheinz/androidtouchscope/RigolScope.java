@@ -2,22 +2,37 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 
 import android.app.Activity;
+import android.os.Handler;
 
-public class RigolScope
+import java.nio.ByteBuffer;
+
+public class RigolScope implements BaseScope
 {
-    private final int RIGOL_VENDOR_ID = 6833;
-    private final int RIGOL_PRODUCT_ID = 1416;
+    private static final int RIGOL_VENDOR_ID = 6833;
+    private static final int RIGOL_PRODUCT_ID = 1416;
 
-    static public final String CHAN_1 = "CHAN1";
-    static public final String CHAN_2 = "CHAN2";
-    static public final String CHAN_MATH = "MATH";
+    private static final String CHAN_1 = "CHAN1";
+    private static final String CHAN_2 = "CHAN2";
+    private static final String CHAN_MATH = "MATH";
 
-    private Scope mScope = null;
+    private static final int READ_RATE = 100;
+
+    private UsbController mUsbController = null;
+
+    private LimitedByteDeque mChanList1 = new LimitedByteDeque(QUEUE_LENGTH);
+    private LimitedByteDeque mChanList2 = new LimitedByteDeque(QUEUE_LENGTH);
+    private LimitedByteDeque mChanListM = new LimitedByteDeque(QUEUE_LENGTH);
+
+    private boolean mIsChan1On = false;
+    private boolean mIsChan2On = false;
+    private boolean mIsChanMOn = false;
+
+    private Handler mReadHandler = new Handler();
 
     public RigolScope(Activity activity)
     {
-        mScope = new Scope(activity, RIGOL_VENDOR_ID, RIGOL_PRODUCT_ID);
-        mScope.open(new Scope.OnDeviceStart()
+        mUsbController = new UsbController(activity, RIGOL_VENDOR_ID, RIGOL_PRODUCT_ID);
+        mUsbController.open(new UsbController.OnDeviceStart()
         {
             @Override
             public void start()
@@ -27,66 +42,159 @@ public class RigolScope
         });
     }
 
+    public void start()
+    {
+        stop();
+        mReadHandler.postDelayed(mReadRunnable, 0);
+    }
+
+    public void stop()
+    {
+        mReadHandler.removeCallbacks(mReadRunnable);
+    }
+
     public void close()
     {
-        if(mScope != null)
-            mScope.close();
+        stop();
+
+        if(mUsbController != null)
+            mUsbController.close();
     }
 
     private void initSettings()
     {
-        if(mScope == null)
+        if(mUsbController == null)
             return;
 
-        mScope.write(":WAV:POIN:MODE NOR");
+        mUsbController.write(":WAV:POIN:MODE NOR");
         forceCommand();
     }
 
     public String getName()
     {
-        if(mScope == null)
+        if(mUsbController == null)
             return null;
 
-        mScope.write("*IDN?");
-        byte[] data = mScope.read(300);
+        mUsbController.write("*IDN?");
+        byte[] data = mUsbController.read(300);
         forceCommand();
         return new String(data);
     }
 
-    public boolean isChannelOn(String channel)
+    public int doCommand(Command command, int channel, boolean force, byte[] data)
     {
-        if(mScope == null)
-            return false;
+        int val = 0;
 
-        mScope.write(":" + channel + ":DISP?");
-        byte[] on = mScope.read(20);
-        if(on.length > 0)
-            return on[0] == 49 ? true : false;
-        else
-            return false;
+        if(mUsbController == null)
+            return val;
+
+        switch (command)
+        {
+            case READ_WAVE:
+                ByteBuffer buffer = ByteBuffer.wrap(data);
+                //readWave(getChannel(channel));
+                switch (channel)
+                {
+                    case 1:
+                        buffer.put(mChanList1.peekTo(SAMPLE_LENGTH));
+                        break;
+                    case 2:
+                        buffer.put(mChanList2.peekTo(SAMPLE_LENGTH));
+                        break;
+                    case 3:
+                        buffer.put(mChanListM.peekTo(SAMPLE_LENGTH));
+                        break;
+                }
+
+                break;
+            case IS_CHANNEL_ON:
+                val = isChannelOn(channel) ? 1 : 0;
+                break;
+            case NO_COMMAND:
+            default:
+                break;
+        }
+
+        if(force)
+            forceCommand();
+
+        return val;
     }
 
-    public byte[] readWave(String channel)
+    private String getChannel(int chan)
     {
-        if(mScope == null)
-            return null;
+        String channel;
+        switch (chan)
+        {
+            case 2:
+                channel = CHAN_2;
+                break;
+            case 3:
+                channel = CHAN_MATH;
+                break;
+            case 1:
+            default:
+                channel = CHAN_1;
+                break;
+        }
 
-     //   mScope.write(":STOP");
-        mScope.write(":WAV:DATA? " + channel);
-        byte[] data = mScope.read(600);
-     //   mScope.write(":" + channel + ":SCAL?");
-     //   byte[] time = mScope.read(20);
-     //   mScope.write(":RUN");
+        return channel;
+    }
 
-        return data;
+    private boolean isChannelOn(int channel)
+    {
+        mUsbController.write(":" + getChannel(channel) + ":DISP?");
+        byte[] on = mUsbController.read(20);
+        boolean isOn = on.length > 0 && on[0] == 49;
+
+        switch (channel)
+        {
+            case 1:
+                mIsChan1On = isOn;
+                break;
+            case 2:
+                mIsChan2On = isOn;
+                break;
+            case 3:
+                mIsChanMOn = isOn;
+        }
+
+        return isOn;
+    }
+
+    private void readWave(String channel)
+    {
+        mUsbController.write(":WAV:DATA? " + channel);
+        byte[] data = mUsbController.read(600);
+
+     //   mUsbController.write(":" + channel + ":SCAL?");
+     //   byte[] time = mUsbController.read(20);
+
+        mChanListM.addMany(data);
     }
 
     // use to re-allow human reaction with the scope
-    public void forceCommand()
+    private void forceCommand()
     {
-        if(mScope == null)
-            return;
-
-        mScope.write(":KEY:FORC");
+        mUsbController.write(":KEY:FORC");
     }
+
+    private Runnable mReadRunnable = new Runnable()
+    {
+        int chan = 1;
+        @Override
+        public void run()
+        {
+            if(mIsChan1On)
+                readWave(CHAN_1);
+
+            if(mIsChan2On)
+                readWave(CHAN_2);
+
+            if(mIsChanMOn)
+                readWave(CHAN_MATH);
+
+            mReadHandler.postDelayed(this, READ_RATE);
+        }
+    };
 }

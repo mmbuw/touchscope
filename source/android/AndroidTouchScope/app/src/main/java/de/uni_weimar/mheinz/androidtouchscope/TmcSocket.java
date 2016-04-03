@@ -8,13 +8,12 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-public class ScopeSocket
+public class TmcSocket
 {
     /*
      * Size of driver internal IO buffer. Must be multiple of 4 and at least as
@@ -31,7 +30,7 @@ public class ScopeSocket
     private final int USBTMC_REQUEST_CHECK_CLEAR_STATUS = 6;
     private final int USBTMC_STATUS_PENDING = 0x02;*/
 
-    private static final String TAG = "ScopeSocket";
+    private static final String TAG = "TmcSocket";
 
     private UsbDeviceConnection mConnection = null;
     private UsbEndpoint mEndpointOut = null;
@@ -41,7 +40,7 @@ public class ScopeSocket
     private final Object io_lock = new Object();
     private byte mTag = (byte)1;
 
-    public ScopeSocket(UsbDeviceConnection connection, UsbInterface usbInterface)
+    public TmcSocket(UsbDeviceConnection connection, UsbInterface usbInterface)
     {
         mConnection = connection;
 

@@ -11,10 +11,9 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
-
-public class Scope
+public class UsbController
 {
-    private static final String TAG = "Scope";
+    private static final String TAG = "UsbController";
 
     private Activity mActivity = null;
     private int mVendorId = 0;
@@ -25,10 +24,10 @@ public class Scope
     private UsbDeviceConnection mConnection = null;
     private UsbInterface mInterface = null;
 
-    private ScopeSocket mScopeSocket = null;
+    private TmcSocket mTmcSocket = null;
     private OnDeviceStart mOnDeviceStart;
 
-    public Scope(Activity activity, int vendorId, int productId)
+    public UsbController(Activity activity, int vendorId, int productId)
     {
         mActivity = activity;
         mVendorId = vendorId;
@@ -63,10 +62,10 @@ public class Scope
 
     private void closeConnection()
     {
-        if(mScopeSocket != null)
+        if(mTmcSocket != null)
         {
-            mScopeSocket.close();
-            mScopeSocket = null;
+            mTmcSocket.close();
+            mTmcSocket = null;
         }
 
         if(mConnection != null)
@@ -98,26 +97,26 @@ public class Scope
 
     public int write(String command)
     {
-        if(mScopeSocket == null)
+        if(mTmcSocket == null)
             return 0;
 
-        return mScopeSocket.write(command);
+        return mTmcSocket.write(command);
     }
 
     public byte[] read(int length)
     {
-        if(mScopeSocket == null)
+        if(mTmcSocket == null)
             return null;
 
-        return mScopeSocket.read(length);
+        return mTmcSocket.read(length);
     }
 
     /*public int clear()
     {
-        if(mScopeSocket == null)
+        if(mTmcSocket == null)
             return 0;
 
-        return mScopeSocket.clear();
+        return mTmcSocket.clear();
     }*/
 
     private boolean setDevice(UsbDevice device)
@@ -138,7 +137,7 @@ public class Scope
 
                 try
                 {
-                    mScopeSocket = new ScopeSocket(mConnection,mInterface);
+                    mTmcSocket = new TmcSocket(mConnection,mInterface);
                     if(mOnDeviceStart != null)
                         mOnDeviceStart.start();
 

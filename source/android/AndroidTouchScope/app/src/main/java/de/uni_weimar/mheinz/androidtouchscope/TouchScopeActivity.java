@@ -8,18 +8,21 @@ import android.view.MenuItem;
 import android.view.View;
 
 import android.os.Handler;
+import android.widget.ToggleButton;
 
 public class TouchScopeActivity extends Activity
 {
     private static final String TAG = "TouchScopeActivity";
-    private final int REFRESH_RATE = 200;
+    private static final int REFRESH_RATE = 100;
 
-    RigolScope mRigolScope = null;
+    BaseScope mRigolScope = null;
     ScopeView mScopeView = null;
 
     private int mIsChan1On = 0;
     private int mIsChan2On = 0;
     private int mIsMathOn = 0;
+
+    private byte[] mBuffer = new byte[BaseScope.SAMPLE_LENGTH];
 
     private Handler mRefreshHandler = new Handler();
 
@@ -30,8 +33,11 @@ public class TouchScopeActivity extends Activity
         setContentView(R.layout.activity_touch_scope);
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
+        ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
+        readButton.setChecked(false);
 
-        mRigolScope = new RigolScope(this);
+        //mRigolScope = new RigolScope(this);
+        mRigolScope = new TestScope();
     }
 
     @Override
@@ -39,28 +45,43 @@ public class TouchScopeActivity extends Activity
     {
         if(mRigolScope != null)
             mRigolScope.close();
+
+        mRefreshHandler.removeCallbacks(mRefreshRunnable);
         super.onDestroy();
     }
 
     public void onTestRead(View v)
     {
-        new Thread(new Runnable()
+        if(((ToggleButton)v).isChecked())
         {
-            public void run()
+            mRigolScope.start();
+            new Thread(new Runnable()
             {
-                if(mRigolScope != null)
+                public void run()
                 {
-                    mRefreshHandler.removeCallbacks(mRefreshRunnable);
+                    if (mRigolScope != null)
+                    {
+                        mRefreshHandler.removeCallbacks(mRefreshRunnable);
 
-                    mIsChan1On = mRigolScope.isChannelOn(RigolScope.CHAN_1) ? 1 : 0;
-                    mIsChan2On = mRigolScope.isChannelOn(RigolScope.CHAN_2) ? 1 : 0;
-                    mIsMathOn = mRigolScope.isChannelOn(RigolScope.CHAN_MATH) ? 1 : 0;
-                    mRigolScope.forceCommand();
+                        mIsChan1On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false, null);
+                        mIsChan2On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false, null);
+                        mIsMathOn = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true, null);
 
-                    mRefreshHandler.postDelayed(mRefreshRunnable, 0);
+                        //    mIsChan1On = mRigolScope.isChannelOn(RigolScope.CHAN_1) ? 1 : 0;
+                        //    mIsChan2On = mRigolScope.isChannelOn(RigolScope.CHAN_2) ? 1 : 0;
+                        //    mIsMathOn = mRigolScope.isChannelOn(RigolScope.CHAN_MATH) ? 1 : 0;
+                        //    mRigolScope.forceCommand();
+
+                        mRefreshHandler.postDelayed(mRefreshRunnable, 0);
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
+        else
+        {
+            mRigolScope.stop();
+            mRefreshHandler.removeCallbacks(mRefreshRunnable);
+        }
     }
 
     @Override
@@ -90,37 +111,34 @@ public class TouchScopeActivity extends Activity
         {
             if(mIsChan1On == 1)
             {
-                byte[] data = mRigolScope.readWave(RigolScope.CHAN_1);
-                mScopeView.setChannelData(RigolScope.CHAN_1, data);
-                mRigolScope.forceCommand();
+                mRigolScope.doCommand(BaseScope.Command.READ_WAVE,1,true, mBuffer);
+                mScopeView.setChannelData(1, mBuffer);
             }
             else if(mIsChan1On == 0)
             {
-                mScopeView.setChannelData(RigolScope.CHAN_1, null);
+                mScopeView.setChannelData(1, null);
                 mIsChan1On = -1;
             }
 
             if(mIsChan2On == 1)
             {
-                byte[] data = mRigolScope.readWave(RigolScope.CHAN_2);
-                mScopeView.setChannelData(RigolScope.CHAN_2, data);
-                mRigolScope.forceCommand();
+                mRigolScope.doCommand(BaseScope.Command.READ_WAVE,2,true,mBuffer);
+                mScopeView.setChannelData(2, mBuffer);
             }
             else if(mIsChan2On == 0)
             {
-                mScopeView.setChannelData(RigolScope.CHAN_2, null);
+                mScopeView.setChannelData(2, null);
                 mIsChan2On = -1;
             }
 
             if(mIsMathOn == 1)
             {
-                byte[] data = mRigolScope.readWave(RigolScope.CHAN_MATH);
-                mScopeView.setChannelData(RigolScope.CHAN_MATH, data);
-                mRigolScope.forceCommand();
+                mRigolScope.doCommand(BaseScope.Command.READ_WAVE,3,true,mBuffer);
+                mScopeView.setChannelData(3, mBuffer);
             }
             else if(mIsMathOn == 0)
             {
-                mScopeView.setChannelData(RigolScope.CHAN_MATH, null);
+                mScopeView.setChannelData(3, null);
                 mIsMathOn = -1;
             }
 

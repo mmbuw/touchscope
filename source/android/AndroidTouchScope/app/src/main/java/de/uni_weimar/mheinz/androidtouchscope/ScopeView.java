@@ -18,11 +18,7 @@ import android.view.View;
  */
 public class ScopeView extends View
 {
-    private final int SCOPE_WIDTH = 600;
-
-    private int mChannel1Color = Color.YELLOW;
-    private int mChannel2Color = Color.BLUE;
-    private int mChannelMathColor = Color.MAGENTA;
+    private static final int SCOPE_WIDTH = 600;
 
     private ShapeDrawable mDrawableChan1 = new ShapeDrawable();
     private ShapeDrawable mDrawableChan2 = new ShapeDrawable();
@@ -63,9 +59,9 @@ public class ScopeView extends View
         mContentWidth = getWidth() - paddingLeft - paddingRight;
         mContentHeight = getHeight() - paddingTop - paddingBottom;
 
-        initDrawable(mDrawableChan1, mPathChan1, mChannel1Color, SCOPE_WIDTH, mContentHeight);
-        initDrawable(mDrawableChan2, mPathChan2, mChannel2Color, SCOPE_WIDTH, mContentHeight);
-        initDrawable(mDrawableMath, mPathMath, mChannelMathColor, SCOPE_WIDTH, mContentHeight);
+        initDrawable(mDrawableChan1, mPathChan1, Color.YELLOW, mContentWidth, mContentHeight);
+        initDrawable(mDrawableChan2, mPathChan2, Color.BLUE, mContentWidth, mContentHeight);
+        initDrawable(mDrawableMath, mPathMath, Color.MAGENTA, mContentWidth, mContentHeight);
     }
 
     private void initDrawable(ShapeDrawable drawable, Path path, int color, int width, int height)
@@ -77,17 +73,17 @@ public class ScopeView extends View
         drawable.setBounds(0, 0, width, height);
     }
 
-    public void setChannelData(String channel, byte[] data)
+    public void setChannelData(int channel, byte[] data)
     {
         switch(channel)
         {
-            case RigolScope.CHAN_1:
+            case 1:
                 updatePath(mPathChan1, data);
                 break;
-            case RigolScope.CHAN_2:
+            case 2:
                 updatePath(mPathChan2, data);
                 break;
-            case RigolScope.CHAN_MATH:
+            case 3:
                 updatePath(mPathMath, data);
                 break;
         }
@@ -101,13 +97,14 @@ public class ScopeView extends View
             return;
 
         int mid = mContentHeight / 2;
+        float widthRatio = ((float)mContentWidth) / data.length;
 
         path.moveTo(0, data[0]);
-
         for(int i = 1; i < data.length; ++i)
         {
-            path.lineTo(i, data[i] + mid);
+            path.lineTo(i * widthRatio, data[i] + mid);
         }
+        data = null;
     }
 
     @Override
