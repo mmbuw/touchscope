@@ -73,38 +73,55 @@ public class ScopeView extends View
         drawable.setBounds(0, 0, width, height);
     }
 
-    public void setChannelData(int channel, byte[] data)
+    public void setChannelData(int channel, WaveData waveData)
     {
         switch(channel)
         {
             case 1:
-                updatePath(mPathChan1, data);
+                updatePath(mPathChan1, waveData);
                 break;
             case 2:
-                updatePath(mPathChan2, data);
+                updatePath(mPathChan2, waveData);
                 break;
             case 3:
-                updatePath(mPathMath, data);
+                updatePath(mPathMath, waveData);
                 break;
         }
         postInvalidate();
     }
 
-    private void updatePath(Path path, byte[] data)
+    private void updatePath(Path path, WaveData waveData)
     {
         path.rewind();
-        if(data == null || data.length == 0)
+        if(waveData == null || waveData.data == null || waveData.data.length == 0)
             return;
 
-        int mid = mContentHeight / 2;
-        float widthRatio = ((float)mContentWidth) / data.length;
+        float offset = mContentHeight / 2.0f + (float)waveData.voltageOffset;
+        float widthRatio = ((float)mContentWidth) / (waveData.data.length - 10);
+        float heightRatio = (mContentHeight * 1/8.0f) / (float)waveData.voltageScale;
 
-        path.moveTo(0, data[0]);
-        for(int i = 1; i < data.length; ++i)
+        path.moveTo(0, waveData.data[10]);
+        for(int i = 11, j = 1; i < waveData.data.length; ++i, ++j)
         {
-            path.lineTo(i * widthRatio, data[i] + mid);
+            float point = actualVoltage(waveData, waveData.data[i]);
+            path.lineTo(j * widthRatio, (point * heightRatio) + offset);
         }
-        data = null;
+    }
+
+    private float actualVoltage(WaveData waveData, byte point)
+    {
+        // Walk through the data, and map it to actual voltages
+        // This mapping is from Cibo Mahto
+        // First invert the data
+        double tPoint = point * -1 + 255;
+
+        // Now, we know from experimentation that the scope display range is actually
+        // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
+        // get the actual voltage.
+
+        tPoint = (tPoint - 130.0 - (waveData.voltageOffset / waveData.voltageScale * 25)) /
+                    25 * waveData.voltageScale;
+        return (float)tPoint;
     }
 
     @Override

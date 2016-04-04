@@ -22,8 +22,6 @@ public class TouchScopeActivity extends Activity
     private int mIsChan2On = 0;
     private int mIsMathOn = 0;
 
-    private byte[] mBuffer = new byte[BaseScope.SAMPLE_LENGTH];
-
     private Handler mRefreshHandler = new Handler();
 
     @Override
@@ -36,8 +34,9 @@ public class TouchScopeActivity extends Activity
         ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
         readButton.setChecked(false);
 
-        //mRigolScope = new RigolScope(this);
-        mRigolScope = new TestScope();
+        mRigolScope = new RigolScope(this);
+        //mRigolScope = new TestScope();
+        mRigolScope.open();
     }
 
     @Override
@@ -52,6 +51,10 @@ public class TouchScopeActivity extends Activity
 
     public void onTestRead(View v)
     {
+        if(!mRigolScope.isConnected())
+        {
+            ((ToggleButton)v).setChecked(false);
+        }
         if(((ToggleButton)v).isChecked())
         {
             mRigolScope.start();
@@ -63,9 +66,9 @@ public class TouchScopeActivity extends Activity
                     {
                         mRefreshHandler.removeCallbacks(mRefreshRunnable);
 
-                        mIsChan1On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false, null);
-                        mIsChan2On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false, null);
-                        mIsMathOn = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true, null);
+                        mIsChan1On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
+                        mIsChan2On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
+                        mIsMathOn = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
 
                         //    mIsChan1On = mRigolScope.isChannelOn(RigolScope.CHAN_1) ? 1 : 0;
                         //    mIsChan2On = mRigolScope.isChannelOn(RigolScope.CHAN_2) ? 1 : 0;
@@ -111,8 +114,8 @@ public class TouchScopeActivity extends Activity
         {
             if(mIsChan1On == 1)
             {
-                mRigolScope.doCommand(BaseScope.Command.READ_WAVE,1,true, mBuffer);
-                mScopeView.setChannelData(1, mBuffer);
+                WaveData waveData = mRigolScope.getWave(1);
+                mScopeView.setChannelData(1, waveData);
             }
             else if(mIsChan1On == 0)
             {
@@ -122,8 +125,8 @@ public class TouchScopeActivity extends Activity
 
             if(mIsChan2On == 1)
             {
-                mRigolScope.doCommand(BaseScope.Command.READ_WAVE,2,true,mBuffer);
-                mScopeView.setChannelData(2, mBuffer);
+                WaveData waveData = mRigolScope.getWave(2);
+                mScopeView.setChannelData(2, waveData);
             }
             else if(mIsChan2On == 0)
             {
@@ -133,8 +136,8 @@ public class TouchScopeActivity extends Activity
 
             if(mIsMathOn == 1)
             {
-                mRigolScope.doCommand(BaseScope.Command.READ_WAVE,3,true,mBuffer);
-                mScopeView.setChannelData(3, mBuffer);
+                WaveData waveData = mRigolScope.getWave(3);
+                mScopeView.setChannelData(3, waveData);
             }
             else if(mIsMathOn == 0)
             {

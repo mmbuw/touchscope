@@ -8,13 +8,25 @@ public class TestScope implements BaseScope
 {
     private static final int READ_RATE = 100;
 
-    private LimitedByteDeque mSampleList1 = new LimitedByteDeque(QUEUE_LENGTH);
+   // private LimitedByteDeque mSampleList1 = new LimitedByteDeque(QUEUE_LENGTH);
+    private WaveRequestPool mWaves1 = new WaveRequestPool(QUEUE_LENGTH);
+
     private Handler mReadHandler = new Handler();
-    private Byte[] mBuffer;
+    private byte[] mBuffer;
 
     public TestScope()
     {
-        mBuffer = new Byte[SAMPLE_LENGTH];
+        mBuffer = new byte[SAMPLE_LENGTH];
+    }
+
+    public void open()
+    {
+
+    }
+
+    public void close()
+    {
+        stop();
     }
 
     public void start()
@@ -28,9 +40,9 @@ public class TestScope implements BaseScope
         mReadHandler.removeCallbacks(mReadRunnable);
     }
 
-    public void close()
+    public boolean isConnected()
     {
-        stop();
+        return true;
     }
 
     public String getName()
@@ -38,7 +50,7 @@ public class TestScope implements BaseScope
         return "Test Scope";
     }
 
-    public int doCommand(Command command, int channel, boolean force, byte[] data)
+    public int doCommand(Command command, int channel, boolean force)
     {
         int val = 0;
         switch (command)
@@ -47,18 +59,19 @@ public class TestScope implements BaseScope
                 if(channel == 1)
                     val = 1;
                 break;
-            case READ_WAVE:
-                ByteBuffer buffer = ByteBuffer.wrap(data);
-              //  generateTone();
-                buffer.put(mSampleList1.peekTo(SAMPLE_LENGTH));
-
-                break;
         }
         return val;
     }
 
+    public WaveData getWave(int chan)
+    {
+        return mWaves1.peek();
+    }
+
     private void generateTone()
     {
+        WaveData waveData = mWaves1.requestWaveData();
+
         float sampleRate = 10.0F; // Allowable 8000,11025,16000,22050,44100
        // double freq = 250;//arbitrary frequency
         double freq = Math.random() * 80000 + 10000;
@@ -73,7 +86,11 @@ public class TestScope implements BaseScope
             mBuffer[cnt] = (byte)(16000*sinValue);
         }//end for loop
 
-        mSampleList1.addMany(mBuffer);
+        waveData.data = mBuffer;
+        waveData.timeOffset = 1.0;
+        waveData.voltageScale = 1.0;
+        waveData.timeScale = 1.0;
+        waveData.voltageOffset = 1.0;
     }
 
     private Runnable mReadRunnable = new Runnable()

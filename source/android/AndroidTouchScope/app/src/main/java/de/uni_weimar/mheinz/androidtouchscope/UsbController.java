@@ -25,7 +25,7 @@ public class UsbController
     private UsbInterface mInterface = null;
 
     private TmcSocket mTmcSocket = null;
-    private OnDeviceStart mOnDeviceStart;
+    private OnDeviceChange mOnDeviceChange;
 
     public UsbController(Activity activity, int vendorId, int productId)
     {
@@ -34,9 +34,9 @@ public class UsbController
         mProductId = productId;
     }
 
-    public void open(OnDeviceStart onDeviceStart)
+    public void open(OnDeviceChange onDeviceChange)
     {
-        mOnDeviceStart = onDeviceStart;
+        mOnDeviceChange = onDeviceChange;
 
         mUsbManager = (UsbManager) mActivity.getSystemService(Context.USB_SERVICE);
 
@@ -79,6 +79,8 @@ public class UsbController
         }
         mDevice = null;
         mInterface = null;
+
+        mOnDeviceChange.stop();
     }
 
     private boolean isCorrectScope(UsbDevice device)
@@ -138,8 +140,8 @@ public class UsbController
                 try
                 {
                     mTmcSocket = new TmcSocket(mConnection,mInterface);
-                    if(mOnDeviceStart != null)
-                        mOnDeviceStart.start();
+                    if(mOnDeviceChange != null)
+                        mOnDeviceChange.start();
 
                     return true;
                 }
@@ -192,8 +194,9 @@ public class UsbController
         }
     };
 
-    public interface OnDeviceStart
+    public interface OnDeviceChange
     {
         void start();
+        void stop();
     }
 }

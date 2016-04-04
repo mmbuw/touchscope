@@ -4,6 +4,7 @@ package de.uni_weimar.mheinz.androidtouchscope;
 import android.app.Activity;
 import android.os.Handler;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class RigolScope implements BaseScope
@@ -17,11 +18,13 @@ public class RigolScope implements BaseScope
 
     private static final int READ_RATE = 100;
 
+    private Activity mActivity;
     private UsbController mUsbController = null;
+    private boolean mIsConnected = false;
 
-    private LimitedByteDeque mChanList1 = new LimitedByteDeque(QUEUE_LENGTH);
-    private LimitedByteDeque mChanList2 = new LimitedByteDeque(QUEUE_LENGTH);
-    private LimitedByteDeque mChanListM = new LimitedByteDeque(QUEUE_LENGTH);
+    private WaveRequestPool mWaves1 = new WaveRequestPool(QUEUE_LENGTH);
+    private WaveRequestPool mWaves2 = new WaveRequestPool(QUEUE_LENGTH);
+    private WaveRequestPool mWavesM = new WaveRequestPool(QUEUE_LENGTH);
 
     private boolean mIsChan1On = false;
     private boolean mIsChan2On = false;
@@ -31,15 +34,38 @@ public class RigolScope implements BaseScope
 
     public RigolScope(Activity activity)
     {
-        mUsbController = new UsbController(activity, RIGOL_VENDOR_ID, RIGOL_PRODUCT_ID);
-        mUsbController.open(new UsbController.OnDeviceStart()
+        mActivity = activity;
+    }
+
+    public void open()
+    {
+        final RigolScope scope = this;
+        mUsbController = new UsbController(mActivity, RIGOL_VENDOR_ID, RIGOL_PRODUCT_ID);
+        mUsbController.open(new UsbController.OnDeviceChange()
         {
             @Override
             public void start()
             {
+                mIsConnected = true;
                 initSettings();
             }
+
+            @Override
+            public void stop()
+            {
+                mIsConnected = false;
+                scope.stop();
+            }
         });
+    }
+
+    public void close()
+    {
+        stop();
+
+        if(mUsbController != null)
+            mUsbController.close();
+        mUsbController = null;
     }
 
     public void start()
@@ -53,12 +79,9 @@ public class RigolScope implements BaseScope
         mReadHandler.removeCallbacks(mReadRunnable);
     }
 
-    public void close()
+    public boolean isConnected()
     {
-        stop();
-
-        if(mUsbController != null)
-            mUsbController.close();
+        return mIsConnected;
     }
 
     private void initSettings()
@@ -66,59 +89,69 @@ public class RigolScope implements BaseScope
         if(mUsbController == null)
             return;
 
-        mUsbController.write(":WAV:POIN:MODE NOR");
-        forceCommand();
+        synchronized(mUsbController)
+        {
+            mUsbController.write(":WAV:POIN:MODE NOR");
+            forceCommand();
+        }
     }
 
     public String getName()
     {
-        if(mUsbController == null)
+        if(mUsbController == null || !mIsConnected)
             return null;
 
-        mUsbController.write("*IDN?");
-        byte[] data = mUsbController.read(300);
-        forceCommand();
-        return new String(data);
+        synchronized(mUsbController)
+        {
+            mUsbController.write("*IDN?");
+            byte[] data = mUsbController.read(300);
+            forceCommand();
+            return new String(data);
+        }
     }
 
-    public int doCommand(Command command, int channel, boolean force, byte[] data)
+    public int doCommand(Command command, int channel, boolean force)
     {
         int val = 0;
 
-        if(mUsbController == null)
+        if(mUsbController == null || !mIsConnected)
             return val;
 
-        switch (command)
+        synchronized(mUsbController)
         {
-            case READ_WAVE:
-                ByteBuffer buffer = ByteBuffer.wrap(data);
-                //readWave(getChannel(channel));
-                switch (channel)
-                {
-                    case 1:
-                        buffer.put(mChanList1.peekTo(SAMPLE_LENGTH));
-                        break;
-                    case 2:
-                        buffer.put(mChanList2.peekTo(SAMPLE_LENGTH));
-                        break;
-                    case 3:
-                        buffer.put(mChanListM.peekTo(SAMPLE_LENGTH));
-                        break;
-                }
+            switch(command)
+            {
+                case IS_CHANNEL_ON:
+                    val = isChannelOn(channel) ? 1 : 0;
+                    break;
+                case NO_COMMAND:
+                default:
+                    break;
+            }
 
-                break;
-            case IS_CHANNEL_ON:
-                val = isChannelOn(channel) ? 1 : 0;
-                break;
-            case NO_COMMAND:
-            default:
-                break;
+            if(force)
+                forceCommand();
         }
 
-        if(force)
-            forceCommand();
-
         return val;
+    }
+
+    public WaveData getWave(int chan)
+    {
+        WaveData waveData = null;
+        switch(chan)
+        {
+            case 1:
+                waveData = mWaves1.peek();
+                break;
+            case 2:
+                waveData = mWaves2.peek();
+                break;
+            case 3:
+                waveData = mWavesM.peek();
+                break;
+        }
+        return waveData;
     }
 
     private String getChannel(int chan)
@@ -157,20 +190,81 @@ public class RigolScope implements BaseScope
                 break;
             case 3:
                 mIsChanMOn = isOn;
+                break;
         }
 
         return isOn;
     }
 
-    private void readWave(String channel)
+    private void readWave(int channel)
     {
-        mUsbController.write(":WAV:DATA? " + channel);
-        byte[] data = mUsbController.read(600);
+        WaveData waveData;
+        switch(channel)
+        {
+            case 1:
+                waveData = mWaves1.requestWaveData();
+                break;
+            case 2:
+                waveData = mWaves2.requestWaveData();
+                break;
+            case 3:
+            default:
+                waveData = mWavesM.requestWaveData();
+                break;
+        }
 
-     //   mUsbController.write(":" + channel + ":SCAL?");
-     //   byte[] time = mUsbController.read(20);
+        synchronized(mUsbController)
+        {
+            // get the raw data
+            mUsbController.write(":WAV:DATA? " + getChannel(channel));
+            waveData.data = mUsbController.read(610);
 
-        mChanListM.addMany(data);
+            //Get the voltage scale
+            mUsbController.write(":" + getChannel(channel) + ":SCAL?");
+            waveData.voltageScale = bytesToDouble(mUsbController.read(20));
+
+            // And the voltage offset
+            mUsbController.write(":" + getChannel(channel) + ":OFFS?");
+            waveData.voltageOffset = bytesToDouble(mUsbController.read(20));
+
+            // Get the timescale
+            mUsbController.write(":TIM:SCAL?");
+            waveData.timeScale = bytesToDouble(mUsbController.read(20));
+
+            // Get the timescale offset
+            mUsbController.write(":TIM:OFFS?");
+            waveData.timeOffset = bytesToDouble(mUsbController.read(20));
+
+            forceCommand();
+        }
+
+        switch (channel)
+        {
+            case 1:
+                mWaves1.add(waveData);
+                break;
+            case 2:
+                mWaves2.add(waveData);
+                break;
+            case 3:
+                mWavesM.add(waveData);
+                break;
+        }
+    }
+
+    private double bytesToDouble(byte[] bytes)
+    {
+        double value = 0.0;
+        try
+        {
+            String strValue = new String(bytes, "UTF-8");
+            value = Double.parseDouble(strValue);
+        }
+        catch(UnsupportedEncodingException e)
+        {
+            e.printStackTrace();
+        }
+        return value;
     }
 
     // use to re-allow human reaction with the scope
@@ -186,13 +280,13 @@ public class RigolScope implements BaseScope
         public void run()
         {
             if(mIsChan1On)
-                readWave(CHAN_1);
+                readWave(1);
 
             if(mIsChan2On)
-                readWave(CHAN_2);
+                readWave(2);
 
             if(mIsChanMOn)
-                readWave(CHAN_MATH);
+                readWave(3);
 
             mReadHandler.postDelayed(this, READ_RATE);
         }
