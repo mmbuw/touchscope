@@ -1,0 +1,7 @@
+<resources>
+    <declare-styleable name="ScopeView">
+        <attr name="channel1Color" format="color"/>
+        <attr name="channel2Color" format="color"/>
+        <attr name="channelMathColor" format="color"/>
+    </declare-styleable>
+</resources>
