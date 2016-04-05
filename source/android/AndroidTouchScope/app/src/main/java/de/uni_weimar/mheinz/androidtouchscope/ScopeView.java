@@ -1,25 +1,17 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
-import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
 
-/**
- * TODO: document your custom view class.
- */
 public class ScopeView extends View
 {
-    private static final int SCOPE_WIDTH = 600;
-
     private ShapeDrawable mDrawableChan1 = new ShapeDrawable();
     private ShapeDrawable mDrawableChan2 = new ShapeDrawable();
     private ShapeDrawable mDrawableMath = new ShapeDrawable();
@@ -51,9 +43,9 @@ public class ScopeView extends View
 
     private void init(AttributeSet attrs, int defStyle)
     {
-        int paddingLeft = getPaddingLeft();
+        int paddingLeft = 0;//getPaddingLeft();
         int paddingTop = getPaddingTop();
-        int paddingRight = getPaddingRight();
+        int paddingRight = 0;//getPaddingRight();
         int paddingBottom = getPaddingBottom();
 
         mContentWidth = getWidth() - paddingLeft - paddingRight;
@@ -96,41 +88,34 @@ public class ScopeView extends View
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
             return;
 
-        float vScale = (float)waveData.voltageScale;
+        float vScale = waveData.voltageScale;
         if(vScale == 0)
             vScale = 1.0f;
 
-        float widthRatio = ((float)mContentWidth) / (waveData.data.length - 11);
-        float heightRatio = (mContentHeight / 32.0f) / vScale;
-        float mid = (mContentHeight / 2.0f);// - (float)waveData.voltageOffset * heightRatio;
+        float widthRatio = (float)(mContentWidth) / (waveData.data.length - 11);
 
-        path.moveTo(0, waveData.data[11]);
+        float point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[11]);
+        path.moveTo(0, point);
         for(int i = 12, j = 1; i < waveData.data.length; ++i, ++j)
         {
-            float point = actualVoltage((float)waveData.voltageOffset, vScale, waveData.data[i]);
-            point = (float)(point + waveData.voltageOffset) * heightRatio + mid;
-            if(point < 0)
-                point = 0;
-            else if(point > mContentHeight)
-                point = mContentHeight;
-
+            point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[i]);
             path.lineTo(j * widthRatio, point);
         }
     }
 
-    private float actualVoltage(float offset, float scale, byte point)
+    private float manipulatePoint(float voltOffset, float voltScale, byte data)
     {
-        // Walk through the data, and map it to actual voltages
-        // This mapping is from Cibo Mahto
-        // First invert the data
-        double tPoint = point * -1 + 255;
+        float heightRatio = (mContentHeight / 32.0f) / voltScale;
+        float mid = (mContentHeight / 2.0f);// - (float)waveData.voltageOffset * heightRatio;
 
-        // Now, we know from experimentation that the scope display range is actually
-        // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
-        // get the actual voltage.
+        float point = RigolScope.actualVoltage(voltOffset, voltScale, data);
+        point = (point + voltOffset) * heightRatio + mid;
+        if(point < 0)
+            point = 0;
+        else if(point > mContentHeight)
+            point = mContentHeight;
 
-        tPoint = (tPoint - 130.0 - (offset/ scale * 25)) / 25 * scale;
-        return (float)tPoint;
+        return point;
     }
 
     @Override

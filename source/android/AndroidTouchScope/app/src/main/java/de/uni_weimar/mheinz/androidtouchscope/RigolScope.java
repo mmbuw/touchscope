@@ -1,11 +1,9 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
-
-import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Handler;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 
 public class RigolScope implements BaseScope
 {
@@ -18,13 +16,14 @@ public class RigolScope implements BaseScope
 
     private static final int READ_RATE = 100;
 
-    private Activity mActivity;
+    private AppCompatActivity mActivity;
+    private final Object mControllerLock = new Object();
     private UsbController mUsbController = null;
     private boolean mIsConnected = false;
 
-    private WaveRequestPool mWaves1 = new WaveRequestPool(QUEUE_LENGTH);
-    private WaveRequestPool mWaves2 = new WaveRequestPool(QUEUE_LENGTH);
-    private WaveRequestPool mWavesM = new WaveRequestPool(QUEUE_LENGTH);
+    private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
+    private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
+    private WaveRequestPool mWavesM = new WaveRequestPool(POOL_SIZE);
 
     private boolean mIsChan1On = false;
     private boolean mIsChan2On = false;
@@ -32,7 +31,7 @@ public class RigolScope implements BaseScope
 
     private Handler mReadHandler = new Handler();
 
-    public RigolScope(Activity activity)
+    public RigolScope(AppCompatActivity activity)
     {
         mActivity = activity;
     }
@@ -89,7 +88,7 @@ public class RigolScope implements BaseScope
         if(mUsbController == null)
             return;
 
-        synchronized(mUsbController)
+        synchronized(mControllerLock)
         {
             mUsbController.write(":WAV:POIN:MODE NOR");
             forceCommand();
@@ -101,7 +100,7 @@ public class RigolScope implements BaseScope
         if(mUsbController == null || !mIsConnected)
             return null;
 
-        synchronized(mUsbController)
+        synchronized(mControllerLock)
         {
             mUsbController.write("*IDN?");
             byte[] data = mUsbController.read(300);
@@ -117,7 +116,7 @@ public class RigolScope implements BaseScope
         if(mUsbController == null || !mIsConnected)
             return val;
 
-        synchronized(mUsbController)
+        synchronized(mControllerLock)
         {
             switch(command)
             {
@@ -213,7 +212,7 @@ public class RigolScope implements BaseScope
                 break;
         }
 
-        synchronized(mUsbController)
+        synchronized(mControllerLock)
         {
             // get the raw data
             mUsbController.write(":WAV:DATA? " + getChannel(channel));
@@ -252,13 +251,13 @@ public class RigolScope implements BaseScope
         }
     }
 
-    private double bytesToDouble(byte[] bytes)
+    private float bytesToDouble(byte[] bytes)
     {
-        double value = 0.0;
+        float value = 0.0f;
         try
         {
             String strValue = new String(bytes, "UTF-8");
-            value = Double.parseDouble(strValue);
+            value = Float.parseFloat(strValue);
         }
         catch(UnsupportedEncodingException e)
         {
@@ -273,9 +272,23 @@ public class RigolScope implements BaseScope
         mUsbController.write(":KEY:FORC");
     }
 
+    public static float actualVoltage(float offset, float scale, byte point)
+    {
+        // Walk through the data, and map it to actual voltages
+        // This mapping is from Cibo Mahto
+        // First invert the data
+        double tPoint = point * -1 + 255;
+
+        // Now, we know from experimentation that the scope display range is actually
+        // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
+        // get the actual voltage.
+
+        tPoint = (tPoint - 130.0 - (offset/ scale * 25)) / 25 * scale;
+        return (float)tPoint;
+    }
+
     private Runnable mReadRunnable = new Runnable()
     {
-        int chan = 1;
         @Override
         public void run()
         {

@@ -2,8 +2,8 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 public interface BaseScope
 {
-    static final int SAMPLE_LENGTH = 600;
-    static final int QUEUE_LENGTH = 4;
+    static final int SAMPLE_LENGTH = 610;
+    static final int POOL_SIZE = 4;
 
     public void open();
     public void close();

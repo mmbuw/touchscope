@@ -1,6 +1,6 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
-import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +15,7 @@ public class UsbController
 {
     private static final String TAG = "UsbController";
 
-    private Activity mActivity = null;
+    private AppCompatActivity mActivity = null;
     private int mVendorId = 0;
     private int mProductId = 0;
 
@@ -27,7 +27,7 @@ public class UsbController
     private TmcSocket mTmcSocket = null;
     private OnDeviceChange mOnDeviceChange;
 
-    public UsbController(Activity activity, int vendorId, int productId)
+    public UsbController(AppCompatActivity activity, int vendorId, int productId)
     {
         mActivity = activity;
         mVendorId = vendorId;
@@ -85,13 +85,11 @@ public class UsbController
 
     private boolean isCorrectScope(UsbDevice device)
     {
-        String man = device.getManufacturerName();
-        String prod = device.getProductName();
         String deviceName = device.getDeviceName();
         int vendorId = device.getVendorId();
         int productId = device.getProductId();
 
-        Log.i(TAG, "Attached device: " + man + " " + prod + " " + deviceName + "::" + vendorId + "--" + productId);
+        Log.i(TAG, "Attached device: " + deviceName + "::" + vendorId + "--" + productId);
 
         return vendorId == mVendorId && productId == mProductId;
 

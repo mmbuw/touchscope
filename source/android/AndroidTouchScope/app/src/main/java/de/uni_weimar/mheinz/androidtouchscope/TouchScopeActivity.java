@@ -1,21 +1,22 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
-import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import android.os.Handler;
 import android.widget.ToggleButton;
+import android.support.v7.widget.Toolbar;
 
-public class TouchScopeActivity extends Activity
+public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
     private static final int REFRESH_RATE = 100;
 
-    BaseScope mRigolScope = null;
+    BaseScope mActiveScope = null;
     ScopeView mScopeView = null;
 
     private int mIsChan1On = 0;
@@ -30,20 +31,27 @@ public class TouchScopeActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_touch_scope);
 
+        Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
+        setSupportActionBar(toolbar);
+
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
         ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
         readButton.setChecked(false);
 
-        mRigolScope = new RigolScope(this);
-        //mRigolScope = new TestScope();
-        mRigolScope.open();
+        // test if it is emulator
+        if(Build.BRAND.contains("generic"))
+            mActiveScope = new TestScope();
+        else
+            mActiveScope = new RigolScope(this);
+
+        mActiveScope.open();
     }
 
     @Override
     public void onDestroy()
     {
-        if(mRigolScope != null)
-            mRigolScope.close();
+        if(mActiveScope != null)
+            mActiveScope.close();
 
         mRefreshHandler.removeCallbacks(mRefreshRunnable);
         super.onDestroy();
@@ -51,29 +59,24 @@ public class TouchScopeActivity extends Activity
 
     public void onTestRead(View v)
     {
-        if(!mRigolScope.isConnected())
+        if(!mActiveScope.isConnected())
         {
             ((ToggleButton)v).setChecked(false);
         }
         if(((ToggleButton)v).isChecked())
         {
-            mRigolScope.start();
+            mActiveScope.start();
             new Thread(new Runnable()
             {
                 public void run()
                 {
-                    if (mRigolScope != null)
+                    if (mActiveScope != null)
                     {
                         mRefreshHandler.removeCallbacks(mRefreshRunnable);
 
-                        mIsChan1On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
-                        mIsChan2On = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
-                        mIsMathOn = mRigolScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
-
-                        //    mIsChan1On = mRigolScope.isChannelOn(RigolScope.CHAN_1) ? 1 : 0;
-                        //    mIsChan2On = mRigolScope.isChannelOn(RigolScope.CHAN_2) ? 1 : 0;
-                        //    mIsMathOn = mRigolScope.isChannelOn(RigolScope.CHAN_MATH) ? 1 : 0;
-                        //    mRigolScope.forceCommand();
+                        mIsChan1On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
+                        mIsChan2On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
+                        mIsMathOn = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
 
                         mRefreshHandler.postDelayed(mRefreshRunnable, 0);
                     }
@@ -82,7 +85,7 @@ public class TouchScopeActivity extends Activity
         }
         else
         {
-            mRigolScope.stop();
+            mActiveScope.stop();
             mRefreshHandler.removeCallbacks(mRefreshRunnable);
         }
     }
@@ -114,7 +117,7 @@ public class TouchScopeActivity extends Activity
         {
             if(mIsChan1On == 1)
             {
-                WaveData waveData = mRigolScope.getWave(1);
+                WaveData waveData = mActiveScope.getWave(1);
                 mScopeView.setChannelData(1, waveData);
             }
             else if(mIsChan1On == 0)
@@ -125,7 +128,7 @@ public class TouchScopeActivity extends Activity
 
             if(mIsChan2On == 1)
             {
-                WaveData waveData = mRigolScope.getWave(2);
+                WaveData waveData = mActiveScope.getWave(2);
                 mScopeView.setChannelData(2, waveData);
             }
             else if(mIsChan2On == 0)
@@ -136,7 +139,7 @@ public class TouchScopeActivity extends Activity
 
             if(mIsMathOn == 1)
             {
-                WaveData waveData = mRigolScope.getWave(3);
+                WaveData waveData = mActiveScope.getWave(3);
                 mScopeView.setChannelData(3, waveData);
             }
             else if(mIsMathOn == 0)

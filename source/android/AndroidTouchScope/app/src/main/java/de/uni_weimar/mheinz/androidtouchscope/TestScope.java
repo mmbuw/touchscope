@@ -2,14 +2,12 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.os.Handler;
 
-import java.nio.ByteBuffer;
-
 public class TestScope implements BaseScope
 {
     private static final int READ_RATE = 100;
 
-   // private LimitedByteDeque mSampleList1 = new LimitedByteDeque(QUEUE_LENGTH);
-    private WaveRequestPool mWaves1 = new WaveRequestPool(QUEUE_LENGTH);
+   // private LimitedByteDeque mSampleList1 = new LimitedByteDeque(POOL_SIZE);
+    private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
 
     private Handler mReadHandler = new Handler();
     private byte[] mBuffer;
@@ -87,10 +85,12 @@ public class TestScope implements BaseScope
         }//end for loop
 
         waveData.data = mBuffer;
-        waveData.timeOffset = 1.0;
-        waveData.voltageScale = 1.0;
-        waveData.timeScale = 1.0;
-        waveData.voltageOffset = 1.0;
+        waveData.timeOffset = 1.0f;
+        waveData.voltageScale = 1.0f;
+        waveData.timeScale = 1.0f;
+        waveData.voltageOffset = 1.0f;
+
+        mWaves1.add(waveData);
     }
 
     private Runnable mReadRunnable = new Runnable()
