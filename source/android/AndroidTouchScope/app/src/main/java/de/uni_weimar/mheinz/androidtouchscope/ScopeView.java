@@ -96,19 +96,29 @@ public class ScopeView extends View
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
             return;
 
-        float offset = mContentHeight / 2.0f + (float)waveData.voltageOffset;
-        float widthRatio = ((float)mContentWidth) / (waveData.data.length - 10);
-        float heightRatio = (mContentHeight * 1/8.0f) / (float)waveData.voltageScale;
+        float vScale = (float)waveData.voltageScale;
+        if(vScale == 0)
+            vScale = 1.0f;
 
-        path.moveTo(0, waveData.data[10]);
-        for(int i = 11, j = 1; i < waveData.data.length; ++i, ++j)
+        float widthRatio = ((float)mContentWidth) / (waveData.data.length - 11);
+        float heightRatio = (mContentHeight / 32.0f) / vScale;
+        float mid = (mContentHeight / 2.0f);// - (float)waveData.voltageOffset * heightRatio;
+
+        path.moveTo(0, waveData.data[11]);
+        for(int i = 12, j = 1; i < waveData.data.length; ++i, ++j)
         {
-            float point = actualVoltage(waveData, waveData.data[i]);
-            path.lineTo(j * widthRatio, (point * heightRatio) + offset);
+            float point = actualVoltage((float)waveData.voltageOffset, vScale, waveData.data[i]);
+            point = (float)(point + waveData.voltageOffset) * heightRatio + mid;
+            if(point < 0)
+                point = 0;
+            else if(point > mContentHeight)
+                point = mContentHeight;
+
+            path.lineTo(j * widthRatio, point);
         }
     }
 
-    private float actualVoltage(WaveData waveData, byte point)
+    private float actualVoltage(float offset, float scale, byte point)
     {
         // Walk through the data, and map it to actual voltages
         // This mapping is from Cibo Mahto
@@ -119,8 +129,7 @@ public class ScopeView extends View
         // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
         // get the actual voltage.
 
-        tPoint = (tPoint - 130.0 - (waveData.voltageOffset / waveData.voltageScale * 25)) /
-                    25 * waveData.voltageScale;
+        tPoint = (tPoint - 130.0 - (offset/ scale * 25)) / 25 * scale;
         return (float)tPoint;
     }
 
