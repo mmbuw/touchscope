@@ -1,6 +1,6 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
-import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +15,7 @@ public class UsbController
 {
     private static final String TAG = "UsbController";
 
-    private Activity mActivity = null;
+    private AppCompatActivity mActivity = null;
     private int mVendorId = 0;
     private int mProductId = 0;
 
@@ -25,18 +25,18 @@ public class UsbController
     private UsbInterface mInterface = null;
 
     private TmcSocket mTmcSocket = null;
-    private OnDeviceStart mOnDeviceStart;
+    private OnDeviceChange mOnDeviceChange;
 
-    public UsbController(Activity activity, int vendorId, int productId)
+    public UsbController(AppCompatActivity activity, int vendorId, int productId)
     {
         mActivity = activity;
         mVendorId = vendorId;
         mProductId = productId;
     }
 
-    public void open(OnDeviceStart onDeviceStart)
+    public void open(OnDeviceChange onDeviceChange)
     {
-        mOnDeviceStart = onDeviceStart;
+        mOnDeviceChange = onDeviceChange;
 
         mUsbManager = (UsbManager) mActivity.getSystemService(Context.USB_SERVICE);
 
@@ -79,17 +79,17 @@ public class UsbController
         }
         mDevice = null;
         mInterface = null;
+
+        mOnDeviceChange.stop();
     }
 
     private boolean isCorrectScope(UsbDevice device)
     {
-        String man = device.getManufacturerName();
-        String prod = device.getProductName();
         String deviceName = device.getDeviceName();
         int vendorId = device.getVendorId();
         int productId = device.getProductId();
 
-        Log.i(TAG, "Attached device: " + man + " " + prod + " " + deviceName + "::" + vendorId + "--" + productId);
+        Log.i(TAG, "Attached device: " + deviceName + "::" + vendorId + "--" + productId);
 
         return vendorId == mVendorId && productId == mProductId;
 
@@ -138,8 +138,8 @@ public class UsbController
                 try
                 {
                     mTmcSocket = new TmcSocket(mConnection,mInterface);
-                    if(mOnDeviceStart != null)
-                        mOnDeviceStart.start();
+                    if(mOnDeviceChange != null)
+                        mOnDeviceChange.start();
 
                     return true;
                 }
@@ -192,8 +192,9 @@ public class UsbController
         }
     };
 
-    public interface OnDeviceStart
+    public interface OnDeviceChange
     {
         void start();
+        void stop();
     }
 }

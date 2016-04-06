@@ -12,9 +12,12 @@ public class LimitedByteDeque
     private final ArrayDeque<Byte> mQueue;
     private int mCapacity = 0;
 
+    private final Byte[] mBuffer;
+
     public LimitedByteDeque(int capacity)
     {
         mQueue = new ArrayDeque<Byte>(capacity);
+        mBuffer = new Byte[capacity];
         mCapacity = capacity;
     }
 
@@ -95,7 +98,7 @@ public class LimitedByteDeque
             if (count > mQueue.size())
                 size = mQueue.size();
 
-            Byte[] data = mQueue.toArray(new Byte[size]);
+            Byte[] data = mQueue.toArray(mBuffer);
             byte[] byteData = new byte[count];
             int i = 0;
             for(; i < size; ++i)
