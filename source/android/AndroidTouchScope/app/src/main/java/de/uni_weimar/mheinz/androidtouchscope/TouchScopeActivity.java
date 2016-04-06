@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import android.os.Handler;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
@@ -44,7 +45,22 @@ public class TouchScopeActivity extends AppCompatActivity
         else
             mActiveScope = new RigolScope(this);
 
-        mActiveScope.open();
+        mActiveScope.open(new BaseScope.OnReceivedName()
+        {
+            @Override
+            public void returnName(String name)
+            {
+                final String scopeName = name;
+                runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        ((TextView)findViewById(R.id.scopeName)).setText(scopeName);
+                    }
+                });
+            }
+        });
     }
 
     @Override

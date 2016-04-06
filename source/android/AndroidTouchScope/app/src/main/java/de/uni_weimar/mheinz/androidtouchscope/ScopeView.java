@@ -103,13 +103,13 @@ public class ScopeView extends View
         }
     }
 
-    private float manipulatePoint(float voltOffset, float voltScale, byte data)
+    private float manipulatePoint(float voltOffset, float voltScale, int data)
     {
         float heightRatio = (mContentHeight / 32.0f) / voltScale;
         float mid = (mContentHeight / 2.0f);// - (float)waveData.voltageOffset * heightRatio;
 
         float point = RigolScope.actualVoltage(voltOffset, voltScale, data);
-        point = (point + voltOffset) * heightRatio + mid;
+        point = mid - ((point + voltOffset) * heightRatio);
         if(point < 0)
             point = 0;
         else if(point > mContentHeight)

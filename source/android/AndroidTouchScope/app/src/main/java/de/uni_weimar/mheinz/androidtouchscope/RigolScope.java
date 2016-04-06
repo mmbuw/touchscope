@@ -20,6 +20,7 @@ public class RigolScope implements BaseScope
     private final Object mControllerLock = new Object();
     private UsbController mUsbController = null;
     private boolean mIsConnected = false;
+    private OnReceivedName mOnReceivedName;
 
     private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
@@ -36,9 +37,11 @@ public class RigolScope implements BaseScope
         mActivity = activity;
     }
 
-    public void open()
+    public void open(OnReceivedName onReceivedName)
     {
         final RigolScope scope = this;
+        mOnReceivedName = onReceivedName;
+
         mUsbController = new UsbController(mActivity, RIGOL_VENDOR_ID, RIGOL_PRODUCT_ID);
         mUsbController.open(new UsbController.OnDeviceChange()
         {
@@ -46,6 +49,7 @@ public class RigolScope implements BaseScope
             public void start()
             {
                 mIsConnected = true;
+                doCommand(Command.GET_NAME,0,false);
                 initSettings();
             }
 
@@ -95,20 +99,6 @@ public class RigolScope implements BaseScope
         }
     }
 
-    public String getName()
-    {
-        if(mUsbController == null || !mIsConnected)
-            return null;
-
-        synchronized(mControllerLock)
-        {
-            mUsbController.write("*IDN?");
-            byte[] data = mUsbController.read(300);
-            forceCommand();
-            return new String(data);
-        }
-    }
-
     public int doCommand(Command command, int channel, boolean force)
     {
         int val = 0;
@@ -123,6 +113,10 @@ public class RigolScope implements BaseScope
                 case IS_CHANNEL_ON:
                     val = isChannelOn(channel) ? 1 : 0;
                     break;
+                case GET_NAME:
+                    String name = getName();
+                    if(mOnReceivedName != null)
+                        mOnReceivedName.returnName(name);
                 case NO_COMMAND:
                 default:
                     break;
@@ -153,6 +147,13 @@ public class RigolScope implements BaseScope
         return waveData;
     }
 
+    private String getName()
+    {
+        mUsbController.write("*IDN?");
+        int[] data = mUsbController.read(300);
+        return new String(intArrayToByteArray(data));
+    }
+
     private String getChannel(int chan)
     {
         String channel;
@@ -176,7 +177,7 @@ public class RigolScope implements BaseScope
     private boolean isChannelOn(int channel)
     {
         mUsbController.write(":" + getChannel(channel) + ":DISP?");
-        byte[] on = mUsbController.read(20);
+        int[] on = mUsbController.read(20);
         boolean isOn = on.length > 0 && on[0] == 49;
 
         switch (channel)
@@ -216,7 +217,7 @@ public class RigolScope implements BaseScope
         {
             // get the raw data
             mUsbController.write(":WAV:DATA? " + getChannel(channel));
-            waveData.data = mUsbController.read(610);
+            waveData.data = mUsbController.read(SAMPLE_LENGTH);
 
             //Get the voltage scale
             mUsbController.write(":" + getChannel(channel) + ":SCAL?");
@@ -251,12 +252,22 @@ public class RigolScope implements BaseScope
         }
     }
 
-    private float bytesToDouble(byte[] bytes)
+    private byte[] intArrayToByteArray(int[] intArray)
+    {
+        byte[] bytes = new byte[intArray.length];
+        for(int i = 0; i < intArray.length; ++i)
+        {
+            bytes[i] = (byte)intArray[i];
+        }
+        return bytes;
+    }
+
+    private float bytesToDouble(int[] data)
     {
         float value = 0.0f;
         try
         {
-            String strValue = new String(bytes, "UTF-8");
+            String strValue = new String(intArrayToByteArray(data), "UTF-8");
             value = Float.parseFloat(strValue);
         }
         catch(UnsupportedEncodingException e)
@@ -272,7 +283,7 @@ public class RigolScope implements BaseScope
         mUsbController.write(":KEY:FORC");
     }
 
-    public static float actualVoltage(float offset, float scale, byte point)
+    public static float actualVoltage(float offset, float scale, int point)
     {
         // Walk through the data, and map it to actual voltages
         // This mapping is from Cibo Mahto
@@ -283,7 +294,7 @@ public class RigolScope implements BaseScope
         // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
         // get the actual voltage.
 
-        tPoint = (tPoint - 130.0 - (offset/ scale * 25)) / 25 * scale;
+        tPoint = (tPoint - 130.0 - (offset / scale * 25)) / 25 * scale;
         return (float)tPoint;
     }
 

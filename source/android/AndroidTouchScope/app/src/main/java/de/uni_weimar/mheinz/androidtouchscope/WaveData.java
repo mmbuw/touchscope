@@ -2,7 +2,7 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 public class WaveData
 {
-    public byte[] data;
+    public int[] data;
     public float voltageScale;
     public float voltageOffset;
 
@@ -18,7 +18,7 @@ public class WaveData
         timeOffset = 0.0f;
     }
 
-    public WaveData(byte[] data,
+    public WaveData(int[] data,
                     float voltageScale, float voltageOffset,
                     float timeScale,    float timeOffset)
     {

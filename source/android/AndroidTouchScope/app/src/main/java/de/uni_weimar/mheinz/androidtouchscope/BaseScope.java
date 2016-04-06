@@ -2,16 +2,15 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 public interface BaseScope
 {
-    static final int SAMPLE_LENGTH = 610;
-    static final int POOL_SIZE = 4;
+    final int SAMPLE_LENGTH = 610;
+    final int POOL_SIZE = 4;
 
-    public void open();
-    public void close();
-    public String getName();
-    public void start();
-    public void stop();
-    public boolean isConnected();
-    public WaveData getWave(int chan);
+    void open(OnReceivedName onReceivedName);
+    void close();
+    void start();
+    void stop();
+    boolean isConnected();
+    WaveData getWave(int chan);
 
     /**
      *
@@ -20,12 +19,18 @@ public interface BaseScope
      * @param force
      * @return data can be returned here if expecting an int
      */
-    public int doCommand(Command command, int channel, boolean force);
+    int doCommand(Command command, int channel, boolean force);
     //public byte[] doCommand(Command command, int channel, boolean force);
 
-    public enum Command
+    enum Command
     {
         IS_CHANNEL_ON,
+        GET_NAME,
         NO_COMMAND
+    }
+
+    interface OnReceivedName
+    {
+        void returnName(String name);
     }
 }

@@ -10,16 +10,18 @@ public class TestScope implements BaseScope
     private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
 
     private Handler mReadHandler = new Handler();
-    private byte[] mBuffer;
+    private int[] mBuffer;
+    private OnReceivedName mOnReceivedName;
 
     public TestScope()
     {
-        mBuffer = new byte[SAMPLE_LENGTH];
+        mBuffer = new int[SAMPLE_LENGTH];
     }
 
-    public void open()
+    public void open(OnReceivedName onReceivedName)
     {
-
+        mOnReceivedName = onReceivedName;
+        doCommand(Command.GET_NAME,0,false);
     }
 
     public void close()
@@ -43,7 +45,7 @@ public class TestScope implements BaseScope
         return true;
     }
 
-    public String getName()
+    private String getName()
     {
         return "Test Scope";
     }
@@ -56,6 +58,10 @@ public class TestScope implements BaseScope
             case IS_CHANNEL_ON:
                 if(channel == 1)
                     val = 1;
+            case GET_NAME:
+                String name = getName();
+                if(mOnReceivedName != null)
+                    mOnReceivedName.returnName(name);
                 break;
         }
         return val;
@@ -81,14 +87,15 @@ public class TestScope implements BaseScope
                     (Math.sin(2*Math.PI*freq*time) +
                             Math.sin(2*Math.PI*(freq/1.8)*time) +
                             Math.sin(2*Math.PI*(freq/1.5)*time))/3.0;
-            mBuffer[cnt] = (byte)(16000*sinValue);
+            mBuffer[cnt] = (byte)(125*sinValue  + 125);
+            mBuffer[cnt] = (mBuffer[cnt] & 0xFF);
         }//end for loop
 
         waveData.data = mBuffer;
         waveData.timeOffset = 1.0f;
         waveData.voltageScale = 1.0f;
         waveData.timeScale = 1.0f;
-        waveData.voltageOffset = 1.0f;
+        waveData.voltageOffset = 0.0f;
 
         mWaves1.add(waveData);
     }

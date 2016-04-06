@@ -25,26 +25,37 @@
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text=""
+            android:id="@+id/scopeName"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"/>
+
         <de.uni_weimar.mheinz.androidtouchscope.ScopeView
             android:id="@+id/scopeView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#000"
-            android:paddingBottom="40dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentStart="true"
             android:layout_alignParentLeft="true"
             android:layout_above="@+id/testRead"
-            android:layout_alignParentTop="true"/>
+            android:layout_below="@+id/scopeName"/>
 
         <ToggleButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Read"
             android:id="@+id/testRead"
             android:onClick="onTestRead"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"/>
+
+
     </RelativeLayout>
 </LinearLayout>

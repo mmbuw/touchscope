@@ -103,7 +103,7 @@ public class UsbController
         return mTmcSocket.write(command);
     }
 
-    public byte[] read(int length)
+    public int[] read(int length)
     {
         if(mTmcSocket == null)
             return null;
