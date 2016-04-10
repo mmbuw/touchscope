@@ -1,6 +1,8 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import android.os.Handler;
+
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
 public class TestScope implements BaseScope
 {

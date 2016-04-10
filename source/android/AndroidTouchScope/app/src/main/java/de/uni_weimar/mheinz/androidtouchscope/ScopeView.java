@@ -10,6 +10,9 @@ import android.graphics.drawable.shapes.PathShape;
 import android.util.AttributeSet;
 import android.view.View;
 
+import de.uni_weimar.mheinz.androidtouchscope.scope.RigolScope;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
+
 public class ScopeView extends View
 {
     private ShapeDrawable mDrawableChan1 = new ShapeDrawable();

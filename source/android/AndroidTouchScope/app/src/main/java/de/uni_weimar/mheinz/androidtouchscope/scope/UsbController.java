@@ -1,6 +1,7 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
+//import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +16,7 @@ public class UsbController
 {
     private static final String TAG = "UsbController";
 
-    private AppCompatActivity mActivity = null;
+    private Activity mActivity = null;
     private int mVendorId = 0;
     private int mProductId = 0;
 
@@ -27,7 +28,7 @@ public class UsbController
     private TmcSocket mTmcSocket = null;
     private OnDeviceChange mOnDeviceChange;
 
-    public UsbController(AppCompatActivity activity, int vendorId, int productId)
+    public UsbController(Activity activity, int vendorId, int productId)
     {
         mActivity = activity;
         mVendorId = vendorId;
@@ -110,14 +111,6 @@ public class UsbController
 
         return mTmcSocket.read(length);
     }
-
-    /*public int clear()
-    {
-        if(mTmcSocket == null)
-            return 0;
-
-        return mTmcSocket.clear();
-    }*/
 
     private boolean setDevice(UsbDevice device)
     {

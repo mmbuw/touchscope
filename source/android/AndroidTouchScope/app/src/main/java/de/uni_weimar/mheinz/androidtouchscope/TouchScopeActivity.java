@@ -3,6 +3,7 @@ package de.uni_weimar.mheinz.androidtouchscope;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -12,13 +13,16 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
+import de.uni_weimar.mheinz.androidtouchscope.scope.*;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
+
 public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
     private static final int REFRESH_RATE = 100;
 
-    BaseScope mActiveScope = null;
-    ScopeView mScopeView = null;
+    private BaseScope mActiveScope = null;
+    private ScopeView mScopeView = null;
 
     private int mIsChan1On = 0;
     private int mIsChan2On = 0;
@@ -34,6 +38,7 @@ public class TouchScopeActivity extends AppCompatActivity
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
         ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
@@ -41,9 +46,15 @@ public class TouchScopeActivity extends AppCompatActivity
 
         // test if it is emulator
         if(Build.BRAND.contains("generic"))
+        {
+            Log.i(TAG, "Emulator detected, using TestScope");
             mActiveScope = new TestScope();
+        }
         else
+        {
+            Log.i(TAG, "Device detected, try to find RigolScope");
             mActiveScope = new RigolScope(this);
+        }
 
         mActiveScope.open(new BaseScope.OnReceivedName()
         {
@@ -56,7 +67,8 @@ public class TouchScopeActivity extends AppCompatActivity
                     @Override
                     public void run()
                     {
-                        ((TextView)findViewById(R.id.scopeName)).setText(scopeName);
+                        Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
+                        ((TextView)toolbar.findViewById(R.id.toolbar_title)).setText(scopeName);
                     }
                 });
             }

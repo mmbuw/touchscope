@@ -1,9 +1,12 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-import android.support.v7.app.AppCompatActivity;
+//import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.os.Handler;
 
 import java.io.UnsupportedEncodingException;
+
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
 public class RigolScope implements BaseScope
 {
@@ -16,7 +19,8 @@ public class RigolScope implements BaseScope
 
     private static final int READ_RATE = 100;
 
-    private AppCompatActivity mActivity;
+    // private AppCompatActivity mActivity;
+    private Activity mActivity;
     private final Object mControllerLock = new Object();
     private UsbController mUsbController = null;
     private boolean mIsConnected = false;
@@ -32,7 +36,7 @@ public class RigolScope implements BaseScope
 
     private Handler mReadHandler = new Handler();
 
-    public RigolScope(AppCompatActivity activity)
+    public RigolScope(Activity activity)
     {
         mActivity = activity;
     }

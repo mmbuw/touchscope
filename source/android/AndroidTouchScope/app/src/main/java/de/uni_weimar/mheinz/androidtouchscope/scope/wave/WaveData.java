@@ -1,4 +1,4 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
 
 public class WaveData
 {

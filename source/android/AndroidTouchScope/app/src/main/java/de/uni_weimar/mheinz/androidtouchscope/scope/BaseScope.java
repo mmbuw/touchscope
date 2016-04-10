@@ -1,4 +1,6 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope;
+
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public interface BaseScope
 {
