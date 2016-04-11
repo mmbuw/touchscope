@@ -155,7 +155,10 @@ public class RigolScope implements BaseScope
     {
         mUsbController.write("*IDN?");
         int[] data = mUsbController.read(300);
-        return new String(intArrayToByteArray(data));
+        String name = new String(intArrayToByteArray(data));
+        String[] parts = name.split(",");
+
+        return parts[0] + " " + parts[1];
     }
 
     private String getChannel(int chan)
@@ -258,12 +261,17 @@ public class RigolScope implements BaseScope
 
     private byte[] intArrayToByteArray(int[] intArray)
     {
-        byte[] bytes = new byte[intArray.length];
-        for(int i = 0; i < intArray.length; ++i)
+        if(intArray != null)
         {
-            bytes[i] = (byte)intArray[i];
+            byte[] bytes = new byte[intArray.length];
+            for(int i = 0; i < intArray.length; ++i)
+            {
+                bytes[i] = (byte) intArray[i];
+            }
+            return bytes;
         }
-        return bytes;
+        else
+            return new byte[]{};
     }
 
     private float bytesToDouble(int[] data)
