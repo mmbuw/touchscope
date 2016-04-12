@@ -1,7 +1,9 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
 
 
 import java.util.ArrayDeque;
+
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class WaveRequestPool
 {

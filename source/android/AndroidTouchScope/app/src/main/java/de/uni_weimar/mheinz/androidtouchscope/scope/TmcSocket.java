@@ -1,4 +1,4 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 
 import android.hardware.usb.UsbConstants;
@@ -10,7 +10,6 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.LinkedList;
 
 public class TmcSocket
@@ -23,12 +22,6 @@ public class TmcSocket
 
     /* Default USB timeout (in milliseconds) */
     private final int USBTMC_TIMEOUT = 5000;
-    /*private final int USBTMC_MAX_READS_TO_CLEAR_BULK_IN = 100;
-    private final int USBTMC_REQUEST_INITIATE_CLEAR = 5;
-    private final int USB_RECIP_INTERFACE = 0x01;
-    private final int USBTMC_STATUS_SUCCESS = 0x01;
-    private final int USBTMC_REQUEST_CHECK_CLEAR_STATUS = 6;
-    private final int USBTMC_STATUS_PENDING = 0x02;*/
 
     private static final String TAG = "TmcSocket";
 
@@ -172,7 +165,7 @@ public class TmcSocket
         return buf.length;
     }
 
-    public byte[] read(int length)
+    public int[] read(int length)
     {
         int remaining = length;
         int this_part;
@@ -201,7 +194,7 @@ public class TmcSocket
                 buffer.put(2, (byte) (~mTag));
                 buffer.put(3, (byte) 0);
                 buffer.putInt(4, this_part); //bytes 4-7
-                buffer.put(8, (byte) (0 * 2)); // unsure, may be (1 * 2)
+                buffer.put(8, (byte) 0); // unsure, may be (1 * 2)
                 buffer.putChar(9, '\n'); // check spec.
                 buffer.put(10, (byte) 0);
                 buffer.put(11, (byte) 0);
@@ -252,119 +245,12 @@ public class TmcSocket
 
                 returnInRequest(request);
             }
-
-            /*try
-            {
-                Log.i(TAG, new String(wholeBuffer.array(), "UTF-8"));
-            }
-            catch(UnsupportedEncodingException e)
-            {
-                e.printStackTrace();
-            }*/
         }
 
-        return Arrays.copyOfRange(wholeBuffer.array(),0,done);
+        int[] asUnsignedBytes = new int[done];
+        for(int i = 0; i < done; ++i)
+            asUnsignedBytes[i] = (wholeBuffer.get(i) & 0xFF);
+        return asUnsignedBytes;
+        //return Arrays.copyOfRange(wholeBuffer.array(),0,done);
     }
-
-    /*public int clear()
-    {
-        int rv = 0;
-        int max_size = 0;
-
-        ByteBuffer buffer = ByteBuffer.allocate(USBTMC_SIZE_IOBUFFER);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        rv = mConnection.controlTransfer(
-                UsbConstants.USB_DIR_IN | UsbConstants.USB_TYPE_CLASS | USB_RECIP_INTERFACE,
-                USBTMC_REQUEST_INITIATE_CLEAR,
-                0, 0, buffer.array(), 1, USBTMC_TIMEOUT);
-
-        if(rv < 0)
-        {
-            //TODO: error handle
-            return rv;
-        }
-
-        if(buffer.get(0) != USBTMC_STATUS_SUCCESS)
-        {
-            //TODO: error handle
-            return -1;
-        }
-
-        max_size = mEndpointIn.getMaxPacketSize();
-        if(max_size == 0)
-        {
-            // TODO: error handle
-            return -1;
-        }
-
-        // check clear status
-        while(true)
-        {
-            rv = mConnection.controlTransfer(
-                    UsbConstants.USB_DIR_IN | UsbConstants.USB_TYPE_CLASS | USB_RECIP_INTERFACE,
-                    USBTMC_REQUEST_CHECK_CLEAR_STATUS,
-                    0, 0, buffer.array(), 2, USBTMC_TIMEOUT);
-
-            if(rv < 0)
-            {
-                //TODO: error handle
-                return rv;
-            }
-
-            if(buffer.get(0) == USBTMC_STATUS_SUCCESS)
-            {
-                break;
-            }
-
-            if(buffer.get(0) != USBTMC_STATUS_PENDING)
-            {
-                //TODO: error handle
-                return -1;
-            }
-
-            if(buffer.get(1) == 1)
-            {
-                int n = 0;
-                do
-                {
-                    UsbRequest request = getInRequest();
-                    request.setClientData(buffer);
-
-                    if(!request.queue(buffer, USBTMC_SIZE_IOBUFFER))
-                    {
-                        //TODO: some error handle
-                        return -1;
-                    }
-                    request = mConnection.requestWait();
-                    n++;
-                    returnInRequest(request);
-                } while(rv == max_size && n < USBTMC_MAX_READS_TO_CLEAR_BULK_IN);
-            }
-            if(rv == max_size)
-            {
-                // TODO: error handle
-                return 0;
-            }
-        }
-
-        /// clear halt
-        int endp = mEndpointOut.getEndpointNumber();//.getAddress();
-        endp = ((endp) >> 15) & 0xf;
-        if((endp & UsbConstants.USB_DIR_IN) > 0)
-            endp |= UsbConstants.USB_DIR_IN;
-
-        rv = mConnection.controlTransfer(
-                0x02, // USB_RECIP_ENDPOINT
-                0x01, // USB_REQ_CLEAR_FEATURE
-                0, //USB_ENDPOINT_HALT
-                endp,
-                null, 0, USBTMC_TIMEOUT);
-
-        if(rv < 0)
-            return rv;
-
-
-        return rv;
-    }*/
 }
