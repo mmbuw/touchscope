@@ -274,15 +274,19 @@ public class RigolScope implements BaseScope
             return new byte[]{};
     }
 
-    private float bytesToDouble(int[] data)
+    private double bytesToDouble(int[] data)
     {
-        float value = 0.0f;
+        double value = 0.0;
         try
         {
             String strValue = new String(intArrayToByteArray(data), "UTF-8");
-            value = Float.parseFloat(strValue);
+            value = Double.parseDouble(strValue);
         }
         catch(UnsupportedEncodingException e)
+        {
+            e.printStackTrace();
+        }
+        catch(NumberFormatException e)
         {
             e.printStackTrace();
         }
@@ -295,7 +299,7 @@ public class RigolScope implements BaseScope
         mUsbController.write(":KEY:FORC");
     }
 
-    public static float actualVoltage(float offset, float scale, int point)
+    public static double actualVoltage(double offset, double scale, int point)
     {
         // Walk through the data, and map it to actual voltages
         // This mapping is from Cibo Mahto
@@ -307,7 +311,7 @@ public class RigolScope implements BaseScope
         // get the actual voltage.
 
         tPoint = (tPoint - 130.0 - (offset / scale * 25)) / 25 * scale;
-        return (float)tPoint;
+        return tPoint;
     }
 
     private Runnable mReadRunnable = new Runnable()

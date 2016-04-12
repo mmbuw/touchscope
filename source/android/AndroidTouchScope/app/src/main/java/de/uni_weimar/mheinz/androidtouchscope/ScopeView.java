@@ -153,8 +153,8 @@ public class ScopeView extends View
         }
         if(waveData != null)
             mTimeText = updateText(waveData ,"Time", false);
-        else
-            mTimeText = "Time";
+     //   else
+     //       mTimeText = "Time";
 
         postInvalidate();
     }
@@ -165,7 +165,7 @@ public class ScopeView extends View
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
             return;
 
-        float vScale = waveData.voltageScale;
+        double vScale = waveData.voltageScale;
         if(vScale == 0)
             vScale = 1.0f;
 
@@ -182,24 +182,58 @@ public class ScopeView extends View
 
     private String updateText(WaveData waveData, String chan, boolean isVolt)
     {
-        String text = chan;
+        double value = 0.0;
+        String end = "";
         if(waveData != null)
         {
             if(isVolt)
-                text += ": " + waveData.voltageScale + "V";
+            {
+                if(waveData.voltageScale < 1)
+                {
+                    value = waveData.voltageScale * 1e3;
+                    end = "mV";
+                }
+                else
+                {
+                    value = waveData.voltageScale;
+                    end = "V";
+                }
+            }
             else
-                text += ": " + waveData.timeScale + "s";
+            {
+                double time = waveData.timeScale;
+                if(time < 1e-6)
+                {
+                    value = (time * 1e9);
+                    end = "nS";
+                }
+                else if(time < 1e-3)
+                {
+                    value = time * 1e6;
+                    end = "uS";
+                }
+                else if(time < 1)
+                {
+                    value = time * 1e3;
+                    end = "mS";
+                }
+                else
+                {
+                    value = time;
+                    end = "S";
+                }
+            }
         }
-        return text;
+        return String.format("%s: %.2f%s",chan,value,end);
     }
 
-    private float manipulatePoint(float voltOffset, float voltScale, int data)
+    private float manipulatePoint(double voltOffset, double voltScale, int data)
     {
-        float heightRatio = (mContentHeight / 8.0f) / voltScale;
-        float mid = (mContentHeight / 2.0f);// - (float)waveData.voltageOffset * heightRatio;
+        float heightRatio = (mContentHeight / 8.0f) / (float)voltScale;
+        float mid = (mContentHeight / 2.0f);
 
-        float point = RigolScope.actualVoltage(voltOffset, voltScale, data);
-        point = mid - ((point + voltOffset) * heightRatio);
+        float point = (float)RigolScope.actualVoltage(voltOffset, voltScale, data);
+        point = mid - ((point + (float)voltOffset) * heightRatio);
         if(point < 0)
             point = 0;
         else if(point > mContentHeight)
@@ -217,9 +251,9 @@ public class ScopeView extends View
         mDrawableGridH.draw(canvas);
         mDrawableGridV.draw(canvas);
         canvas.drawText(mChan1Text, mTextPos.x, mTextPos.y, mChan1TextPaint);
-        canvas.drawText(mChan2Text,mTextPos.x + 100,mTextPos.y,mChan2TextPaint);
-        canvas.drawText(mMathText,mTextPos.x + 200,mTextPos.y,mMathTextPaint);
-        canvas.drawText(mTimeText,mTextPos.x + 300,mTextPos.y,mTimeTextPaint);
+        canvas.drawText(mChan2Text,mTextPos.x + 150,mTextPos.y,mChan2TextPaint);
+        canvas.drawText(mMathText,mTextPos.x + 300,mTextPos.y,mMathTextPaint);
+        canvas.drawText(mTimeText,mTextPos.x + 450,mTextPos.y,mTimeTextPaint);
 
         super.onDraw(canvas);
     }

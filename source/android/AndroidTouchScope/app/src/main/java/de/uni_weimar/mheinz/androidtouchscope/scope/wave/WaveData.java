@@ -3,24 +3,24 @@ package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
 public class WaveData
 {
     public int[] data;
-    public float voltageScale;
-    public float voltageOffset;
+    public double voltageScale;
+    public double voltageOffset;
 
-    public float timeScale;
-    public float timeOffset;
+    public double timeScale;
+    public double timeOffset;
 
     public WaveData()
     {
         data = null;
-        voltageScale = 0.0f;
-        voltageOffset = 0.0f;
-        timeScale = 0.0f;
-        timeOffset = 0.0f;
+        voltageScale = 0.0;
+        voltageOffset = 0.0;
+        timeScale = 0.0;
+        timeOffset = 0.0;
     }
 
     public WaveData(int[] data,
-                    float voltageScale, float voltageOffset,
-                    float timeScale,    float timeOffset)
+                    double voltageScale, double voltageOffset,
+                    double timeScale,    double timeOffset)
     {
         this.data = data;
         this.voltageScale = voltageScale;

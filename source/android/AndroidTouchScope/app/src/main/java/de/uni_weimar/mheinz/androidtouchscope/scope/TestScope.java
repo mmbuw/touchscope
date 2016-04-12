@@ -78,7 +78,7 @@ public class TestScope implements BaseScope
     {
         WaveData waveData = mWaves1.requestWaveData();
 
-        float sampleRate = 10.0F; // Allowable 8000,11025,16000,22050,44100
+        double sampleRate = 10.0; // Allowable 8000,11025,16000,22050,44100
        // double freq = 250;//arbitrary frequency
         double freq = Math.random() * 80000 + 10000;
 

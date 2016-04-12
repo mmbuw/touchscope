@@ -36,6 +36,9 @@ public class TouchScopeActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_touch_scope);
 
+      //  if(savedInstanceState != null)
+      //      return;
+
         Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
