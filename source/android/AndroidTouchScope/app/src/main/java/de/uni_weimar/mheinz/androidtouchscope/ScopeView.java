@@ -13,6 +13,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.RigolScope;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class ScopeView extends View
@@ -34,10 +35,10 @@ public class ScopeView extends View
     private Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    private String mChan1Text = "Chan1";
-    private String mChan2Text = "Chan2";
-    private String mMathText = "Math";
-    private String mTimeText = "Time";
+    private String mChan1Text = "";
+    private String mChan2Text = "";
+    private String mMathText = "";
+    private String mTimeText = "";
 
     private Point mTextPos;
 
@@ -134,27 +135,24 @@ public class ScopeView extends View
         paint.setTextAlign(Paint.Align.LEFT);
     }
 
-    public void setChannelData(int channel, WaveData waveData)
+    public void setChannelData(int channel, WaveData waveData, TimeData timeData)
     {
         switch(channel)
         {
             case 1:
                 updatePath(mPathChan1, waveData);
-                mChan1Text = updateText(waveData ,"Chan1", true);
+                mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
             case 2:
                 updatePath(mPathChan2, waveData);
-                mChan2Text = updateText(waveData ,"Chan2", true);
+                mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
             case 3:
                 updatePath(mPathMath, waveData);
-                mMathText = updateText(waveData ,"Math", true);
+                mMathText = updateVoltText(waveData, "Math");
                 break;
         }
-        if(waveData != null)
-            mTimeText = updateText(waveData ,"Time", false);
-     //   else
-     //       mTimeText = "Time";
+        mTimeText = updateTimeText(timeData);
 
         postInvalidate();
     }
@@ -180,51 +178,61 @@ public class ScopeView extends View
         }
     }
 
-    private String updateText(WaveData waveData, String chan, boolean isVolt)
+    private String updateVoltText(WaveData waveData, String chan)
     {
-        double value = 0.0;
-        String end = "";
-        if(waveData != null)
+        if(waveData != null && waveData.data != null)
         {
-            if(isVolt)
+            double value = 0.0;
+            String end = "";
+
+            if (waveData.voltageScale < 1)
             {
-                if(waveData.voltageScale < 1)
-                {
-                    value = waveData.voltageScale * 1e3;
-                    end = "mV";
-                }
-                else
-                {
-                    value = waveData.voltageScale;
-                    end = "V";
-                }
+                value = waveData.voltageScale * 1e3;
+                end = "mV";
             }
             else
             {
-                double time = waveData.timeScale;
-                if(time < 1e-6)
-                {
-                    value = (time * 1e9);
-                    end = "nS";
-                }
-                else if(time < 1e-3)
-                {
-                    value = time * 1e6;
-                    end = "uS";
-                }
-                else if(time < 1)
-                {
-                    value = time * 1e3;
-                    end = "mS";
-                }
-                else
-                {
-                    value = time;
-                    end = "S";
-                }
+                value = waveData.voltageScale;
+                end = "V";
             }
+
+            return String.format("%s: %.2f%s", chan, value, end);
         }
-        return String.format("%s: %.2f%s",chan,value,end);
+        else
+        {
+            return "";
+        }
+    }
+
+    private String updateTimeText(TimeData timeData)
+    {
+        if(timeData == null)
+            return "";
+
+        double value = 0.0;
+        String end = "";
+        double time = timeData.timeScale;
+        if(time < 1e-6)
+        {
+            value = (time * 1e9);
+            end = "nS";
+        }
+        else if(time < 1e-3)
+        {
+            value = time * 1e6;
+            end = "uS";
+        }
+        else if(time < 1)
+        {
+            value = time * 1e3;
+            end = "mS";
+        }
+        else
+        {
+            value = time;
+            end = "S";
+        }
+        return String.format("Time: %.2f%s",value,end);
     }
 
     private float manipulatePoint(double voltOffset, double voltScale, int data)

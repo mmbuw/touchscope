@@ -29,10 +29,11 @@ public class RigolScope implements BaseScope
     private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
     private WaveRequestPool mWavesM = new WaveRequestPool(POOL_SIZE);
+    private TimeData mTimeData = new TimeData();
 
-    private boolean mIsChan1On = false;
-    private boolean mIsChan2On = false;
-    private boolean mIsChanMOn = false;
+    //   private boolean mIsChan1On = false;
+    //   private boolean mIsChan2On = false;
+    //   private boolean mIsChanMOn = false;
 
     private Handler mReadHandler = new Handler();
 
@@ -53,7 +54,7 @@ public class RigolScope implements BaseScope
             public void start()
             {
                 mIsConnected = true;
-                doCommand(Command.GET_NAME,0,false);
+                doCommand(Command.GET_NAME, 0, false);
                 initSettings();
             }
 
@@ -70,7 +71,7 @@ public class RigolScope implements BaseScope
     {
         stop();
 
-        if(mUsbController != null)
+        if (mUsbController != null)
             mUsbController.close();
         mUsbController = null;
     }
@@ -93,10 +94,10 @@ public class RigolScope implements BaseScope
 
     private void initSettings()
     {
-        if(mUsbController == null)
+        if (mUsbController == null)
             return;
 
-        synchronized(mControllerLock)
+        synchronized (mControllerLock)
         {
             mUsbController.write(":WAV:POIN:MODE NOR");
             forceCommand();
@@ -107,26 +108,26 @@ public class RigolScope implements BaseScope
     {
         int val = 0;
 
-        if(mUsbController == null || !mIsConnected)
+        if (mUsbController == null || !mIsConnected)
             return val;
 
-        synchronized(mControllerLock)
+        synchronized (mControllerLock)
         {
-            switch(command)
+            switch (command)
             {
                 case IS_CHANNEL_ON:
                     val = isChannelOn(channel) ? 1 : 0;
                     break;
                 case GET_NAME:
                     String name = getName();
-                    if(mOnReceivedName != null)
+                    if (mOnReceivedName != null)
                         mOnReceivedName.returnName(name);
                 case NO_COMMAND:
                 default:
                     break;
             }
 
-            if(force)
+            if (force)
                 forceCommand();
         }
 
@@ -136,7 +137,7 @@ public class RigolScope implements BaseScope
     public WaveData getWave(int chan)
     {
         WaveData waveData = null;
-        switch(chan)
+        switch (chan)
         {
             case 1:
                 waveData = mWaves1.peek();
@@ -149,6 +150,11 @@ public class RigolScope implements BaseScope
                 break;
         }
         return waveData;
+    }
+
+    public TimeData getTimeData()
+    {
+        return mTimeData;
     }
 
     private String getName()
@@ -187,76 +193,7 @@ public class RigolScope implements BaseScope
         int[] on = mUsbController.read(20);
         boolean isOn = on.length > 0 && on[0] == 49;
 
-        switch (channel)
-        {
-            case 1:
-                mIsChan1On = isOn;
-                break;
-            case 2:
-                mIsChan2On = isOn;
-                break;
-            case 3:
-                mIsChanMOn = isOn;
-                break;
-        }
-
         return isOn;
-    }
-
-    private void readWave(int channel)
-    {
-        WaveData waveData;
-        switch(channel)
-        {
-            case 1:
-                waveData = mWaves1.requestWaveData();
-                break;
-            case 2:
-                waveData = mWaves2.requestWaveData();
-                break;
-            case 3:
-            default:
-                waveData = mWavesM.requestWaveData();
-                break;
-        }
-
-        synchronized(mControllerLock)
-        {
-            // get the raw data
-            mUsbController.write(":WAV:DATA? " + getChannel(channel));
-            waveData.data = mUsbController.read(SAMPLE_LENGTH);
-
-            //Get the voltage scale
-            mUsbController.write(":" + getChannel(channel) + ":SCAL?");
-            waveData.voltageScale = bytesToDouble(mUsbController.read(20));
-
-            // And the voltage offset
-            mUsbController.write(":" + getChannel(channel) + ":OFFS?");
-            waveData.voltageOffset = bytesToDouble(mUsbController.read(20));
-
-            // Get the timescale
-            mUsbController.write(":TIM:SCAL?");
-            waveData.timeScale = bytesToDouble(mUsbController.read(20));
-
-            // Get the timescale offset
-            mUsbController.write(":TIM:OFFS?");
-            waveData.timeOffset = bytesToDouble(mUsbController.read(20));
-
-            forceCommand();
-        }
-
-        switch (channel)
-        {
-            case 1:
-                mWaves1.add(waveData);
-                break;
-            case 2:
-                mWaves2.add(waveData);
-                break;
-            case 3:
-                mWavesM.add(waveData);
-                break;
-        }
     }
 
     private byte[] intArrayToByteArray(int[] intArray)
@@ -299,6 +236,90 @@ public class RigolScope implements BaseScope
         mUsbController.write(":KEY:FORC");
     }
 
+
+    private Runnable mReadRunnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            readWave(1);
+            readWave(2);
+            readWave(3);
+            readTimeData();
+
+            mReadHandler.postDelayed(this, READ_RATE);
+        }
+    };
+
+    private void readWave(int channel)
+    {
+        WaveData waveData;
+        switch(channel)
+        {
+            case 1:
+                waveData = mWaves1.requestWaveData();
+                break;
+            case 2:
+                waveData = mWaves2.requestWaveData();
+                break;
+            case 3:
+            default:
+                waveData = mWavesM.requestWaveData();
+                break;
+        }
+
+        synchronized(mControllerLock)
+        {
+            if(isChannelOn(channel))
+            {
+                // get the raw data
+                mUsbController.write(":WAV:DATA? " + getChannel(channel));
+                waveData.data = mUsbController.read(SAMPLE_LENGTH);
+
+                //Get the voltage scale
+                mUsbController.write(":" + getChannel(channel) + ":SCAL?");
+                waveData.voltageScale = bytesToDouble(mUsbController.read(20));
+
+                // And the voltage offset
+                mUsbController.write(":" + getChannel(channel) + ":OFFS?");
+                waveData.voltageOffset = bytesToDouble(mUsbController.read(20));
+            }
+            else
+            {
+                waveData.data = null;
+            }
+        }
+
+        switch (channel)
+        {
+            case 1:
+                mWaves1.add(waveData);
+                break;
+            case 2:
+                mWaves2.add(waveData);
+                break;
+            case 3:
+                mWavesM.add(waveData);
+                break;
+        }
+    }
+
+    private void readTimeData()
+    {
+        synchronized(mControllerLock)
+        {
+            // Get the timescale
+            mUsbController.write(":TIM:SCAL?");
+            mTimeData.timeScale = bytesToDouble(mUsbController.read(20));
+
+            // Get the timescale offset
+            mUsbController.write(":TIM:OFFS?");
+            mTimeData.timeOffset = bytesToDouble(mUsbController.read(20));
+
+            forceCommand();
+        }
+    }
+
     public static double actualVoltage(double offset, double scale, int point)
     {
         // Walk through the data, and map it to actual voltages
@@ -309,26 +330,7 @@ public class RigolScope implements BaseScope
         // Now, we know from experimentation that the scope display range is actually
         // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
         // get the actual voltage.
-
         tPoint = (tPoint - 130.0 - (offset / scale * 25)) / 25 * scale;
         return tPoint;
     }
-
-    private Runnable mReadRunnable = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            if(mIsChan1On)
-                readWave(1);
-
-            if(mIsChan2On)
-                readWave(2);
-
-            if(mIsChanMOn)
-                readWave(3);
-
-            mReadHandler.postDelayed(this, READ_RATE);
-        }
-    };
 }

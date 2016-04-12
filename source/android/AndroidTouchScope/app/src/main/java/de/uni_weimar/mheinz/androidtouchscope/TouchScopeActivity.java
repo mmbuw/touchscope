@@ -14,6 +14,7 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class TouchScopeActivity extends AppCompatActivity
@@ -24,9 +25,9 @@ public class TouchScopeActivity extends AppCompatActivity
     private BaseScope mActiveScope = null;
     private ScopeView mScopeView = null;
 
-    private int mIsChan1On = 0;
-    private int mIsChan2On = 0;
-    private int mIsMathOn = 0;
+ //   private int mIsChan1On = 0;
+ //   private int mIsChan2On = 0;
+ //   private int mIsMathOn = 0;
 
     private Handler mRefreshHandler = new Handler();
 
@@ -105,9 +106,9 @@ public class TouchScopeActivity extends AppCompatActivity
                     {
                         mRefreshHandler.removeCallbacks(mRefreshRunnable);
 
-                        mIsChan1On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
-                        mIsChan2On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
-                        mIsMathOn = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
+                    //    mIsChan1On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
+                    //    mIsChan2On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
+                    //    mIsMathOn = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
 
                         mRefreshHandler.postDelayed(mRefreshRunnable, 0);
                     }
@@ -146,38 +147,39 @@ public class TouchScopeActivity extends AppCompatActivity
         @Override
         public void run()
         {
-            if(mIsChan1On == 1)
+            TimeData timeData = mActiveScope.getTimeData();
+          //  if(mIsChan1On == 1)
             {
                 WaveData waveData = mActiveScope.getWave(1);
-                mScopeView.setChannelData(1, waveData);
+                mScopeView.setChannelData(1, waveData,timeData);
             }
-            else if(mIsChan1On == 0)
+         /*   else if(mIsChan1On == 0)
             {
                 mScopeView.setChannelData(1, null);
                 mIsChan1On = -1;
-            }
+            }*/
 
-            if(mIsChan2On == 1)
+        //    if(mIsChan2On == 1)
             {
                 WaveData waveData = mActiveScope.getWave(2);
-                mScopeView.setChannelData(2, waveData);
+                mScopeView.setChannelData(2, waveData,timeData);
             }
-            else if(mIsChan2On == 0)
+          /*  else if(mIsChan2On == 0)
             {
                 mScopeView.setChannelData(2, null);
                 mIsChan2On = -1;
-            }
+            }*/
 
-            if(mIsMathOn == 1)
+        //    if(mIsMathOn == 1)
             {
                 WaveData waveData = mActiveScope.getWave(3);
-                mScopeView.setChannelData(3, waveData);
+                mScopeView.setChannelData(3, waveData,timeData);
             }
-            else if(mIsMathOn == 0)
+           /* else if(mIsMathOn == 0)
             {
                 mScopeView.setChannelData(3, null);
                 mIsMathOn = -1;
-            }
+            }*/
 
             mRefreshHandler.postDelayed(this, REFRESH_RATE);
         }

@@ -1,5 +1,6 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public interface BaseScope
@@ -13,6 +14,7 @@ public interface BaseScope
     void stop();
     boolean isConnected();
     WaveData getWave(int chan);
+    TimeData getTimeData();
 
     /**
      *
