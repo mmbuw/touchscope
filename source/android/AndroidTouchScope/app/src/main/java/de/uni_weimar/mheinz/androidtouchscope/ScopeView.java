@@ -48,22 +48,28 @@ public class ScopeView extends View
     public ScopeView(Context context)
     {
         super(context);
-        init(null, 0);
+        init();
     }
 
     public ScopeView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
-        init(attrs, 0);
+        init();
     }
 
     public ScopeView(Context context, AttributeSet attrs, int defStyle)
     {
         super(context, attrs, defStyle);
-        init(attrs, defStyle);
+        init();
     }
 
-    private void init(AttributeSet attrs, int defStyle)
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Init functions
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    private void init()
     {
         int paddingLeft = getPaddingLeft();
         int paddingTop = getPaddingTop();
@@ -134,6 +140,12 @@ public class ScopeView extends View
         paint.setTextSize(height);
         paint.setTextAlign(Paint.Align.LEFT);
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Update View functions
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     public void setChannelData(int channel, WaveData waveData, TimeData timeData)
     {
@@ -235,6 +247,12 @@ public class ScopeView extends View
         return String.format("Time: %.2f%s",value,end);
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Helper functions
+    //
+    //////////////////////////////////////////////////////////////////////////
+
     private float manipulatePoint(double voltOffset, double voltScale, int data)
     {
         float heightRatio = (mContentHeight / 8.0f) / (float)voltScale;
@@ -249,6 +267,12 @@ public class ScopeView extends View
 
         return point;
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Class overrides
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     @Override
     protected void onDraw(Canvas canvas)
@@ -269,6 +293,6 @@ public class ScopeView extends View
     @Override
     protected void onSizeChanged (int w, int h, int oldw, int oldh)
     {
-        init(null,0);
+        init();
     }
 }

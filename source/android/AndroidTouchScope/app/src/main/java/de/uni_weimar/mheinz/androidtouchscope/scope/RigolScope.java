@@ -1,6 +1,5 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-//import android.support.v7.app.AppCompatActivity;
 import android.app.Activity;
 import android.os.Handler;
 
@@ -19,7 +18,6 @@ public class RigolScope implements BaseScope
 
     private static final int READ_RATE = 100;
 
-    // private AppCompatActivity mActivity;
     private Activity mActivity;
     private final Object mControllerLock = new Object();
     private UsbController mUsbController = null;
@@ -30,10 +28,6 @@ public class RigolScope implements BaseScope
     private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
     private WaveRequestPool mWavesM = new WaveRequestPool(POOL_SIZE);
     private TimeData mTimeData = new TimeData();
-
-    //   private boolean mIsChan1On = false;
-    //   private boolean mIsChan2On = false;
-    //   private boolean mIsChanMOn = false;
 
     private Handler mReadHandler = new Handler();
 
@@ -92,17 +86,40 @@ public class RigolScope implements BaseScope
         return mIsConnected;
     }
 
-    private void initSettings()
-    {
-        if (mUsbController == null)
-            return;
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Get Wave Data
+    //
+    //////////////////////////////////////////////////////////////////////////
 
-        synchronized (mControllerLock)
+    public WaveData getWave(int chan)
+    {
+        WaveData waveData = null;
+        switch (chan)
         {
-            mUsbController.write(":WAV:POIN:MODE NOR");
-            forceCommand();
+            case 1:
+                waveData = mWaves1.peek();
+                break;
+            case 2:
+                waveData = mWaves2.peek();
+                break;
+            case 3:
+                waveData = mWavesM.peek();
+                break;
         }
+        return waveData;
     }
+
+    public TimeData getTimeData()
+    {
+        return mTimeData;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Scope Functions
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     public int doCommand(Command command, int channel, boolean force)
     {
@@ -134,27 +151,16 @@ public class RigolScope implements BaseScope
         return val;
     }
 
-    public WaveData getWave(int chan)
+    private void initSettings()
     {
-        WaveData waveData = null;
-        switch (chan)
-        {
-            case 1:
-                waveData = mWaves1.peek();
-                break;
-            case 2:
-                waveData = mWaves2.peek();
-                break;
-            case 3:
-                waveData = mWavesM.peek();
-                break;
-        }
-        return waveData;
-    }
+        if (mUsbController == null)
+            return;
 
-    public TimeData getTimeData()
-    {
-        return mTimeData;
+        synchronized (mControllerLock)
+        {
+            mUsbController.write(":WAV:POIN:MODE NOR");
+            forceCommand();
+        }
     }
 
     private String getName()
@@ -166,6 +172,25 @@ public class RigolScope implements BaseScope
 
         return parts[0] + " " + parts[1];
     }
+
+    private boolean isChannelOn(int channel)
+    {
+        mUsbController.write(":" + getChannel(channel) + ":DISP?");
+        int[] on = mUsbController.read(20);
+        return on != null && on.length > 0 && on[0] == 49;
+    }
+
+    // use to re-allow human actions with the scope
+    private void forceCommand()
+    {
+        mUsbController.write(":KEY:FORC");
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Helper utility functions
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     private String getChannel(int chan)
     {
@@ -185,15 +210,6 @@ public class RigolScope implements BaseScope
         }
 
         return channel;
-    }
-
-    private boolean isChannelOn(int channel)
-    {
-        mUsbController.write(":" + getChannel(channel) + ":DISP?");
-        int[] on = mUsbController.read(20);
-        boolean isOn = on.length > 0 && on[0] == 49;
-
-        return isOn;
     }
 
     private byte[] intArrayToByteArray(int[] intArray)
@@ -230,12 +246,11 @@ public class RigolScope implements BaseScope
         return value;
     }
 
-    // use to re-allow human reaction with the scope
-    private void forceCommand()
-    {
-        mUsbController.write(":KEY:FORC");
-    }
-
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Collect Wave Data at timed intervals
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     private Runnable mReadRunnable = new Runnable()
     {
@@ -320,6 +335,19 @@ public class RigolScope implements BaseScope
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Public Static Methods
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    /**
+     * based on the point value, returns the actual voltage with calculations from scale and offset
+     * @param offset - voltage offset
+     * @param scale - voltage scale
+     * @param point - point formatted as a unsigned byte in an int
+     * @return - the actual voltage
+     */
     public static double actualVoltage(double offset, double scale, int point)
     {
         // Walk through the data, and map it to actual voltages

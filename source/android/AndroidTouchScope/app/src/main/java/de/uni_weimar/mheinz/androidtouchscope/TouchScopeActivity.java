@@ -25,10 +25,6 @@ public class TouchScopeActivity extends AppCompatActivity
     private BaseScope mActiveScope = null;
     private ScopeView mScopeView = null;
 
- //   private int mIsChan1On = 0;
- //   private int mIsChan2On = 0;
- //   private int mIsMathOn = 0;
-
     private Handler mRefreshHandler = new Handler();
 
     @Override
@@ -36,9 +32,6 @@ public class TouchScopeActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_touch_scope);
-
-      //  if(savedInstanceState != null)
-      //      return;
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
         setSupportActionBar(toolbar);
@@ -49,17 +42,30 @@ public class TouchScopeActivity extends AppCompatActivity
         readButton.setChecked(false);
 
         // test if it is emulator
-        if(Build.BRAND.contains("generic"))
+        initScope(!Build.BRAND.contains("generic"));
+    }
+
+    private void initScope(boolean doReal)
+    {
+        if(mActiveScope != null)
         {
-            Log.i(TAG, "Emulator detected, using TestScope");
-            mActiveScope = new TestScope();
+            mRefreshHandler.removeCallbacks(mRefreshRunnable);
+            mActiveScope.close();
+
+            ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
+            readButton.setChecked(false);
         }
-        else
+
+        if(doReal)
         {
             Log.i(TAG, "Device detected, try to find RigolScope");
             mActiveScope = new RigolScope(this);
         }
-
+        else
+        {
+            Log.i(TAG, "Emulator detected, using TestScope");
+            mActiveScope = new TestScope();
+        }
         mActiveScope.open(new BaseScope.OnReceivedName()
         {
             @Override
@@ -71,8 +77,8 @@ public class TouchScopeActivity extends AppCompatActivity
                     @Override
                     public void run()
                     {
-                        Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
-                        ((TextView)toolbar.findViewById(R.id.toolbar_title)).setText(scopeName);
+                        Toolbar toolbar = (Toolbar) findViewById(R.id.scope_toolbar);
+                        ((TextView) toolbar.findViewById(R.id.toolbar_title)).setText(scopeName);
                     }
                 });
             }
@@ -82,10 +88,11 @@ public class TouchScopeActivity extends AppCompatActivity
     @Override
     public void onDestroy()
     {
+        mRefreshHandler.removeCallbacks(mRefreshRunnable);
+
         if(mActiveScope != null)
             mActiveScope.close();
 
-        mRefreshHandler.removeCallbacks(mRefreshRunnable);
         super.onDestroy();
     }
 
@@ -105,11 +112,6 @@ public class TouchScopeActivity extends AppCompatActivity
                     if (mActiveScope != null)
                     {
                         mRefreshHandler.removeCallbacks(mRefreshRunnable);
-
-                    //    mIsChan1On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
-                    //    mIsChan2On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
-                    //    mIsMathOn = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
-
                         mRefreshHandler.postDelayed(mRefreshRunnable, 0);
                     }
                 }
@@ -134,8 +136,14 @@ public class TouchScopeActivity extends AppCompatActivity
     {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings)
+        if (id == R.id.action_scope)
         {
+            initScope(true);
+            return true;
+        }
+        else if(id == R.id.action_test)
+        {
+            initScope(false);
             return true;
         }
 
@@ -148,38 +156,15 @@ public class TouchScopeActivity extends AppCompatActivity
         public void run()
         {
             TimeData timeData = mActiveScope.getTimeData();
-          //  if(mIsChan1On == 1)
-            {
-                WaveData waveData = mActiveScope.getWave(1);
-                mScopeView.setChannelData(1, waveData,timeData);
-            }
-         /*   else if(mIsChan1On == 0)
-            {
-                mScopeView.setChannelData(1, null);
-                mIsChan1On = -1;
-            }*/
 
-        //    if(mIsChan2On == 1)
-            {
-                WaveData waveData = mActiveScope.getWave(2);
-                mScopeView.setChannelData(2, waveData,timeData);
-            }
-          /*  else if(mIsChan2On == 0)
-            {
-                mScopeView.setChannelData(2, null);
-                mIsChan2On = -1;
-            }*/
+            WaveData waveData = mActiveScope.getWave(1);
+            mScopeView.setChannelData(1, waveData,timeData);
 
-        //    if(mIsMathOn == 1)
-            {
-                WaveData waveData = mActiveScope.getWave(3);
-                mScopeView.setChannelData(3, waveData,timeData);
-            }
-           /* else if(mIsMathOn == 0)
-            {
-                mScopeView.setChannelData(3, null);
-                mIsMathOn = -1;
-            }*/
+            waveData = mActiveScope.getWave(2);
+            mScopeView.setChannelData(2, waveData,timeData);
+
+            waveData = mActiveScope.getWave(3);
+            mScopeView.setChannelData(3, waveData,timeData);
 
             mRefreshHandler.postDelayed(this, REFRESH_RATE);
         }

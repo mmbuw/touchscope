@@ -8,7 +8,6 @@ public class TestScope implements BaseScope
 {
     private static final int READ_RATE = 100;
 
-   // private LimitedByteDeque mSampleList1 = new LimitedByteDeque(POOL_SIZE);
     private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
     private WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
@@ -56,27 +55,11 @@ public class TestScope implements BaseScope
         return true;
     }
 
-    private String getName()
-    {
-        return "Test Scope";
-    }
-
-    public int doCommand(Command command, int channel, boolean force)
-    {
-        int val = 0;
-        switch (command)
-        {
-            case IS_CHANNEL_ON:
-                val = isChannelOn(channel) ? 1 : 0;
-                break;
-            case GET_NAME:
-                String name = getName();
-                if(mOnReceivedName != null)
-                    mOnReceivedName.returnName(name);
-                break;
-        }
-        return val;
-    }
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Get Wave Data
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     public WaveData getWave(int chan)
     {
@@ -101,6 +84,34 @@ public class TestScope implements BaseScope
         return mTimeData;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Scope Functions
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    public int doCommand(Command command, int channel, boolean force)
+    {
+        int val = 0;
+        switch (command)
+        {
+            case IS_CHANNEL_ON:
+                val = isChannelOn(channel) ? 1 : 0;
+                break;
+            case GET_NAME:
+                String name = getName();
+                if(mOnReceivedName != null)
+                    mOnReceivedName.returnName(name);
+                break;
+        }
+        return val;
+    }
+
+    private String getName()
+    {
+        return "Test Scope";
+    }
+
     private boolean isChannelOn(int channel)
     {
         boolean isOn = false;
@@ -119,6 +130,24 @@ public class TestScope implements BaseScope
 
         return isOn;
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Collect Wave Data at timed intervals
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    private Runnable mReadRunnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            generateTone(1);
+            generateTone(2);
+            generateTone(3);
+            mReadHandler.postDelayed(this, READ_RATE);
+        }
+    };
 
     private void generateTone(int channel)
     {
@@ -184,20 +213,11 @@ public class TestScope implements BaseScope
         }
     }
 
-    private Runnable mReadRunnable = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-         //   if(mIsChan1On)
-                generateTone(1);
-        //    if(mIsChan2On)
-                generateTone(2);
-        //    if(mIsChan3On)
-                generateTone(3);
-            mReadHandler.postDelayed(this, READ_RATE);
-        }
-    };
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Class to imitate a scope
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     private class FakeWaveData
     {
