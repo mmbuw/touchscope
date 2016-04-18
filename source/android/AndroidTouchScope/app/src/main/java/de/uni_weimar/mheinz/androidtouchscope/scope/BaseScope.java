@@ -6,7 +6,7 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 public interface BaseScope
 {
     final int SAMPLE_LENGTH = 610;
-    final int POOL_SIZE = 4;
+    final int POOL_SIZE = 2;
 
     void open(OnReceivedName onReceivedName);
     void close();
@@ -16,20 +16,14 @@ public interface BaseScope
     WaveData getWave(int chan);
     TimeData getTimeData();
 
-    /**
-     *
-     * @param command
-     * @param channel
-     * @param force
-     * @return data can be returned here if expecting an int
-     */
-    int doCommand(Command command, int channel, boolean force);
-    //public byte[] doCommand(Command command, int channel, boolean force);
+    int doCommand(Command command, int channel, boolean force, Object specialData);
 
     enum Command
     {
         IS_CHANNEL_ON,
         GET_NAME,
+        SET_ACTIVE_CHANNEL,
+        SET_VOLTAGE_OFFSET,
         NO_COMMAND
     }
 

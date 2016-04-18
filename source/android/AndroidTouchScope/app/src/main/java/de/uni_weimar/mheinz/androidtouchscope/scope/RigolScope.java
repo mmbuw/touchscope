@@ -29,6 +29,8 @@ public class RigolScope implements BaseScope
     private WaveRequestPool mWavesM = new WaveRequestPool(POOL_SIZE);
     private TimeData mTimeData = new TimeData();
 
+    private int mActiveWave = -1;
+
     private Handler mReadHandler = new Handler();
 
     public RigolScope(Activity activity)
@@ -48,7 +50,7 @@ public class RigolScope implements BaseScope
             public void start()
             {
                 mIsConnected = true;
-                doCommand(Command.GET_NAME, 0, false);
+                doCommand(Command.GET_NAME, 0, false, null);
                 initSettings();
             }
 
@@ -86,6 +88,7 @@ public class RigolScope implements BaseScope
         return mIsConnected;
     }
 
+
     //////////////////////////////////////////////////////////////////////////
     //
     // Get Wave Data
@@ -121,7 +124,7 @@ public class RigolScope implements BaseScope
     //
     //////////////////////////////////////////////////////////////////////////
 
-    public int doCommand(Command command, int channel, boolean force)
+    public int doCommand(Command command, int channel, boolean force, Object specialData)
     {
         int val = 0;
 
@@ -139,6 +142,14 @@ public class RigolScope implements BaseScope
                     String name = getName();
                     if (mOnReceivedName != null)
                         mOnReceivedName.returnName(name);
+                    break;
+                case SET_ACTIVE_CHANNEL:
+                    mActiveWave = channel;
+                    break;
+                case SET_VOLTAGE_OFFSET:
+                    Float off = (Float)specialData;
+                    setVoltageOffset(channel,off);
+                    break;
                 case NO_COMMAND:
                 default:
                     break;
@@ -178,6 +189,15 @@ public class RigolScope implements BaseScope
         mUsbController.write(":" + getChannel(channel) + ":DISP?");
         int[] on = mUsbController.read(20);
         return on != null && on.length > 0 && on[0] == 49;
+    }
+
+    private void setVoltageOffset(int channel, float value)
+    {
+        WaveData data = getWave(channel);
+     //   float offset = (float)actualVoltage(data.voltageOffset,data.voltageScale, (int)value);
+        double offset = (value / data.voltageScale) + data.voltageOffset;
+
+        mUsbController.write(":" + getChannel(channel) + ":OFFS " + (float)value);
     }
 
     // use to re-allow human actions with the scope

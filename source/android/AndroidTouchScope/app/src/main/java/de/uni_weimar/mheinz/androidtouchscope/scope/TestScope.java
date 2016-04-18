@@ -17,6 +17,8 @@ public class TestScope implements BaseScope
     private FakeWaveData mFakeWave2;
     private FakeWaveData mFakeWave3;
 
+    private int mActiveWave = -1;
+
     private Handler mReadHandler = new Handler();
     private OnReceivedName mOnReceivedName;
 
@@ -31,7 +33,7 @@ public class TestScope implements BaseScope
     public void open(OnReceivedName onReceivedName)
     {
         mOnReceivedName = onReceivedName;
-        doCommand(Command.GET_NAME, 0, false);
+        doCommand(Command.GET_NAME, 0, false, null);
     }
 
     public void close()
@@ -90,7 +92,7 @@ public class TestScope implements BaseScope
     //
     //////////////////////////////////////////////////////////////////////////
 
-    public int doCommand(Command command, int channel, boolean force)
+    public int doCommand(Command command, int channel, boolean force, Object specialData)
     {
         int val = 0;
         switch (command)
@@ -102,6 +104,12 @@ public class TestScope implements BaseScope
                 String name = getName();
                 if(mOnReceivedName != null)
                     mOnReceivedName.returnName(name);
+                break;
+            case SET_ACTIVE_CHANNEL:
+                mActiveWave = channel;
+                break;
+            case SET_VOLTAGE_OFFSET:
+                //TODO: test offset code
                 break;
         }
         return val;

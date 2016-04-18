@@ -1,4 +1,4 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.not_used;
 
 import java.util.ArrayDeque;
 

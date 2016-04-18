@@ -57,11 +57,21 @@ public class TouchScopeActivity extends AppCompatActivity
         }
 
         mDrawerList = (ListView)findViewById(R.id.right_drawer);
-        mDrawerList.setAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1,
-                new String[]{"one", "two", "three"}));
+        mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new String[]{"one", "two", "three"}));
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
+        mScopeView.setOnDoCommand(new ScopeView.OnDoCommand()
+        {
+            @Override
+            public void doCommand(BaseScope.Command command, int channel, Object specialData)
+            {
+                if(mActiveScope != null)
+                {
+                    mActiveScope.doCommand(command, channel, true, specialData);
+                }
+            }
+        });
+
         ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
         readButton.setChecked(false);
 

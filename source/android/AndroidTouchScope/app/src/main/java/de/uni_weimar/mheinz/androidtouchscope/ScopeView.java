@@ -6,12 +6,19 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.Point;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
+import de.uni_weimar.mheinz.androidtouchscope.scope.BaseScope;
 import de.uni_weimar.mheinz.androidtouchscope.scope.RigolScope;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -45,22 +52,36 @@ public class ScopeView extends View
     private int mContentWidth = 0;
     private int mContentHeight = 0;
 
+    private ScaleGestureDetector mScaleGestureDetector;
+    private GestureDetectorCompat mScopeDetector;
+
+    private int mSelectedPath = -1; // -1 if not selected
+    private OnDoCommand mOnDoCommand = null;
+
     public ScopeView(Context context)
     {
         super(context);
+        initGestures(context);
         init();
     }
 
     public ScopeView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
+        initGestures(context);
         init();
     }
 
     public ScopeView(Context context, AttributeSet attrs, int defStyle)
     {
         super(context, attrs, defStyle);
+        initGestures(context);
         init();
+    }
+
+    public void setOnDoCommand(OnDoCommand onDoCommand)
+    {
+        mOnDoCommand = onDoCommand;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -69,8 +90,16 @@ public class ScopeView extends View
     //
     //////////////////////////////////////////////////////////////////////////
 
+    private void initGestures(Context context)
+    {
+        mScopeDetector = new GestureDetectorCompat(context,new ScopeGestureListener());
+        mScaleGestureDetector = new ScaleGestureDetector(context, new ScopeScaleListener());
+    }
+
     private void init()
     {
+       // setLayerType(LAYER_TYPE_SOFTWARE, null);
+
         int paddingLeft = getPaddingLeft();
         int paddingTop = getPaddingTop();
         int paddingRight = getPaddingRight();
@@ -98,6 +127,8 @@ public class ScopeView extends View
         drawable.getPaint().setStyle(Paint.Style.STROKE);
         drawable.getPaint().setColor(color);
         drawable.setBounds(0, 0, width, height);
+
+        setLayerType(LAYER_TYPE_SOFTWARE, drawable.getPaint());
     }
 
     private void initGridV(ShapeDrawable drawable, Path path, int color, int width, int height)
@@ -294,5 +325,180 @@ public class ScopeView extends View
     protected void onSizeChanged (int w, int h, int oldw, int oldh)
     {
         init();
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Path Selection
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    /*private float smallestDistanceToPath(PathPoints path, float x, float y)
+    {
+        PointF[] points = path.getPoints();
+        float minDist = 1000f;
+        float dist = 0f;
+
+        for(PointF point : points)
+        {
+            dist = (float)Math.hypot(x - point.x, y - point.y);
+            if(dist < minDist)
+                minDist = dist;
+        }
+        return minDist;
+    }*/
+
+    private float smallestDistanceToPath(Path path, float x, float y)
+    {
+        PathMeasure measure = new PathMeasure(path,false);
+        float coord[] = {0f, 0f};
+        float minDist = 1000f;
+        float dist = 0f;
+
+        for(int i = 0; i < measure.getLength(); ++i)
+        {
+            measure.getPosTan(i, coord, null);
+            dist = (float)Math.hypot(x - coord[0], y - coord[1]);
+            if(dist < minDist)
+                minDist = dist;
+        }
+        return minDist;
+    }
+
+    private int pathHitTest(float x, float y, float threshold)
+    {
+        int selected = -1;
+        float minDist = threshold;
+
+        float dist = smallestDistanceToPath(mPathChan1,x,y);
+        if(dist <= minDist)
+        {
+            selected = 1;
+            minDist = dist;
+        }
+
+        dist = smallestDistanceToPath(mPathChan2,x,y);
+        if(dist < minDist)
+        {
+            selected = 2;
+            minDist = dist;
+        }
+
+        dist = smallestDistanceToPath(mPathMath,x,y);
+        if(dist < minDist)
+        {
+            selected = 3;
+        }
+
+        return selected;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Methods related to gesture handling
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
+    {
+        boolean retVal = mScaleGestureDetector.onTouchEvent(event);
+        retVal = mScopeDetector.onTouchEvent(event) || retVal;
+        return retVal || super.onTouchEvent(event);
+    }
+
+    private class ScopeGestureListener extends GestureDetector.SimpleOnGestureListener
+    {
+        @Override
+        public boolean onDown(MotionEvent event)
+        {
+            return true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+        {
+            if(mSelectedPath > 0)
+            {
+                if(mOnDoCommand != null)
+                    mOnDoCommand.doCommand(
+                            BaseScope.Command.SET_VOLTAGE_OFFSET,
+                            mSelectedPath,
+                            (Float)(-distanceY / (mContentHeight / 8.0f)));
+            }
+            return super.onScroll(e1, e2, distanceX, distanceY);
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent event)
+        {
+            final int pointerIndex = MotionEventCompat.getActionIndex(event);
+            final float x = MotionEventCompat.getX(event, pointerIndex);
+            final float y = MotionEventCompat.getY(event, pointerIndex);
+
+            int hit = pathHitTest(x, y, 15f);
+            if(hit == -1 && mSelectedPath == -1)
+                return true;
+
+            if(mSelectedPath == hit)
+                mSelectedPath = -1;
+            else
+                mSelectedPath = hit;
+
+            if(mOnDoCommand != null)
+                mOnDoCommand.doCommand(BaseScope.Command.SET_ACTIVE_CHANNEL, mSelectedPath, null);
+
+            mDrawableChan1.getPaint().clearShadowLayer();
+            mDrawableChan1.getPaint().setStrokeWidth(1);
+            mDrawableChan2.getPaint().clearShadowLayer();
+            mDrawableChan2.getPaint().setStrokeWidth(1);
+            mDrawableMath.getPaint().clearShadowLayer();
+            mDrawableMath.getPaint().setStrokeWidth(1);
+
+            switch(mSelectedPath)
+            {
+                case 1:
+                    mDrawableChan1.getPaint().setShadowLayer(10f,0f,0f,Color.YELLOW);
+                    mDrawableChan1.getPaint().setStrokeWidth(1.5f);
+                    break;
+                case 2:
+                    mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,Color.BLUE);
+                    mDrawableChan2.getPaint().setStrokeWidth(1.5f);
+                    break;
+                case 3:
+                    mDrawableMath.getPaint().setShadowLayer(10f,0f,0f,Color.MAGENTA);
+                    mDrawableMath.getPaint().setStrokeWidth(1.5f);
+                    break;
+                default:
+                    break;
+            }
+
+            return true;
+        }
+    }
+
+    private class ScopeScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener
+    {
+        private float mLastSpanX;
+        private float mLastSpanY;
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector)
+        {
+            mLastSpanX = scaleGestureDetector.getCurrentSpanX();
+            mLastSpanY = scaleGestureDetector.getCurrentSpanY();
+            return true;
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Callback methods
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    interface OnDoCommand
+    {
+        void doCommand(BaseScope.Command command, int channel, Object specialData);
     }
 }
