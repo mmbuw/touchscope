@@ -8,12 +8,13 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -25,6 +26,8 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class ScopeView extends View
 {
+    private static final String TAG = "ScopeView";
+
     private ShapeDrawable mDrawableChan1 = new ShapeDrawable();
     private ShapeDrawable mDrawableChan2 = new ShapeDrawable();
     private ShapeDrawable mDrawableMath = new ShapeDrawable();
@@ -92,7 +95,6 @@ public class ScopeView extends View
 
     private void initGestures(Context context)
     {
-        mScopeDetector = new GestureDetectorCompat(context,new ScopeGestureListener());
         mScaleGestureDetector = new ScaleGestureDetector(context, new ScopeScaleListener());
     }
 
@@ -180,20 +182,34 @@ public class ScopeView extends View
 
     public void setChannelData(int channel, WaveData waveData, TimeData timeData)
     {
+    //    Log.d(TAG,"setChannelData::" + channel);
+
         switch(channel)
         {
             case 1:
+            {
+                if(mSelectedPath == 1 && mInMovement)
+                    break;
                 updatePath(mPathChan1, waveData);
                 mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
+            }
             case 2:
+            {
+                if(mSelectedPath == 2 && mInMovement)
+                    break;
                 updatePath(mPathChan2, waveData);
                 mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
+            }
             case 3:
+            {
+                if(mSelectedPath == 3 && mInMovement)
+                    break;
                 updatePath(mPathMath, waveData);
                 mMathText = updateVoltText(waveData, "Math");
                 break;
+            }
         }
         mTimeText = updateTimeText(timeData);
 
@@ -308,6 +324,8 @@ public class ScopeView extends View
     @Override
     protected void onDraw(Canvas canvas)
     {
+    //    Log.d(TAG,"onDraw");
+
         mDrawableChan1.draw(canvas);
         mDrawableChan2.draw(canvas);
         mDrawableMath.draw(canvas);
@@ -332,21 +350,6 @@ public class ScopeView extends View
     // Path Selection
     //
     //////////////////////////////////////////////////////////////////////////
-
-    /*private float smallestDistanceToPath(PathPoints path, float x, float y)
-    {
-        PointF[] points = path.getPoints();
-        float minDist = 1000f;
-        float dist = 0f;
-
-        for(PointF point : points)
-        {
-            dist = (float)Math.hypot(x - point.x, y - point.y);
-            if(dist < minDist)
-                minDist = dist;
-        }
-        return minDist;
-    }*/
 
     private float smallestDistanceToPath(Path path, float x, float y)
     {
@@ -399,82 +402,172 @@ public class ScopeView extends View
     //
     //////////////////////////////////////////////////////////////////////////
 
+    private int mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+    private float mFirstTouchY = 0f;
+    private float mLastTouchX = 0;
+    private float mLastTouchY = 0;
+    private boolean mInMovement = false;
+
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
-        boolean retVal = mScaleGestureDetector.onTouchEvent(event);
-        retVal = mScopeDetector.onTouchEvent(event) || retVal;
-        return retVal || super.onTouchEvent(event);
+        mScaleGestureDetector.onTouchEvent(event);
+
+        final int action = MotionEventCompat.getActionMasked(event);
+        switch(action)
+        {
+            case MotionEvent.ACTION_DOWN:
+            {
+                int index = MotionEventCompat.getActionIndex(event);
+                mLastTouchX = MotionEventCompat.getX(event, index);
+                mLastTouchY = MotionEventCompat.getY(event, index);
+                mFirstTouchY = mLastTouchY;
+
+                // id for dragging
+                mActivePointerId = MotionEventCompat.getPointerId(event, 0);
+
+                break;
+            }
+            case MotionEvent.ACTION_MOVE:
+            {
+                int pointerIndex = MotionEventCompat.findPointerIndex(event, mActivePointerId);
+
+                float x = MotionEventCompat.getX(event, pointerIndex);
+                float y = MotionEventCompat.getY(event, pointerIndex);
+
+                // Calculate the distance moved
+                final float dx = x - mLastTouchX;
+                final float dy = y - mLastTouchY;
+
+                if(Math.abs(dx) + Math.abs(dy) > 5)
+                {
+                    mInMovement = true;
+
+                    if(mSelectedPath > 0)
+                    {
+                      /*  if(mOnDoCommand != null)
+                            mOnDoCommand.doCommand(
+                                    BaseScope.Command.SET_VOLTAGE_OFFSET,
+                                    mSelectedPath,
+                                    (Float)(-dy / (mContentHeight / 8.0f)));*/
+
+                        switch(mSelectedPath)
+                        {
+                            case 1:
+                                mPathChan1.offset(0,dy);
+                                break;
+                            case 2:
+                                mPathChan2.offset(0,dy);
+                                break;
+                            case 3:
+                                mPathMath.offset(0,dy);
+                                break;
+                        }
+
+                        invalidate();
+                    }
+                    mLastTouchX = x;
+                    mLastTouchY = y;
+                }
+
+                break;
+            }
+            case MotionEvent.ACTION_UP:
+            {
+                int pointerIndex = MotionEventCompat.findPointerIndex(event, mActivePointerId);
+
+                float x = MotionEventCompat.getX(event, pointerIndex);
+                float y = MotionEventCompat.getY(event, pointerIndex);
+
+                if(!mInMovement)
+                {
+                    touchSelectPath(event);
+                }
+                else
+                {
+                    float distY = mFirstTouchY - y;
+                    if(mOnDoCommand != null)
+                        mOnDoCommand.doCommand(
+                                BaseScope.Command.SET_VOLTAGE_OFFSET,
+                                mSelectedPath,
+                                (Float) (distY / (mContentHeight / 8.0f)));
+                }
+
+                mInMovement = false;
+                mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+                break;
+            }
+            case MotionEvent.ACTION_CANCEL:
+            {
+                mInMovement = false;
+                mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+                break;
+            }
+            case MotionEvent.ACTION_POINTER_UP:
+            {
+                final int pointerIndex = MotionEventCompat.getActionIndex(event);
+                final int pointerId = MotionEventCompat.getPointerId(event, pointerIndex);
+
+                if (pointerId == mActivePointerId)
+                {
+                    // This was our active pointer going up. Choose a new
+                    // active pointer and adjust accordingly.
+                    final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+                    mLastTouchX = MotionEventCompat.getX(event, newPointerIndex);
+                    mLastTouchY = MotionEventCompat.getY(event, newPointerIndex);
+                    mActivePointerId = MotionEventCompat.getPointerId(event, newPointerIndex);
+                }
+                break;
+            }
+        }
+
+
+        return true;//retVal || super.onTouchEvent(event);
     }
 
-    private class ScopeGestureListener extends GestureDetector.SimpleOnGestureListener
+    private boolean touchSelectPath(MotionEvent event)
     {
-        @Override
-        public boolean onDown(MotionEvent event)
+        final int pointerIndex = MotionEventCompat.getActionIndex(event);
+        final float x = MotionEventCompat.getX(event, pointerIndex);
+        final float y = MotionEventCompat.getY(event, pointerIndex);
+
+        int hit = pathHitTest(x, y, 15f);
+        if(hit == -1 && mSelectedPath == -1)
+            return false;
+
+        if(mSelectedPath == hit)
+            mSelectedPath = -1;
+        else
+            mSelectedPath = hit;
+
+        if(mOnDoCommand != null)
+            mOnDoCommand.doCommand(BaseScope.Command.SET_ACTIVE_CHANNEL, mSelectedPath, null);
+
+        mDrawableChan1.getPaint().clearShadowLayer();
+        mDrawableChan1.getPaint().setStrokeWidth(1);
+        mDrawableChan2.getPaint().clearShadowLayer();
+        mDrawableChan2.getPaint().setStrokeWidth(1);
+        mDrawableMath.getPaint().clearShadowLayer();
+        mDrawableMath.getPaint().setStrokeWidth(1);
+
+        switch(mSelectedPath)
         {
-            return true;
+            case 1:
+                mDrawableChan1.getPaint().setShadowLayer(10f,0f,0f,Color.YELLOW);
+                mDrawableChan1.getPaint().setStrokeWidth(1.5f);
+                break;
+            case 2:
+                mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,Color.BLUE);
+                mDrawableChan2.getPaint().setStrokeWidth(1.5f);
+                break;
+            case 3:
+                mDrawableMath.getPaint().setShadowLayer(10f,0f,0f,Color.MAGENTA);
+                mDrawableMath.getPaint().setStrokeWidth(1.5f);
+                break;
+            default:
+                break;
         }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
-        {
-            if(mSelectedPath > 0)
-            {
-                if(mOnDoCommand != null)
-                    mOnDoCommand.doCommand(
-                            BaseScope.Command.SET_VOLTAGE_OFFSET,
-                            mSelectedPath,
-                            (Float)(-distanceY / (mContentHeight / 8.0f)));
-            }
-            return super.onScroll(e1, e2, distanceX, distanceY);
-        }
-
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent event)
-        {
-            final int pointerIndex = MotionEventCompat.getActionIndex(event);
-            final float x = MotionEventCompat.getX(event, pointerIndex);
-            final float y = MotionEventCompat.getY(event, pointerIndex);
-
-            int hit = pathHitTest(x, y, 15f);
-            if(hit == -1 && mSelectedPath == -1)
-                return true;
-
-            if(mSelectedPath == hit)
-                mSelectedPath = -1;
-            else
-                mSelectedPath = hit;
-
-            if(mOnDoCommand != null)
-                mOnDoCommand.doCommand(BaseScope.Command.SET_ACTIVE_CHANNEL, mSelectedPath, null);
-
-            mDrawableChan1.getPaint().clearShadowLayer();
-            mDrawableChan1.getPaint().setStrokeWidth(1);
-            mDrawableChan2.getPaint().clearShadowLayer();
-            mDrawableChan2.getPaint().setStrokeWidth(1);
-            mDrawableMath.getPaint().clearShadowLayer();
-            mDrawableMath.getPaint().setStrokeWidth(1);
-
-            switch(mSelectedPath)
-            {
-                case 1:
-                    mDrawableChan1.getPaint().setShadowLayer(10f,0f,0f,Color.YELLOW);
-                    mDrawableChan1.getPaint().setStrokeWidth(1.5f);
-                    break;
-                case 2:
-                    mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,Color.BLUE);
-                    mDrawableChan2.getPaint().setStrokeWidth(1.5f);
-                    break;
-                case 3:
-                    mDrawableMath.getPaint().setShadowLayer(10f,0f,0f,Color.MAGENTA);
-                    mDrawableMath.getPaint().setStrokeWidth(1.5f);
-                    break;
-                default:
-                    break;
-            }
-
-            return true;
-        }
+        return true;
     }
 
     private class ScopeScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener

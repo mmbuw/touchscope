@@ -12,7 +12,7 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
-public class UsbController
+class UsbController
 {
     private static final String TAG = "UsbController";
 

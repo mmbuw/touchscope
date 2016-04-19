@@ -5,8 +5,8 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public interface BaseScope
 {
-    final int SAMPLE_LENGTH = 610;
-    final int POOL_SIZE = 2;
+    int SAMPLE_LENGTH = 610;
+    int POOL_SIZE = 2;
 
     void open(OnReceivedName onReceivedName);
     void close();

@@ -194,10 +194,10 @@ public class RigolScope implements BaseScope
     private void setVoltageOffset(int channel, float value)
     {
         WaveData data = getWave(channel);
-     //   float offset = (float)actualVoltage(data.voltageOffset,data.voltageScale, (int)value);
-        double offset = (value / data.voltageScale) + data.voltageOffset;
+    //    float offset1 = (float)actualVoltage(data.voltageOffset,data.voltageScale, (int)value);
+        double offset = (value * data.voltageScale) + data.voltageOffset;
 
-        mUsbController.write(":" + getChannel(channel) + ":OFFS " + (float)value);
+        mUsbController.write(":" + getChannel(channel) + ":OFFS " + (float)offset);
     }
 
     // use to re-allow human actions with the scope
