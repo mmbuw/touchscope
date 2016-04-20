@@ -147,9 +147,17 @@ public class RigolScope implements BaseScope
                     mActiveWave = channel;
                     break;
                 case SET_VOLTAGE_OFFSET:
-                    Float off = (Float)specialData;
-                    setVoltageOffset(channel,off);
+                {
+                    Float off = (Float) specialData;
+                    setVoltageOffset(channel, off);
                     break;
+                }
+                case SET_TIME_OFFSET:
+                {
+                    Float off = (Float) specialData;
+                    setTimeOffset(off);
+                    break;
+                }
                 case NO_COMMAND:
                 default:
                     break;
@@ -194,10 +202,18 @@ public class RigolScope implements BaseScope
     private void setVoltageOffset(int channel, float value)
     {
         WaveData data = getWave(channel);
-    //    float offset1 = (float)actualVoltage(data.voltageOffset,data.voltageScale, (int)value);
         double offset = (value * data.voltageScale) + data.voltageOffset;
+        String command = String.format(":%s:OFFS %f",getChannel(channel),offset);
 
-        mUsbController.write(":" + getChannel(channel) + ":OFFS " + (float)offset);
+        mUsbController.write(command);
+    }
+
+    private void setTimeOffset(float value)
+    {
+        double offset = (value * mTimeData.timeScale) + mTimeData.timeOffset;
+        String command = String.format(":TIM:OFFS %f",offset);
+
+        mUsbController.write(command);
     }
 
     // use to re-allow human actions with the scope
@@ -308,6 +324,24 @@ public class RigolScope implements BaseScope
             if(isChannelOn(channel))
             {
                 // get the raw data
+            /*    mUsbController.write(":WAV:DATA? " + getChannel(channel));
+                int[] buf1 = mUsbController.read(SAMPLE_LENGTH);
+                int len1 = buf1.length;
+
+                mUsbController.write(":WAV:DATA? " + getChannel(channel));
+                int[] buf2 = mUsbController.read(SAMPLE_LENGTH);
+                int len2 = buf1.length;
+
+                mUsbController.write(":WAV:DATA? " + getChannel(channel));
+                int[] buf3 = mUsbController.read(SAMPLE_LENGTH);
+                int len3 = buf1.length;
+
+                int[] triBuffer = new int[len1 + len2 + len3];
+                System.arraycopy(buf1,0,triBuffer,0,len1);
+                System.arraycopy(buf2,0,triBuffer,len1,len2);
+                System.arraycopy(buf3,0,triBuffer,len1 + len2,len3);
+                waveData.data = triBuffer;*/
+
                 mUsbController.write(":WAV:DATA? " + getChannel(channel));
                 waveData.data = mUsbController.read(SAMPLE_LENGTH);
 

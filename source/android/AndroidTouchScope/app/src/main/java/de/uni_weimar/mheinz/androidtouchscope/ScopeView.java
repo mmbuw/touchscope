@@ -9,9 +9,10 @@ import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.Region;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
-import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -54,9 +55,9 @@ public class ScopeView extends View
 
     private int mContentWidth = 0;
     private int mContentHeight = 0;
+    private float mWidthRatio = 0f;
 
     private ScaleGestureDetector mScaleGestureDetector;
-    private GestureDetectorCompat mScopeDetector;
 
     private int mSelectedPath = -1; // -1 if not selected
     private OnDoCommand mOnDoCommand = null;
@@ -136,8 +137,8 @@ public class ScopeView extends View
     private void initGridV(ShapeDrawable drawable, Path path, int color, int width, int height)
     {
         path.rewind();
-        float cellWidth = width / 12.0f;
-        for(int i = 0; i < 12; ++i)
+        float cellWidth = width / 10.0f;
+        for(int i = 0; i < 10; ++i)
         {
             path.moveTo(i * cellWidth,0);
             path.lineTo(i * cellWidth,height);
@@ -163,7 +164,7 @@ public class ScopeView extends View
         drawable.setShape(new PathShape(path, width, height));
         drawable.getPaint().setStyle(Paint.Style.STROKE);
         drawable.getPaint().setColor(color);
-        drawable.getPaint().setPathEffect(new DashPathEffect(new float[]{1, (width - 60) / 60.0f}, 0));
+        drawable.getPaint().setPathEffect(new DashPathEffect(new float[]{1, (width - 50) / 50.0f}, 0));
         drawable.setBounds(0, 0, width, height);
     }
 
@@ -180,6 +181,10 @@ public class ScopeView extends View
     //
     //////////////////////////////////////////////////////////////////////////
 
+    private int mChangeAttempts1 = 0;
+    private int mChangeAttempts2 = 0;
+    private int mChangeAttempts3 = 0;
+
     public void setChannelData(int channel, WaveData waveData, TimeData timeData)
     {
     //    Log.d(TAG,"setChannelData::" + channel);
@@ -190,7 +195,7 @@ public class ScopeView extends View
             {
                 if(mSelectedPath == 1 && mInMovement)
                     break;
-                updatePath(mPathChan1, waveData);
+                mChangeAttempts1 = updatePath(mPathChan1, waveData, mChangeAttempts1);
                 mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
             }
@@ -198,7 +203,7 @@ public class ScopeView extends View
             {
                 if(mSelectedPath == 2 && mInMovement)
                     break;
-                updatePath(mPathChan2, waveData);
+                mChangeAttempts2 = updatePath(mPathChan2, waveData, mChangeAttempts2);
                 mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
             }
@@ -206,7 +211,7 @@ public class ScopeView extends View
             {
                 if(mSelectedPath == 3 && mInMovement)
                     break;
-                updatePath(mPathMath, waveData);
+                mChangeAttempts3 = updatePath(mPathMath, waveData, mChangeAttempts3);
                 mMathText = updateVoltText(waveData, "Math");
                 break;
             }
@@ -216,25 +221,65 @@ public class ScopeView extends View
         postInvalidate();
     }
 
-    private void updatePath(Path path, WaveData waveData)
+    private int updatePath(Path path, WaveData waveData, int attempts)
     {
-        path.rewind();
-        if(waveData == null || waveData.data == null || waveData.data.length == 0)
-            return;
 
+        if(waveData == null || waveData.data == null || waveData.data.length == 0)
+        {
+            path.rewind();
+            return 0;
+        }
+
+        int length = Math.min(BaseScope.SAMPLE_LENGTH, waveData.data.length) - 10;
+        mWidthRatio = (float)(mContentWidth) / (length - 100);
         double vScale = waveData.voltageScale;
         if(vScale == 0)
             vScale = 1.0f;
 
-        float widthRatio = (float)(mContentWidth) / (waveData.data.length - 11);
+        Path newPath = new Path();
+        float point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[10]);
 
-        float point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[11]);
-        path.moveTo(0, point);
-        for(int i = 12, j = 1; i < waveData.data.length; ++i, ++j)
+        int j = -49;
+        newPath.moveTo(j  * mWidthRatio, point);
+
+        for(int i = 11; i < waveData.data.length; ++i, ++j)
         {
             point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[i]);
-            path.lineTo(j * widthRatio, point);
+            newPath.lineTo(j * mWidthRatio, point);
         }
+
+        if(new PathMeasure(path,false).getLength() == 0)
+        {
+            path.set(newPath);
+            return 0;
+        }
+
+        //check similarity, ignore if too different
+        Region clip = new Region(0, 0, mContentWidth, mContentHeight);
+
+        Region oldRegion = new Region();
+        oldRegion.setPath(path,clip);
+        Rect oldRect = oldRegion.getBounds();
+        int mid = (oldRect.top + oldRect.bottom) / 2;
+        oldRect.set(oldRect.left, mid, oldRect.right, mid);
+
+        Region newRegion = new Region();
+        newRegion.setPath(newPath,clip);
+        Rect newRect = newRegion.getBounds();
+        mid = (newRect.top + newRect.bottom) / 2;
+        newRect.set(newRect.left, mid - 10, newRect.right, mid + 10);
+
+        if(oldRect.intersect(newRect) ||
+                attempts > 5)
+        {
+            path.set(newPath);
+            attempts = 0;
+        }
+        else
+        {
+            attempts++;
+        }
+        return attempts;
     }
 
     private String updateVoltText(WaveData waveData, String chan)
@@ -403,9 +448,8 @@ public class ScopeView extends View
     //////////////////////////////////////////////////////////////////////////
 
     private int mActivePointerId = MotionEvent.INVALID_POINTER_ID;
-    private float mFirstTouchY = 0f;
-    private float mLastTouchX = 0;
-    private float mLastTouchY = 0;
+    private PointF mFirstTouch = new PointF();
+    private PointF mRecentTouch = new PointF();
     private boolean mInMovement = false;
 
     @Override
@@ -419,9 +463,9 @@ public class ScopeView extends View
             case MotionEvent.ACTION_DOWN:
             {
                 int index = MotionEventCompat.getActionIndex(event);
-                mLastTouchX = MotionEventCompat.getX(event, index);
-                mLastTouchY = MotionEventCompat.getY(event, index);
-                mFirstTouchY = mLastTouchY;
+                mRecentTouch.x = MotionEventCompat.getX(event, index);
+                mRecentTouch.y = MotionEventCompat.getY(event, index);
+                mFirstTouch.set(mRecentTouch.x,mRecentTouch.y);
 
                 // id for dragging
                 mActivePointerId = MotionEventCompat.getPointerId(event, 0);
@@ -436,38 +480,43 @@ public class ScopeView extends View
                 float y = MotionEventCompat.getY(event, pointerIndex);
 
                 // Calculate the distance moved
-                final float dx = x - mLastTouchX;
-                final float dy = y - mLastTouchY;
+                final float dx = x - mRecentTouch.x;
+                final float dy = y - mRecentTouch.y;
 
                 if(Math.abs(dx) + Math.abs(dy) > 5)
                 {
                     mInMovement = true;
 
-                    if(mSelectedPath > 0)
+                    // must have a selected channel for voltage offset
+                    switch(mSelectedPath)
                     {
-                      /*  if(mOnDoCommand != null)
-                            mOnDoCommand.doCommand(
-                                    BaseScope.Command.SET_VOLTAGE_OFFSET,
-                                    mSelectedPath,
-                                    (Float)(-dy / (mContentHeight / 8.0f)));*/
-
-                        switch(mSelectedPath)
-                        {
-                            case 1:
-                                mPathChan1.offset(0,dy);
-                                break;
-                            case 2:
-                                mPathChan2.offset(0,dy);
-                                break;
-                            case 3:
-                                mPathMath.offset(0,dy);
-                                break;
-                        }
-
-                        invalidate();
+                        case 1:
+                            mPathChan1.offset(0,dy);
+                            break;
+                        case 2:
+                            mPathChan2.offset(0,dy);
+                            break;
+                        case 3:
+                            mPathMath.offset(0,dy);
+                            break;
                     }
-                    mLastTouchX = x;
-                    mLastTouchY = y;
+
+                    mPathChan1.offset(dx, 0);
+                    mPathChan2.offset(dx, 0);
+                    mPathMath.offset(dx, 0);
+
+                    invalidate();
+
+                    // if horizontal change is larger than 25 points, send update to scope
+                   /* if(mOnDoCommand != null && Math.abs(x - mFirstTouch.x) > mWidthRatio * 25)
+                    {
+                        mOnDoCommand.doCommand(BaseScope.Command.SET_TIME_OFFSET,
+                                0,
+                                (Float) (mFirstTouch.x - x) / (mContentWidth / 10.0f));//mWidthRatio / 12));
+                    }*/
+
+                    mRecentTouch.x = x;
+                    mRecentTouch.y = y;
                 }
 
                 break;
@@ -485,12 +534,21 @@ public class ScopeView extends View
                 }
                 else
                 {
-                    float distY = mFirstTouchY - y;
                     if(mOnDoCommand != null)
+                    {
+                        if(mSelectedPath > 0)
+                        {
+                            float distY = mFirstTouch.y - y;
+                            mOnDoCommand.doCommand(BaseScope.Command.SET_VOLTAGE_OFFSET,
+                                    mSelectedPath,
+                                    (Float) (distY / (mContentHeight / 8.0f)));
+                        }
+                        float distX = mFirstTouch.x - x;
                         mOnDoCommand.doCommand(
-                                BaseScope.Command.SET_VOLTAGE_OFFSET,
-                                mSelectedPath,
-                                (Float) (distY / (mContentHeight / 8.0f)));
+                                BaseScope.Command.SET_TIME_OFFSET,
+                                0,
+                                (Float)(distX / (mContentWidth / 10.0f)));//mWidthRatio / 12));
+                    }
                 }
 
                 mInMovement = false;
@@ -513,8 +571,8 @@ public class ScopeView extends View
                     // This was our active pointer going up. Choose a new
                     // active pointer and adjust accordingly.
                     final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-                    mLastTouchX = MotionEventCompat.getX(event, newPointerIndex);
-                    mLastTouchY = MotionEventCompat.getY(event, newPointerIndex);
+                    mRecentTouch.x = MotionEventCompat.getX(event, newPointerIndex);
+                    mRecentTouch.y = MotionEventCompat.getY(event, newPointerIndex);
                     mActivePointerId = MotionEventCompat.getPointerId(event, newPointerIndex);
                 }
                 break;
