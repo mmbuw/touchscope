@@ -25,6 +25,7 @@ public interface BaseScope
         SET_ACTIVE_CHANNEL,
         SET_VOLTAGE_OFFSET,
         SET_TIME_OFFSET,
+        SET_CHANNEL_STATE,
         NO_COMMAND
     }
 

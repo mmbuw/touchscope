@@ -1,6 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.graphics.Color;
+import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -32,7 +33,8 @@ public class TouchScopeActivity extends AppCompatActivity
     private ScopeView mScopeView = null;
 
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList; // temp till done
+    private NavigationView mRightDrawer;
+ //   private ListView mDrawerList; // temp till done
 
     private Handler mRefreshHandler = new Handler();
 
@@ -56,8 +58,51 @@ public class TouchScopeActivity extends AppCompatActivity
             actionBar.setHomeButtonEnabled(true);
         }
 
-        mDrawerList = (ListView)findViewById(R.id.right_drawer);
-        mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new String[]{"one", "two", "three"}));
+      //  mDrawerList = (ListView)findViewById(R.id.right_drawer);
+      //  mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new String[]{"one", "two", "three"}));
+        mRightDrawer = (NavigationView)findViewById(R.id.right_drawer);
+        mRightDrawer.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
+        {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item)
+            {
+                if(mActiveScope == null)
+                    return true;
+
+                item.setChecked(!item.isChecked());
+
+
+                //Closing drawer on item click
+                mDrawerLayout.closeDrawers();
+
+                //Check to see which item was being clicked and perform appropriate action
+                switch (item.getItemId())
+                {
+                    case R.id.navigation_channel1:
+                        mActiveScope.doCommand(
+                                BaseScope.Command.SET_CHANNEL_STATE,
+                                1,
+                                true,
+                                (Boolean)item.isChecked());
+                        break;
+                    case R.id.navigation_channel2:
+                        mActiveScope.doCommand(
+                                BaseScope.Command.SET_CHANNEL_STATE,
+                                2,
+                                true,
+                                (Boolean)item.isChecked());
+                        break;
+                    case R.id.navigation_channel3:
+                        mActiveScope.doCommand(
+                                BaseScope.Command.SET_CHANNEL_STATE,
+                                3,
+                                true,
+                                (Boolean)item.isChecked());
+                        break;
+                }
+                return false;
+            }
+        });
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
         mScopeView.setOnDoCommand(new ScopeView.OnDoCommand()

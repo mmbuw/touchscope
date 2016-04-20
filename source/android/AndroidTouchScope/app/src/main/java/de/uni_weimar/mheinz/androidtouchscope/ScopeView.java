@@ -193,7 +193,7 @@ public class ScopeView extends View
         {
             case 1:
             {
-                if(mSelectedPath == 1 && mInMovement)
+                if(/*mSelectedPath == 1 &&*/ mInMovement)
                     break;
                 mChangeAttempts1 = updatePath(mPathChan1, waveData, mChangeAttempts1);
                 mChan1Text = updateVoltText(waveData, "Chan1");
@@ -201,7 +201,7 @@ public class ScopeView extends View
             }
             case 2:
             {
-                if(mSelectedPath == 2 && mInMovement)
+                if(/*mSelectedPath == 2 &&*/ mInMovement)
                     break;
                 mChangeAttempts2 = updatePath(mPathChan2, waveData, mChangeAttempts2);
                 mChan2Text = updateVoltText(waveData, "Chan2");
@@ -209,7 +209,7 @@ public class ScopeView extends View
             }
             case 3:
             {
-                if(mSelectedPath == 3 && mInMovement)
+                if(/*mSelectedPath == 3 &&*/ mInMovement)
                     break;
                 mChangeAttempts3 = updatePath(mPathMath, waveData, mChangeAttempts3);
                 mMathText = updateVoltText(waveData, "Math");
@@ -508,12 +508,12 @@ public class ScopeView extends View
                     invalidate();
 
                     // if horizontal change is larger than 25 points, send update to scope
-                   /* if(mOnDoCommand != null && Math.abs(x - mFirstTouch.x) > mWidthRatio * 25)
+                    if(mOnDoCommand != null && Math.abs(mFirstTouch.x - x) > 10)// mWidthRatio * 25)
                     {
                         mOnDoCommand.doCommand(BaseScope.Command.SET_TIME_OFFSET,
                                 0,
-                                (Float) (mFirstTouch.x - x) / (mContentWidth / 10.0f));//mWidthRatio / 12));
-                    }*/
+                                (Float) (mRecentTouch.x - x) / (mContentWidth / 10.0f));//mWidthRatio / 12));
+                    }
 
                     mRecentTouch.x = x;
                     mRecentTouch.y = y;
@@ -543,7 +543,7 @@ public class ScopeView extends View
                                     mSelectedPath,
                                     (Float) (distY / (mContentHeight / 8.0f)));
                         }
-                        float distX = mFirstTouch.x - x;
+                        float distX = mRecentTouch.x - x;
                         mOnDoCommand.doCommand(
                                 BaseScope.Command.SET_TIME_OFFSET,
                                 0,

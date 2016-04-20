@@ -74,6 +74,23 @@
         </RelativeLayout>
     </LinearLayout>
 
+<!--
+    <android.support.design.widget.NavigationView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/drawer_header"
+        app:menu="@menu/drawer"/>
+-->
+
+    <android.support.design.widget.NavigationView
+        android:id="@+id/right_drawer"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        app:menu="@menu/drawer_right"/>
+
+<!--
     <ListView android:id="@+id/right_drawer"
               android:layout_width="240dp"
               android:layout_height="match_parent"
@@ -83,5 +100,5 @@
               android:divider="@android:color/transparent"
               android:dividerHeight="0dp"
               android:background="#111"/>
-
+-->
 </android.support.v4.widget.DrawerLayout>
