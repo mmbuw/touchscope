@@ -18,7 +18,7 @@ public class RigolScope implements BaseScope
 
     private static final int READ_RATE = 100;
 
-    private Activity mActivity;
+    private final Activity mActivity;
     private final Object mControllerLock = new Object();
     private UsbController mUsbController = null;
     private boolean mIsConnected = false;
@@ -266,19 +266,19 @@ public class RigolScope implements BaseScope
     private double bytesToDouble(int[] data)
     {
         double value = 0.0;
-        try
+        if(data != null)
         {
-            String strValue = new String(intArrayToByteArray(data), "UTF-8");
-            value = Double.parseDouble(strValue);
+            try
+            {
+                String strValue = new String(intArrayToByteArray(data), "UTF-8");
+                value = Double.parseDouble(strValue);
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
         }
-        catch(UnsupportedEncodingException e)
-        {
-            e.printStackTrace();
-        }
-        catch(NumberFormatException e)
-        {
-            e.printStackTrace();
-        }
+
         return value;
     }
 
@@ -323,25 +323,6 @@ public class RigolScope implements BaseScope
         {
             if(isChannelOn(channel))
             {
-                // get the raw data
-            /*    mUsbController.write(":WAV:DATA? " + getChannel(channel));
-                int[] buf1 = mUsbController.read(SAMPLE_LENGTH);
-                int len1 = buf1.length;
-
-                mUsbController.write(":WAV:DATA? " + getChannel(channel));
-                int[] buf2 = mUsbController.read(SAMPLE_LENGTH);
-                int len2 = buf1.length;
-
-                mUsbController.write(":WAV:DATA? " + getChannel(channel));
-                int[] buf3 = mUsbController.read(SAMPLE_LENGTH);
-                int len3 = buf1.length;
-
-                int[] triBuffer = new int[len1 + len2 + len3];
-                System.arraycopy(buf1,0,triBuffer,0,len1);
-                System.arraycopy(buf2,0,triBuffer,len1,len2);
-                System.arraycopy(buf3,0,triBuffer,len1 + len2,len3);
-                waveData.data = triBuffer;*/
-
                 mUsbController.write(":WAV:DATA? " + getChannel(channel));
                 waveData.data = mUsbController.read(SAMPLE_LENGTH);
 

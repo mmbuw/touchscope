@@ -41,12 +41,19 @@ class UsbController
 
         mUsbManager = (UsbManager) mActivity.getSystemService(Context.USB_SERVICE);
 
-        for (UsbDevice device : mUsbManager.getDeviceList().values())
+        try
         {
-            if(isCorrectScope(device))
+            for (UsbDevice device : mUsbManager.getDeviceList().values())
             {
-                setDevice(device);
+                if (isCorrectScope(device))
+                {
+                    setDevice(device);
+                }
             }
+        }
+        catch (NullPointerException ex)
+        {
+            ex.printStackTrace();
         }
 
         IntentFilter filter = new IntentFilter();

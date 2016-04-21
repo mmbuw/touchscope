@@ -62,26 +62,28 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentLeft="true"
-                android:layout_above="@+id/testRead"/>
+                android:layout_above="@+id/buttonRunStop"/>
 
             <ToggleButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/testRead"
-                android:onClick="onTestRead"
+                android:id="@+id/buttonRunStop"
+                android:textOn="Run Stop"
+                android:textOff="Run Stop"
+                android:onClick="onRunStop"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"/>
         </RelativeLayout>
     </LinearLayout>
 
-<!--
+
     <android.support.design.widget.NavigationView
-        android:layout_width="wrap_content"
+        android:id="@+id/left_drawer"
+        android:layout_width="240dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:headerLayout="@layout/drawer_header"
-        app:menu="@menu/drawer"/>
--->
+        app:menu="@menu/drawer_left"/>
+
 
     <android.support.design.widget.NavigationView
         android:id="@+id/right_drawer"
@@ -91,14 +93,11 @@
         app:menu="@menu/drawer_right"/>
 
 <!--
-    <ListView android:id="@+id/right_drawer"
-              android:layout_width="240dp"
-              android:layout_height="match_parent"
-              android:layout_gravity="end"
-              android:fitsSystemWindows="true"
-              android:choiceMode="singleChoice"
-              android:divider="@android:color/transparent"
-              android:dividerHeight="0dp"
-              android:background="#111"/>
+    <android.support.design.widget.NavigationView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/drawer_header"
+        app:menu="@menu/drawer"/>
 -->
 </android.support.v4.widget.DrawerLayout>

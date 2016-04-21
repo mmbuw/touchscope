@@ -29,22 +29,22 @@ public class ScopeView extends View
 {
     private static final String TAG = "ScopeView";
 
-    private ShapeDrawable mDrawableChan1 = new ShapeDrawable();
-    private ShapeDrawable mDrawableChan2 = new ShapeDrawable();
-    private ShapeDrawable mDrawableMath = new ShapeDrawable();
-    private ShapeDrawable mDrawableGridH = new ShapeDrawable();
-    private ShapeDrawable mDrawableGridV = new ShapeDrawable();
+    private final ShapeDrawable mDrawableChan1 = new ShapeDrawable();
+    private final ShapeDrawable mDrawableChan2 = new ShapeDrawable();
+    private final ShapeDrawable mDrawableMath = new ShapeDrawable();
+    private final ShapeDrawable mDrawableGridH = new ShapeDrawable();
+    private final ShapeDrawable mDrawableGridV = new ShapeDrawable();
 
-    private Path mPathChan1 = new Path();
-    private Path mPathChan2 = new Path();
-    private Path mPathMath = new Path();
-    private Path mPathGridH = new Path();
-    private Path mPathGridV = new Path();
+    private final Path mPathChan1 = new Path();
+    private final Path mPathChan2 = new Path();
+    private final Path mPathMath = new Path();
+    private final Path mPathGridH = new Path();
+    private final Path mPathGridV = new Path();
 
-    private Paint mChan1TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private Paint mChan2TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mChan1TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mChan2TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private String mChan1Text = "";
     private String mChan2Text = "";
@@ -448,8 +448,8 @@ public class ScopeView extends View
     //////////////////////////////////////////////////////////////////////////
 
     private int mActivePointerId = MotionEvent.INVALID_POINTER_ID;
-    private PointF mFirstTouch = new PointF();
-    private PointF mRecentTouch = new PointF();
+    private final PointF mFirstTouch = new PointF();
+    private final PointF mRecentTouch = new PointF();
     private boolean mInMovement = false;
 
     @Override

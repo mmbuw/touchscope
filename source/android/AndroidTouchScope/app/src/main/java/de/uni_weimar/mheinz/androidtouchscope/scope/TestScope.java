@@ -8,19 +8,19 @@ public class TestScope implements BaseScope
 {
     private static final int READ_RATE = 100;
 
-    private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
-    private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    private WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
-    private TimeData mTimeData = new TimeData();
+    private final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
+    private final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
+    private final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
+    private final TimeData mTimeData = new TimeData();
 
-    private FakeWaveData mFakeWave1;
-    private FakeWaveData mFakeWave2;
-    private FakeWaveData mFakeWave3;
+    private final FakeWaveData mFakeWave1;
+    private final FakeWaveData mFakeWave2;
+    private final FakeWaveData mFakeWave3;
 
     private int mActiveWave = -1;
 
     private final Object mControllerLock = new Object();
-    private Handler mReadHandler = new Handler();
+    private final Handler mReadHandler = new Handler();
     private OnReceivedName mOnReceivedName;
 
     public TestScope()
@@ -130,6 +130,14 @@ public class TestScope implements BaseScope
                     setChannelState(channel, state);
                     break;
                 }
+                case SET_RUN_STOP:
+                {
+                 /*   Boolean run = (Boolean)specialData;
+                    if(run)
+                        start();
+                    else
+                        stop();*/
+                }
             }
         }
         return val;
@@ -205,7 +213,7 @@ public class TestScope implements BaseScope
     //
     //////////////////////////////////////////////////////////////////////////
 
-    private Runnable mReadRunnable = new Runnable()
+    private final Runnable mReadRunnable = new Runnable()
     {
         @Override
         public void run()
