@@ -306,11 +306,35 @@ public class TouchScopeActivity extends AppCompatActivity
 
     public void onRunStop(View view)
     {
+        final boolean isChecked = ((ToggleButton)view).isChecked();
+
         if(mActiveScope != null)
             mActiveScope.doCommand(
                     BaseScope.Command.SET_RUN_STOP,
                     0,
                     true,
-                    ((ToggleButton)view).isChecked());
+                    isChecked);
+    }
+
+    public void onAuto(View view)
+    {
+        final ToggleButton button = (ToggleButton)view;
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(mActiveScope != null)
+                    mActiveScope.doCommand(
+                            BaseScope.Command.DO_AUTO,
+                            0,
+                            true,
+                            button.isChecked());
+
+                Log.i(TAG, "Auto Completed");
+                button.setChecked(false);
+            }
+        }, 0);
     }
 }

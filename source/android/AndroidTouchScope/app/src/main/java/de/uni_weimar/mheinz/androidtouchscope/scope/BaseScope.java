@@ -27,6 +27,7 @@ public interface BaseScope
         SET_TIME_OFFSET,
         SET_CHANNEL_STATE,
         SET_RUN_STOP,
+        DO_AUTO,
         NO_COMMAND
     }
 

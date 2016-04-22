@@ -158,6 +158,21 @@ public class RigolScope implements BaseScope
                     setTimeOffset(off);
                     break;
                 }
+                case SET_CHANNEL_STATE:
+                {
+                    Boolean state = (Boolean)specialData;
+                    setChannelState(channel, state);
+                    break;
+                }
+                case SET_RUN_STOP:
+                {
+                    Boolean run = (Boolean)specialData;
+                    setRunStop(run);
+                    break;
+                }
+                case DO_AUTO:
+                    doAuto();
+                    break;
                 case NO_COMMAND:
                 default:
                     break;
@@ -178,6 +193,7 @@ public class RigolScope implements BaseScope
         synchronized (mControllerLock)
         {
             mUsbController.write(":WAV:POIN:MODE NOR");
+            setRunStop(true);
             forceCommand();
         }
     }
@@ -203,7 +219,7 @@ public class RigolScope implements BaseScope
     {
         WaveData data = getWave(channel);
         double offset = (value * data.voltageScale) + data.voltageOffset;
-        String command = String.format(":%s:OFFS %f",getChannel(channel),offset);
+        String command = String.format(":%s:OFFS %f", getChannel(channel), offset);
 
         mUsbController.write(command);
     }
@@ -211,9 +227,37 @@ public class RigolScope implements BaseScope
     private void setTimeOffset(float value)
     {
         double offset = (value * mTimeData.timeScale) + mTimeData.timeOffset;
-        String command = String.format(":TIM:OFFS %f",offset);
+        String command = String.format(":TIM:OFFS %.10f",offset);
 
         mUsbController.write(command);
+    }
+
+    private void setChannelState(int channel, boolean state)
+    {
+        String onOff = state ? "ON" : "OFF";
+        String command = String.format(":%s:DISP %s",getChannel(channel), onOff);
+
+        mUsbController.write(command);
+    }
+
+    private void setRunStop(boolean run)
+    {
+        String command = run ? ":RUN" : ":STOP";
+
+        mUsbController.write(command);
+    }
+
+    private void doAuto()
+    {
+        mUsbController.write(":AUTO");
+        try
+        {
+            Thread.sleep(5000,0);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     // use to re-allow human actions with the scope

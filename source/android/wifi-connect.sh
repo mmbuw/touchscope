@@ -7,7 +7,7 @@ if [ "$?" -ne "0" ]; then
   exit 1
 fi
 read -p "disconnect device and press enter"
-./adb connect 10.0.1.62:5555
+./adb connect 10.0.1.6:5555
 if [ "$?" -ne "0" ]; then
   echo "could not find device on wifi"
 fi
