@@ -1,6 +1,8 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -10,10 +12,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import android.os.Handler;
+import android.view.TouchDelegate;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -28,7 +32,7 @@ public class TouchScopeActivity extends AppCompatActivity
     private static final String TAG = "TouchScopeActivity";
     private static final int REFRESH_RATE = 100;
 
-    private BaseScope mActiveScope = null;
+    private ScopeInterface mActiveScope = null;
     private ScopeView mScopeView = null;
 
     private DrawerLayout mDrawerLayout;
@@ -47,7 +51,9 @@ public class TouchScopeActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        assert mDrawerLayout != null;
         mDrawerLayout.setScrimColor(Color.TRANSPARENT);
+        mDrawerLayout.post(new ExpandScopeViewArea());
 
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null)
@@ -60,19 +66,21 @@ public class TouchScopeActivity extends AppCompatActivity
         mLeftDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
                 R.string.drawer_open, R.string.drawer_close);
 
-        mDrawerLayout.setDrawerListener(mLeftDrawerToggle);
+        mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
 
         mLeftDrawer = (NavigationView)findViewById(R.id.left_drawer);
+        assert mLeftDrawer != null;
         mLeftDrawer.setNavigationItemSelectedListener(mLeftDrawerSelectedListener);
 
         NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
+        assert rightDrawer != null;
         rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
         mScopeView.setOnDoCommand(new ScopeView.OnDoCommand()
         {
             @Override
-            public void doCommand(BaseScope.Command command, int channel, Object specialData)
+            public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
             {
                 if(mActiveScope != null)
                 {
@@ -82,15 +90,17 @@ public class TouchScopeActivity extends AppCompatActivity
         });
 
         ToggleButton runStopButton = (ToggleButton)findViewById(R.id.buttonRunStop);
+        assert runStopButton != null;
         runStopButton.setChecked(true);
 
         // test if it is emulator
-        initScope(!Build.BRAND.contains("generic"));
+        initScope(!Build.FINGERPRINT.contains("generic"));
     }
 
     private void initScope(boolean doReal)
     {
         Toolbar toolbar = (Toolbar) findViewById(R.id.scope_toolbar);
+        assert toolbar != null;
         ((TextView) toolbar.findViewById(R.id.toolbar_title)).setText(R.string.app_name);
 
         if(mActiveScope != null)
@@ -111,7 +121,7 @@ public class TouchScopeActivity extends AppCompatActivity
             mActiveScope = new TestScope();
             mLeftDrawer.getMenu().getItem(1).setChecked(true);
         }
-        mActiveScope.open(new BaseScope.OnReceivedName()
+        mActiveScope.open(new ScopeInterface.OnReceivedName()
         {
             @Override
             public void returnName(String name)
@@ -123,6 +133,7 @@ public class TouchScopeActivity extends AppCompatActivity
                     public void run()
                     {
                         Toolbar toolbar = (Toolbar) findViewById(R.id.scope_toolbar);
+                        assert toolbar != null;
                         ((TextView) toolbar.findViewById(R.id.toolbar_title)).setText(scopeName);
                     }
                 });
@@ -175,7 +186,7 @@ public class TouchScopeActivity extends AppCompatActivity
 
         if(mActiveScope == null)
         {
-            initScope(!Build.BRAND.contains("generic"));
+            initScope(!Build.FINGERPRINT.contains("generic"));
         }
 
         startRunnableAndScope();
@@ -260,21 +271,21 @@ public class TouchScopeActivity extends AppCompatActivity
             {
                 case R.id.navigation_channel1:
                     mActiveScope.doCommand(
-                            BaseScope.Command.SET_CHANNEL_STATE,
+                            ScopeInterface.Command.SET_CHANNEL_STATE,
                             1,
                             true,
                             (Boolean) item.isChecked());
                     break;
                 case R.id.navigation_channel2:
                     mActiveScope.doCommand(
-                            BaseScope.Command.SET_CHANNEL_STATE,
+                            ScopeInterface.Command.SET_CHANNEL_STATE,
                             2,
                             true,
                             (Boolean) item.isChecked());
                     break;
                 case R.id.navigation_channel3:
                     mActiveScope.doCommand(
-                            BaseScope.Command.SET_CHANNEL_STATE,
+                            ScopeInterface.Command.SET_CHANNEL_STATE,
                             3,
                             true,
                             (Boolean) item.isChecked());
@@ -304,13 +315,42 @@ public class TouchScopeActivity extends AppCompatActivity
         }
     };
 
+   // private final Runnable mExpandTouchView = new Runnable()
+    private class ExpandScopeViewArea implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
+            assert scopeView != null;
+
+            Display display = getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+
+           // scopeView.getHitRect(delegateArea);
+            //set to available size
+            Rect delegateArea = new Rect();
+            delegateArea.left = 0;
+            delegateArea.top = 0;
+            delegateArea.right = size.x;
+            delegateArea.bottom = size.y;
+            TouchDelegate touchDelegate = new TouchDelegate(delegateArea, scopeView);
+
+            if(View.class.isInstance(scopeView.getParent()))
+            {
+                ((View)scopeView.getParent()).setTouchDelegate(touchDelegate);
+            }
+        }
+    }
+
     public void onRunStop(View view)
     {
         final boolean isChecked = ((ToggleButton)view).isChecked();
 
         if(mActiveScope != null)
             mActiveScope.doCommand(
-                    BaseScope.Command.SET_RUN_STOP,
+                    ScopeInterface.Command.SET_RUN_STOP,
                     0,
                     true,
                     isChecked);
@@ -327,7 +367,7 @@ public class TouchScopeActivity extends AppCompatActivity
             {
                 if(mActiveScope != null)
                     mActiveScope.doCommand(
-                            BaseScope.Command.DO_AUTO,
+                            ScopeInterface.Command.DO_AUTO,
                             0,
                             true,
                             button.isChecked());

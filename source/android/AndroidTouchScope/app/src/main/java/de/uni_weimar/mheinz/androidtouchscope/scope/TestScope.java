@@ -1,90 +1,31 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-import android.os.Handler;
-
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
-public class TestScope implements BaseScope
+public class TestScope extends BaseScope
 {
-    private static final int READ_RATE = 100;
-
-    private final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
-    private final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    private final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
-    private final TimeData mTimeData = new TimeData();
-
-    private final FakeWaveData mFakeWave1;
-    private final FakeWaveData mFakeWave2;
-    private final FakeWaveData mFakeWave3;
-
-    private int mActiveWave = -1;
-
-    private final Object mControllerLock = new Object();
-    private final Handler mReadHandler = new Handler();
-    private OnReceivedName mOnReceivedName;
+    private FakeWaveData mFakeWave1;
+    private FakeWaveData mFakeWave2;
+    private FakeWaveData mFakeWave3;
 
     public TestScope()
+    {
+        initTestScope();
+        mIsConnected = true;
+    }
+
+    private void initTestScope()
     {
         mFakeWave1 = new FakeWaveData(59909.986179362626);
         mFakeWave2 = new FakeWaveData(36135.1315588236);
         mFakeWave3 = new FakeWaveData(48039.920311455244);
-   //     mFakeWave1.isOn = true;
+        mFakeWave1.isOn = true;
     }
 
     public void open(OnReceivedName onReceivedName)
     {
-        mOnReceivedName = onReceivedName;
+        super.open(onReceivedName);
         doCommand(Command.GET_NAME, 0, false, null);
-    }
-
-    public void close()
-    {
-        stop();
-    }
-
-    public void start()
-    {
-        stop();
-        mReadHandler.postDelayed(mReadRunnable, 0);
-    }
-
-    public void stop()
-    {
-        mReadHandler.removeCallbacks(mReadRunnable);
-    }
-
-    public boolean isConnected()
-    {
-        return true;
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    //
-    // Get Wave Data
-    //
-    //////////////////////////////////////////////////////////////////////////
-
-    public WaveData getWave(int chan)
-    {
-        WaveData waveData = null;
-        switch(chan)
-        {
-            case 1:
-                waveData = mWaves1.peek();
-                break;
-            case 2:
-                waveData = mWaves2.peek();
-                break;
-            case 3:
-                waveData = mWaves3.peek();
-                break;
-        }
-        return waveData;
-    }
-
-    public TimeData getTimeData()
-    {
-        return mTimeData;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -93,62 +34,12 @@ public class TestScope implements BaseScope
     //
     //////////////////////////////////////////////////////////////////////////
 
-    public int doCommand(Command command, int channel, boolean force, Object specialData)
-    {
-        int val = 0;
-
-        synchronized (mControllerLock)
-        {
-            switch (command)
-            {
-                case IS_CHANNEL_ON:
-                    val = isChannelOn(channel) ? 1 : 0;
-                    break;
-                case GET_NAME:
-                    String name = getName();
-                    if (mOnReceivedName != null)
-                        mOnReceivedName.returnName(name);
-                    break;
-                case SET_ACTIVE_CHANNEL:
-                    mActiveWave = channel;
-                    break;
-                case SET_VOLTAGE_OFFSET:
-                {
-                    Float off = (Float) specialData;
-                    setVoltageOffset(channel, off);
-                    break;
-                }
-                case SET_TIME_OFFSET:
-                {
-                    Float off = (Float) specialData;
-                    setTimeOffset(off);
-                    break;
-                }
-                case SET_CHANNEL_STATE:
-                {
-                    Boolean state = (Boolean)specialData;
-                    setChannelState(channel, state);
-                    break;
-                }
-                case SET_RUN_STOP:
-                {
-                 /*   Boolean run = (Boolean)specialData;
-                    if(run)
-                        start();
-                    else
-                        stop();*/
-                }
-            }
-        }
-        return val;
-    }
-
-    private String getName()
+    protected String getName()
     {
         return "Test Scope";
     }
 
-    private boolean isChannelOn(int channel)
+    protected boolean isChannelOn(int channel)
     {
         boolean isOn = false;
         switch (channel)
@@ -167,10 +58,10 @@ public class TestScope implements BaseScope
         return isOn;
     }
 
-    private void setVoltageOffset(int channel, float value)
+    protected void setVoltageOffset(int channel, float value)
     {
         WaveData data = getWave(channel);
-        double offset = (-value /** data.voltageScale*/ * 25) + data.voltageOffset;
+        double offset = (-value * 25) + data.voltageOffset;
 
         switch (channel)
         {
@@ -186,12 +77,37 @@ public class TestScope implements BaseScope
         }
     }
 
-    private void setTimeOffset(float value)
+    protected void setTimeOffset(float value)
     {
-        mTimeData.timeOffset = (value * 50 /*mTimeData.timeScale*/) + mTimeData.timeOffset;
+        mTimeData.timeOffset = (value * 50) + mTimeData.timeOffset;
     }
 
-    private void setChannelState(int channel, boolean state)
+    protected void setVoltageScale(int channel, float value)
+    {
+        WaveData data = getWave(channel);
+        double scale = value * data.voltageScale;
+
+        switch (channel)
+        {
+            case 1:
+                mFakeWave1.scale = scale;
+                break;
+            case 2:
+                mFakeWave2.scale = scale;
+                break;
+            case 3:
+                mFakeWave3.scale = scale;
+                break;
+        }
+    }
+
+    protected void setTimeScale(float value)
+    {
+        double scale = Math.abs(mTimeData.timeScale - 1/value);
+        mTimeData.timeScale = scale;
+    }
+
+    protected void setChannelState(int channel, boolean state)
     {
         switch (channel)
         {
@@ -207,25 +123,26 @@ public class TestScope implements BaseScope
         }
     }
 
+    protected void doAuto()
+    {
+        initTestScope();
+        try
+        {
+            Thread.sleep(1000,0);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     //////////////////////////////////////////////////////////////////////////
     //
     // Collect Wave Data at timed intervals
     //
     //////////////////////////////////////////////////////////////////////////
 
-    private final Runnable mReadRunnable = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            generateTone(1);
-            generateTone(2);
-            generateTone(3);
-            mReadHandler.postDelayed(this, READ_RATE);
-        }
-    };
-
-    private void generateTone(int channel)
+    protected void readWave(int channel)
     {
         WaveData waveData;
         FakeWaveData fakeWaveData;

@@ -21,8 +21,10 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
+import java.util.Locale;
+
+import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.BaseScope;
-import de.uni_weimar.mheinz.androidtouchscope.scope.RigolScope;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
@@ -312,7 +314,7 @@ public class ScopeView extends View
                 end = "V";
             }
 
-            return String.format("%s: %.2f%s", chan, value, end);
+            return String.format(Locale.getDefault(),"%s: %.2f%s", chan, value, end);
         }
         else
         {
@@ -348,7 +350,7 @@ public class ScopeView extends View
             value = time;
             end = "S";
         }
-        return String.format("Time: %.2f%s",value,end);
+        return String.format(Locale.getDefault(),"Time: %.2f%s",value,end);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -362,7 +364,7 @@ public class ScopeView extends View
         float heightRatio = (mContentHeight / 8.0f) / (float)voltScale;
         float mid = (mContentHeight / 2.0f);
 
-        float point = (float)RigolScope.actualVoltage(voltOffset, voltScale, data);
+        float point = (float) BaseScope.actualVoltage(voltOffset, voltScale, data);
         point = mid - ((point + (float)voltOffset) * heightRatio);
         if(point < 0)
             point = 0;
@@ -370,6 +372,20 @@ public class ScopeView extends View
             point = mContentHeight;
 
         return point;
+    }
+
+    private int channelOnCount()
+    {
+        int count = 0;
+
+        PathMeasure measure = new PathMeasure(mPathChan1,false);
+        count += measure.getLength() > 0 ? 1 : 0;
+        measure.setPath(mPathChan2,false);
+        count += measure.getLength() > 0 ? 1 : 0;
+        measure.setPath(mPathMath,false);
+        count += measure.getLength() > 0 ? 1 : 0;
+
+        return count;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -423,8 +439,8 @@ public class ScopeView extends View
         else
             mSelectedPath = hit;
 
-        if(mOnDoCommand != null)
-            mOnDoCommand.doCommand(BaseScope.Command.SET_ACTIVE_CHANNEL, mSelectedPath, null);
+        //if(mOnDoCommand != null)
+        //    mOnDoCommand.doCommand(ScopeInterface.Command.SET_ACTIVE_CHANNEL, mSelectedPath, null);
 
         mDrawableChan1.getPaint().clearShadowLayer();
         mDrawableChan1.getPaint().setStrokeWidth(1);
@@ -520,27 +536,21 @@ public class ScopeView extends View
                     float x = MotionEventCompat.getX(event, pointerIndex);
                     float y = MotionEventCompat.getY(event, pointerIndex);
 
-                    int numOn = 0;
-                    PathMeasure measure = new PathMeasure(mPathChan1,false);
-                    numOn += measure.getLength() > 0 ? 1 : 0;
-                    measure.setPath(mPathChan2,false);
-                    numOn += measure.getLength() > 0 ? 1 : 0;
-                    measure.setPath(mPathMath,false);
-                    numOn += measure.getLength() > 0 ? 1 : 0;
-
+                    int numOn = channelOnCount();
                     mChangeDelay = 4 * numOn;
+
                     if(mOnDoCommand != null)
                     {
                         if(mSelectedPath > 0)
                         {
                             float distY = mFirstTouch.y - y;
-                            mOnDoCommand.doCommand(BaseScope.Command.SET_VOLTAGE_OFFSET,
+                            mOnDoCommand.doCommand(ScopeInterface.Command.SET_VOLTAGE_OFFSET,
                                     mSelectedPath,
                                     (Float) (distY / (mContentHeight / NUM_ROWS)));
                         }
                         float distX = mFirstTouch.x - x;
                         mOnDoCommand.doCommand(
-                                BaseScope.Command.SET_TIME_OFFSET,
+                                ScopeInterface.Command.SET_TIME_OFFSET,
                                 0,
                                 (Float)(distX / (mContentWidth / NUM_COLUMNS)));
                     }
@@ -607,13 +617,8 @@ public class ScopeView extends View
 
     private class ScopeScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener
     {
-        private float mLastSpanX;
-        private float mLastSpanY;
-
-        private static final float MAX_ZOOM_X = 10f;
-        private static final float MIN_ZOOM_X = 2.0E-3f;
-        private static final float MAX_ZOOM_Y = 50f;
-        private static final float MIN_ZOOM_Y = 2.0E-9f;
+        private float mFirstSpanX;
+        private float mFirstSpanY;
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector)
@@ -621,8 +626,8 @@ public class ScopeView extends View
             Log.d(TAG, "onScaleBegin");
 
             mInScaling = true;
-            mLastSpanX = scaleGestureDetector.getCurrentSpanX();
-            mLastSpanY = scaleGestureDetector.getCurrentSpanY();
+            mFirstSpanX = scaleGestureDetector.getCurrentSpanX();
+            mFirstSpanY = scaleGestureDetector.getCurrentSpanY();
 
             // stop dragging while zooming
             mFirstTouch = null;
@@ -638,11 +643,9 @@ public class ScopeView extends View
             float previousSpanY = detector.getPreviousSpanY();
 
             float scaleX = spanX / previousSpanX;
-            scaleX = (float)Math.pow(scaleX, 2);
-        //    scaleX = Math.max(Math.min(scaleX, MAX_ZOOM_X), MIN_ZOOM_X);
+        //    scaleX = (float)Math.pow(scaleX, 2);
             float scaleY = spanY / previousSpanY;
-            scaleY = (float)Math.pow(scaleY, 3);
-            //    scaleY = Math.max(Math.min(scaleY, MAX_ZOOM_Y), MIN_ZOOM_Y);
+        //    scaleY = (float)Math.pow(scaleY, 3);
 
             Log.d(TAG, "onScale::x:" + scaleX + " y:" + scaleY);
 
@@ -676,8 +679,35 @@ public class ScopeView extends View
         @Override
         public void onScaleEnd(ScaleGestureDetector detector)
         {
-            Log.d(TAG, "onScaleEnd");
-            super.onScaleEnd(detector);
+            float spanX = detector.getCurrentSpanX();
+            float spanY = detector.getCurrentSpanY();
+
+            float scaleX = spanX / mFirstSpanX;
+            float scaleY = spanY / mFirstSpanY;
+
+            Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
+
+            if(mOnDoCommand != null)
+            {
+                if(mSelectedPath > 0)
+                {
+                    mOnDoCommand.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
+                            mSelectedPath,
+                            (Float) scaleY);
+                }
+
+                mOnDoCommand.doCommand(
+                        ScopeInterface.Command.SET_TIME_SCALE,
+                        0,
+                        (Float)scaleX);
+            }
+
+            int numOn = channelOnCount();
+            mChangeDelay = 4 * numOn;
+            mInScaling = false;
+
+
+            //      super.onScaleEnd(detector);
         }
     }
 
@@ -689,6 +719,6 @@ public class ScopeView extends View
 
     interface OnDoCommand
     {
-        void doCommand(BaseScope.Command command, int channel, Object specialData);
+        void doCommand(ScopeInterface.Command command, int channel, Object specialData);
     }
 }
