@@ -1,5 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
+import android.graphics.RectF;
+
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
 public class TestScope extends BaseScope
@@ -79,13 +81,19 @@ public class TestScope extends BaseScope
 
     protected void setTimeOffset(float value)
     {
-        mTimeData.timeOffset = (value * 50) + mTimeData.timeOffset;
+        mTimeData.timeOffset = (value * 50 * mTimeData.timeScale) + mTimeData.timeOffset;
     }
 
-    protected void setVoltageScale(int channel, float value)
+    protected void setVoltageScale(int channel, RectF value)
     {
+        float offset = value.top;
+        if(Math.abs(offset) < 1)
+            offset = -1.7f;
+
+        setVoltageOffset(channel, offset);
+
         WaveData data = getWave(channel);
-        double scale = value * data.voltageScale;
+        double scale = value.bottom / data.voltageScale;
 
         switch (channel)
         {
@@ -101,10 +109,10 @@ public class TestScope extends BaseScope
         }
     }
 
-    protected void setTimeScale(float value)
+    protected void setTimeScale(RectF value)
     {
-        double scale = Math.abs(mTimeData.timeScale - 1/value);
-        mTimeData.timeScale = scale;
+        setTimeOffset(value.left);
+        mTimeData.timeScale = mTimeData.timeScale / value.right;
     }
 
     protected void setChannelState(int channel, boolean state)
@@ -169,7 +177,13 @@ public class TestScope extends BaseScope
             int[] buffer = null;
             if (isChannelOn(channel))
             {
-                buffer = new int[(int) (SAMPLE_LENGTH * mTimeData.timeScale)];
+                int size = (int) (SAMPLE_LENGTH * mTimeData.timeScale);
+                if(size < 50)
+                {
+                    size = 50;
+                    mTimeData.timeScale = 51f / SAMPLE_LENGTH;
+                }
+                buffer = new int[size];
                 double sampleRate = 10.0;
                 double freq = fakeWaveData.freq;
                 // double freq = Math.random() * 80000 + 10000;

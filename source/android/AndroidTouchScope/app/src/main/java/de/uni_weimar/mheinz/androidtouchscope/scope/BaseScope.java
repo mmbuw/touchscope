@@ -1,5 +1,6 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
+import android.graphics.RectF;
 import android.os.Handler;
 import android.util.Log;
 
@@ -146,13 +147,13 @@ public class BaseScope implements ScopeInterface
                 }
                 case SET_VOLTAGE_SCALE:
                 {
-                    Float scale = (Float) specialData;
+                    RectF scale = (RectF) specialData;
                     setVoltageScale(channel,scale);
                     break;
                 }
                 case SET_TIME_SCALE:
                 {
-                    Float scale = (Float) specialData;
+                    RectF scale = (RectF) specialData;
                     setTimeScale(scale);
                     break;
                 }
@@ -185,12 +186,12 @@ public class BaseScope implements ScopeInterface
         return val;
     }
 
-    protected void setTimeScale(float scale)
+    protected void setTimeScale(RectF scale)
     {
         Log.d(TAG, "setTimeScale");
     }
 
-    protected void setVoltageScale(int channel, float scale)
+    protected void setVoltageScale(int channel, RectF scale)
     {
         Log.d(TAG, "setVoltageScale");
     }

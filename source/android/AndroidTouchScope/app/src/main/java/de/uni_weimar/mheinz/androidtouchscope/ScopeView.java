@@ -10,8 +10,11 @@ import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.os.Build;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
@@ -33,6 +36,8 @@ public class ScopeView extends View
     private static final String TAG = "ScopeView";
     private static final float NUM_COLUMNS = 10f;
     private static final float NUM_ROWS = 8f;
+    //scope returns 12 columns worth, this is displayed ratio
+    private static final float DISPLAY_RATIO = NUM_COLUMNS / 12f;
 
     private int mContentWidth = 0;
     private int mContentHeight = 0;
@@ -111,6 +116,15 @@ public class ScopeView extends View
     private void initGestures(Context context)
     {
         mScaleGestureDetector = new ScaleGestureDetector(context, new ScopeScaleListener());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+        {
+            mScaleGestureDetector.setQuickScaleEnabled(false);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            mScaleGestureDetector.setStylusScaleEnabled(false);
+        }
+
         mGestureDetector = new GestureDetectorCompat(context, new ScopeGestureListener());
     }
 
@@ -244,7 +258,8 @@ public class ScopeView extends View
         }
 
         int length = Math.min(BaseScope.SAMPLE_LENGTH, waveData.data.length) - 10;
-        float widthRatio = (float)(mContentWidth) / (length - 100);
+        //float widthRatio = (float)(mContentWidth) / (length - 100);
+        float widthRatio = (float)(mContentWidth) / (length * DISPLAY_RATIO);
         double vScale = waveData.voltageScale;
         if(vScale == 0)
             vScale = 1.0f;
@@ -252,7 +267,8 @@ public class ScopeView extends View
         Path newPath = new Path();
         float point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[10]);
 
-        int j = -50;
+        //int j = -50;
+        float j = -(length * (1 - DISPLAY_RATIO)) / 2;
         newPath.moveTo(j++  * widthRatio, point);
 
         for(int i = 11; i < waveData.data.length; ++i, ++j)
@@ -300,8 +316,8 @@ public class ScopeView extends View
     {
         if(waveData != null && waveData.data != null)
         {
-            double value = 0.0;
-            String end = "";
+            double value;
+            String end;
 
             if (waveData.voltageScale < 1)
             {
@@ -327,8 +343,8 @@ public class ScopeView extends View
         if(timeData == null)
             return "";
 
-        double value = 0.0;
-        String end = "";
+        double value;
+        String end;
         double time = timeData.timeScale;
         if(time < 1e-6)
         {
@@ -472,14 +488,14 @@ public class ScopeView extends View
     private float smallestDistanceToPath(Path path, float x, float y)
     {
         PathMeasure measure = new PathMeasure(path,false);
-        float coord[] = {0f, 0f};
+        float pos[] = {0f, 0f};
         float minDist = 1000f;
-        float dist = 0f;
+        float dist;
 
         for(int i = 0; i < measure.getLength(); ++i)
         {
-            measure.getPosTan(i, coord, null);
-            dist = (float)Math.hypot(x - coord[0], y - coord[1]);
+            measure.getPosTan(i, pos, null);
+            dist = (float)Math.hypot(x - pos[0], y - pos[1]);
             if(dist < minDist)
                 minDist = dist;
         }
@@ -619,6 +635,8 @@ public class ScopeView extends View
     {
         private float mFirstSpanX;
         private float mFirstSpanY;
+        private float mFirstFocusX;
+        private float mFirstFocusY;
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector)
@@ -628,6 +646,8 @@ public class ScopeView extends View
             mInScaling = true;
             mFirstSpanX = scaleGestureDetector.getCurrentSpanX();
             mFirstSpanY = scaleGestureDetector.getCurrentSpanY();
+            mFirstFocusX = scaleGestureDetector.getFocusX();
+            mFirstFocusY = scaleGestureDetector.getFocusY();
 
             // stop dragging while zooming
             mFirstTouch = null;
@@ -650,7 +670,11 @@ public class ScopeView extends View
             Log.d(TAG, "onScale::x:" + scaleX + " y:" + scaleY);
 
             Matrix scaleMatrix = new Matrix();
-            scaleMatrix.setScale(1, scaleY, detector.getFocusX(), detector.getFocusY());
+            Rect drawRect = new Rect();
+            getDrawingRect(drawRect);
+            //path.computeBounds(rectF, true);
+           // scaleMatrix.setScale(1, scaleY, detector.getFocusX(), detector.getFocusY());
+            scaleMatrix.setScale(1, scaleY, drawRect.centerX(), drawRect.centerY());
 
             switch(mSelectedPath)
             {
@@ -665,7 +689,8 @@ public class ScopeView extends View
                     break;
             }
 
-            scaleMatrix.setScale(scaleX, 1, detector.getFocusX(), detector.getFocusY());
+            scaleMatrix = new Matrix();
+            scaleMatrix.setScale(scaleX, 1, drawRect.centerX(), drawRect.centerY());
 
             mPathChan1.transform(scaleMatrix);
             mPathChan2.transform(scaleMatrix);
@@ -685,21 +710,30 @@ public class ScopeView extends View
             float scaleX = spanX / mFirstSpanX;
             float scaleY = spanY / mFirstSpanY;
 
+            float distX = mFirstFocusX - detector.getFocusX();
+            float distY = mFirstFocusY - detector.getFocusY();
+
             Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
+            Log.d(TAG, "onScaleEnd::dx:" + distX + " dy:" + distY);
+
+            distX = distX / (mContentWidth / NUM_COLUMNS);
+            distY = distY / (mContentHeight / NUM_ROWS);
 
             if(mOnDoCommand != null)
             {
                 if(mSelectedPath > 0)
                 {
+                    RectF rectY = new RectF(0,distY,0,scaleY);
                     mOnDoCommand.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
                             mSelectedPath,
-                            (Float) scaleY);
+                            (RectF) rectY);
                 }
 
+                RectF rectX = new RectF(-distX,0,scaleX,0);
                 mOnDoCommand.doCommand(
                         ScopeInterface.Command.SET_TIME_SCALE,
                         0,
-                        (Float)scaleX);
+                        (RectF)rectX);
             }
 
             int numOn = channelOnCount();

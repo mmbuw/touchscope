@@ -1,6 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import android.app.Activity;
+import android.graphics.RectF;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Locale;
@@ -128,7 +129,7 @@ public class RigolScope extends BaseScope
         double scale = value * data.voltageScale;
     }
 
-    protected void setTimeScale(float value)
+    protected void setTimeScale(RectF value)
     {
       //  mTimeData.timeScale = value;
     }
