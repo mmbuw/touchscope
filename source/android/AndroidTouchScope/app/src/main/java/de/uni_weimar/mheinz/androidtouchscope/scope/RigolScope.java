@@ -1,9 +1,9 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import android.app.Activity;
-import android.graphics.RectF;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.Locale;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
@@ -16,6 +16,9 @@ public class RigolScope extends BaseScope
     private static final String CHAN_1 = "CHAN1";
     private static final String CHAN_2 = "CHAN2";
     private static final String CHAN_MATH = "MATH";
+
+    /*private static final double[] POSSIBLE_VOLT_VALUES =
+            {2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10};*/
 
     private final Activity mActivity;
     private UsbController mUsbController = null;
@@ -126,12 +129,19 @@ public class RigolScope extends BaseScope
     protected void setVoltageScale(int channel, float value)
     {
         WaveData data = getWave(channel);
-        double scale = value * data.voltageScale;
+        double scale = data.voltageScale / value;
+        scale = getClosestVoltValue(scale);
+        String command = String.format(Locale.getDefault(), ":%s:SCAL %f", getChannelName(channel), scale);
+
+        mUsbController.write(command);
     }
 
-    protected void setTimeScale(RectF value)
+    protected void setTimeScale(float value)
     {
-      //  mTimeData.timeScale = value;
+        double scale = mTimeData.timeScale / value;
+        String command = String.format(Locale.getDefault(), ":TIM:SCAL %.10f",scale);
+
+        mUsbController.write(command);
     }
 
     protected void setChannelState(int channel, boolean state)
@@ -226,6 +236,40 @@ public class RigolScope extends BaseScope
         }
 
         return value;
+    }
+
+    private double getClosestVoltValue(double value)
+    {
+        int scale;
+        if(value < 10E-3)
+            scale = 3;
+        else if(value < 100E-3)
+            scale = 2;
+        else if(value < 1)
+            scale = 1;
+        else
+            scale = 0;
+
+        BigDecimal number = BigDecimal.valueOf(value);
+        number = number.setScale(scale, BigDecimal.ROUND_HALF_EVEN);
+        return number.doubleValue();
+
+
+
+
+        /*double minDist = Math.abs(POSSIBLE_VOLT_VALUES[0] - value);
+        int minIndex = 0;
+        for(int i = 1; i < POSSIBLE_VOLT_VALUES.length; i++)
+        {
+            double dist = Math.abs(POSSIBLE_VOLT_VALUES[i] - value);
+            if(dist < minDist)
+            {
+                minDist = dist;
+                minIndex = i;
+            }
+        }
+
+        return POSSIBLE_VOLT_VALUES[minIndex];*/
     }
 
     //////////////////////////////////////////////////////////////////////////

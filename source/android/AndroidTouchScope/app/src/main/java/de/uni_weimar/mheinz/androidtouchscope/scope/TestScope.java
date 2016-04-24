@@ -1,7 +1,5 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-import android.graphics.RectF;
-
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
 public class TestScope extends BaseScope
@@ -84,16 +82,16 @@ public class TestScope extends BaseScope
         mTimeData.timeOffset = (value * 50 * mTimeData.timeScale) + mTimeData.timeOffset;
     }
 
-    protected void setVoltageScale(int channel, RectF value)
+    protected void setVoltageScale(int channel, float value)
     {
-        float offset = value.top;
+      /*  float offset = value.top;
         if(Math.abs(offset) < 1)
             offset = -1.7f;
 
-        setVoltageOffset(channel, offset);
+        setVoltageOffset(channel, offset);*/
 
         WaveData data = getWave(channel);
-        double scale = value.bottom / data.voltageScale;
+        double scale = value / data.voltageScale;
 
         switch (channel)
         {
@@ -109,10 +107,10 @@ public class TestScope extends BaseScope
         }
     }
 
-    protected void setTimeScale(RectF value)
+    protected void setTimeScale(float value)
     {
-        setTimeOffset(value.left);
-        mTimeData.timeScale = mTimeData.timeScale / value.right;
+       // setTimeOffset(value.left);
+        mTimeData.timeScale = mTimeData.timeScale / value;
     }
 
     protected void setChannelState(int channel, boolean state)

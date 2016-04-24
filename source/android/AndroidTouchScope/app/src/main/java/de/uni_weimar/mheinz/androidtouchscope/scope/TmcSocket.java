@@ -110,7 +110,7 @@ class TmcSocket
         {
             while(remaining > 0)
             {
-                int retval = 0;
+                int retval;
                 if(remaining > USBTMC_SIZE_IOBUFFER - 12)
                 {
                     this_part = USBTMC_SIZE_IOBUFFER - 12;

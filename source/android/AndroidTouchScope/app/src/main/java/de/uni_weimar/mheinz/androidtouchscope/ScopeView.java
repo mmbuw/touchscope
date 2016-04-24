@@ -70,7 +70,6 @@ public class ScopeView extends View
 
     private Point mTextPos;
 
-
     /****  Gestures  ****/
     private ScaleGestureDetector mScaleGestureDetector;
     private GestureDetectorCompat mGestureDetector;
@@ -78,8 +77,6 @@ public class ScopeView extends View
     private PointF mFirstTouch = null;
     private boolean mInMovement = false;
     private boolean mInScaling = false;
-
-
 
     public ScopeView(Context context)
     {
@@ -542,39 +539,38 @@ public class ScopeView extends View
         mScaleGestureDetector.onTouchEvent(event);
         mGestureDetector.onTouchEvent(event);
 
-        switch(MotionEventCompat.getActionMasked(event))
+        if(MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_UP ||
+                mScaleGestureDetector.isInProgress())
         {
-            case MotionEvent.ACTION_UP:
+            if(mInMovement && mFirstTouch != null)
             {
-                if(mInMovement && mFirstTouch != null)
+                int pointerIndex = MotionEventCompat.getActionIndex(event);
+                float x = MotionEventCompat.getX(event, pointerIndex);
+                float y = MotionEventCompat.getY(event, pointerIndex);
+
+                int numOn = channelOnCount();
+                mChangeDelay = 4 * numOn;
+
+                if(mOnDoCommand != null)
                 {
-                    int pointerIndex = MotionEventCompat.getActionIndex(event);
-                    float x = MotionEventCompat.getX(event, pointerIndex);
-                    float y = MotionEventCompat.getY(event, pointerIndex);
-
-                    int numOn = channelOnCount();
-                    mChangeDelay = 4 * numOn;
-
-                    if(mOnDoCommand != null)
+                    if(mSelectedPath > 0)
                     {
-                        if(mSelectedPath > 0)
-                        {
-                            float distY = mFirstTouch.y - y;
-                            mOnDoCommand.doCommand(ScopeInterface.Command.SET_VOLTAGE_OFFSET,
-                                    mSelectedPath,
-                                    (Float) (distY / (mContentHeight / NUM_ROWS)));
-                        }
-                        float distX = mFirstTouch.x - x;
+                        float distY = mFirstTouch.y - y;
                         mOnDoCommand.doCommand(
-                                ScopeInterface.Command.SET_TIME_OFFSET,
-                                0,
-                                (Float)(distX / (mContentWidth / NUM_COLUMNS)));
+                                ScopeInterface.Command.SET_VOLTAGE_OFFSET,
+                                mSelectedPath,
+                                (Float) (distY / (mContentHeight / NUM_ROWS)));
                     }
+                    float distX = mFirstTouch.x - x;
+                    mOnDoCommand.doCommand(
+                            ScopeInterface.Command.SET_TIME_OFFSET,
+                            0,
+                            (Float) (distX / (mContentWidth / NUM_COLUMNS)));
                 }
-
-                mInMovement = false;
-                break;
+                mFirstTouch = null;
             }
+
+            mInMovement = false;
         }
 
         return true;
@@ -635,8 +631,6 @@ public class ScopeView extends View
     {
         private float mFirstSpanX;
         private float mFirstSpanY;
-        private float mFirstFocusX;
-        private float mFirstFocusY;
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector)
@@ -646,8 +640,6 @@ public class ScopeView extends View
             mInScaling = true;
             mFirstSpanX = scaleGestureDetector.getCurrentSpanX();
             mFirstSpanY = scaleGestureDetector.getCurrentSpanY();
-            mFirstFocusX = scaleGestureDetector.getFocusX();
-            mFirstFocusY = scaleGestureDetector.getFocusY();
 
             // stop dragging while zooming
             mFirstTouch = null;
@@ -663,33 +655,35 @@ public class ScopeView extends View
             float previousSpanY = detector.getPreviousSpanY();
 
             float scaleX = spanX / previousSpanX;
-        //    scaleX = (float)Math.pow(scaleX, 2);
-            float scaleY = spanY / previousSpanY;
-        //    scaleY = (float)Math.pow(scaleY, 3);
+            float scaleY = (float)Math.pow(spanY / previousSpanY, 2);
 
             Log.d(TAG, "onScale::x:" + scaleX + " y:" + scaleY);
 
             Matrix scaleMatrix = new Matrix();
-            Rect drawRect = new Rect();
-            getDrawingRect(drawRect);
-            //path.computeBounds(rectF, true);
-           // scaleMatrix.setScale(1, scaleY, detector.getFocusX(), detector.getFocusY());
-            scaleMatrix.setScale(1, scaleY, drawRect.centerX(), drawRect.centerY());
+            RectF rectF = new RectF();
 
             switch(mSelectedPath)
             {
                 case 1:
+                    mPathChan1.computeBounds(rectF, true);
+                    scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathChan1.transform(scaleMatrix);
                     break;
                 case 2:
+                    mPathChan2.computeBounds(rectF, true);
+                    scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathChan2.transform(scaleMatrix);
                     break;
                 case 3:
+                    mPathMath.computeBounds(rectF, true);
+                    scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathMath.transform(scaleMatrix);
                     break;
             }
 
             scaleMatrix = new Matrix();
+            Rect drawRect = new Rect();
+            getDrawingRect(drawRect);
             scaleMatrix.setScale(scaleX, 1, drawRect.centerX(), drawRect.centerY());
 
             mPathChan1.transform(scaleMatrix);
@@ -708,40 +702,28 @@ public class ScopeView extends View
             float spanY = detector.getCurrentSpanY();
 
             float scaleX = spanX / mFirstSpanX;
-            float scaleY = spanY / mFirstSpanY;
-
-            float distX = mFirstFocusX - detector.getFocusX();
-            float distY = mFirstFocusY - detector.getFocusY();
+            float scaleY = (float)Math.pow(spanY / mFirstSpanY, 2);
 
             Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
-            Log.d(TAG, "onScaleEnd::dx:" + distX + " dy:" + distY);
-
-            distX = distX / (mContentWidth / NUM_COLUMNS);
-            distY = distY / (mContentHeight / NUM_ROWS);
 
             if(mOnDoCommand != null)
             {
                 if(mSelectedPath > 0)
                 {
-                    RectF rectY = new RectF(0,distY,0,scaleY);
                     mOnDoCommand.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
                             mSelectedPath,
-                            (RectF) rectY);
+                            (Float) scaleY);
                 }
 
-                RectF rectX = new RectF(-distX,0,scaleX,0);
                 mOnDoCommand.doCommand(
                         ScopeInterface.Command.SET_TIME_SCALE,
                         0,
-                        (RectF)rectX);
+                        (Float)scaleX);
             }
 
             int numOn = channelOnCount();
             mChangeDelay = 4 * numOn;
             mInScaling = false;
-
-
-            //      super.onScaleEnd(detector);
         }
     }
 

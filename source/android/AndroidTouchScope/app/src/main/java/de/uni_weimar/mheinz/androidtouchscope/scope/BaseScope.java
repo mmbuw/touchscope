@@ -1,6 +1,5 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-import android.graphics.RectF;
 import android.os.Handler;
 import android.util.Log;
 
@@ -16,10 +15,10 @@ public class BaseScope implements ScopeInterface
     public static final int SAMPLE_LENGTH = 610;
     protected static final int POOL_SIZE = 2;
 
-    protected static final float MAX_VOLTAGE_SCALE = 10f;
+    /*protected static final float MAX_VOLTAGE_SCALE = 10f;
     protected static final float MIN_VOLTAGE_SCALE = 2.0E-3f;
     protected static final float MAX_TIME_SCALE = 50f;
-    protected static final float MIN_TIME_SCALE = 2.0E-9f;
+    protected static final float MIN_TIME_SCALE = 2.0E-9f;*/
 
     protected WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     protected WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
@@ -147,13 +146,13 @@ public class BaseScope implements ScopeInterface
                 }
                 case SET_VOLTAGE_SCALE:
                 {
-                    RectF scale = (RectF) specialData;
+                    float scale = (Float) specialData;
                     setVoltageScale(channel,scale);
                     break;
                 }
                 case SET_TIME_SCALE:
                 {
-                    RectF scale = (RectF) specialData;
+                    float scale = (Float) specialData;
                     setTimeScale(scale);
                     break;
                 }
@@ -186,12 +185,12 @@ public class BaseScope implements ScopeInterface
         return val;
     }
 
-    protected void setTimeScale(RectF scale)
+    protected void setTimeScale(float scale)
     {
         Log.d(TAG, "setTimeScale");
     }
 
-    protected void setVoltageScale(int channel, RectF scale)
+    protected void setVoltageScale(int channel, float scale)
     {
         Log.d(TAG, "setVoltageScale");
     }
