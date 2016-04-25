@@ -12,7 +12,7 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
-public class UsbController
+class UsbController
 {
     private static final String TAG = "UsbController";
 
@@ -41,12 +41,19 @@ public class UsbController
 
         mUsbManager = (UsbManager) mActivity.getSystemService(Context.USB_SERVICE);
 
-        for (UsbDevice device : mUsbManager.getDeviceList().values())
+        try
         {
-            if(isCorrectScope(device))
+            for (UsbDevice device : mUsbManager.getDeviceList().values())
             {
-                setDevice(device);
+                if (isCorrectScope(device))
+                {
+                    setDevice(device);
+                }
             }
+        }
+        catch (NullPointerException ex)
+        {
+            ex.printStackTrace();
         }
 
         IntentFilter filter = new IntentFilter();

@@ -1,27 +1,20 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-import android.os.Handler;
-
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
-public class TestScope implements BaseScope
+public class TestScope extends BaseScope
 {
-    private static final int READ_RATE = 100;
-
-   // private LimitedByteDeque mSampleList1 = new LimitedByteDeque(POOL_SIZE);
-    private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
-    private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    private WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
-    private TimeData mTimeData = new TimeData();
-
     private FakeWaveData mFakeWave1;
     private FakeWaveData mFakeWave2;
     private FakeWaveData mFakeWave3;
 
-    private Handler mReadHandler = new Handler();
-    private OnReceivedName mOnReceivedName;
-
     public TestScope()
+    {
+        initTestScope();
+        mIsConnected = true;
+    }
+
+    private void initTestScope()
     {
         mFakeWave1 = new FakeWaveData(59909.986179362626);
         mFakeWave2 = new FakeWaveData(36135.1315588236);
@@ -31,77 +24,22 @@ public class TestScope implements BaseScope
 
     public void open(OnReceivedName onReceivedName)
     {
-        mOnReceivedName = onReceivedName;
-        doCommand(Command.GET_NAME, 0, false);
+        super.open(onReceivedName);
+        doCommand(Command.GET_NAME, 0, false, null);
     }
 
-    public void close()
-    {
-        stop();
-    }
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Scope Functions
+    //
+    //////////////////////////////////////////////////////////////////////////
 
-    public void start()
-    {
-        stop();
-        mReadHandler.postDelayed(mReadRunnable, 0);
-    }
-
-    public void stop()
-    {
-        mReadHandler.removeCallbacks(mReadRunnable);
-    }
-
-    public boolean isConnected()
-    {
-        return true;
-    }
-
-    private String getName()
+    protected String getName()
     {
         return "Test Scope";
     }
 
-    public int doCommand(Command command, int channel, boolean force)
-    {
-        int val = 0;
-        switch (command)
-        {
-            case IS_CHANNEL_ON:
-                val = isChannelOn(channel) ? 1 : 0;
-                break;
-            case GET_NAME:
-                String name = getName();
-                if(mOnReceivedName != null)
-                    mOnReceivedName.returnName(name);
-                break;
-        }
-        return val;
-    }
-
-    public WaveData getWave(int chan)
-    {
-        WaveData waveData = null;
-        switch(chan)
-        {
-            case 1:
-                waveData = mWaves1.peek();
-                break;
-            case 2:
-                waveData = mWaves2.peek();
-                break;
-            case 3:
-                waveData = mWaves3.peek();
-                break;
-        }
-        return waveData;
-    }
-
-    public TimeData getTimeData()
-    {
-        return mTimeData;
-    }
-
-    private boolean isChannelOn(int channel)
+    protected boolean isChannelOn(int channel)
     {
         boolean isOn = false;
         switch (channel)
@@ -120,10 +58,101 @@ public class TestScope implements BaseScope
         return isOn;
     }
 
-    private void generateTone(int channel)
+    protected void setVoltageOffset(int channel, float value)
+    {
+        WaveData data = getWave(channel);
+        double offset = (-value * 25) + data.voltageOffset;
+
+        switch (channel)
+        {
+            case 1:
+                mFakeWave1.offset = offset;
+                break;
+            case 2:
+                mFakeWave2.offset = offset;
+                break;
+            case 3:
+                mFakeWave3.offset = offset;
+                break;
+        }
+    }
+
+    protected void setTimeOffset(float value)
+    {
+        mTimeData.timeOffset = (value * 50 * mTimeData.timeScale) + mTimeData.timeOffset;
+    }
+
+    protected void setVoltageScale(int channel, float value)
+    {
+      /*  float offset = value.top;
+        if(Math.abs(offset) < 1)
+            offset = -1.7f;
+
+        setVoltageOffset(channel, offset);*/
+
+        WaveData data = getWave(channel);
+        double scale = value / data.voltageScale;
+
+        switch (channel)
+        {
+            case 1:
+                mFakeWave1.scale = scale;
+                break;
+            case 2:
+                mFakeWave2.scale = scale;
+                break;
+            case 3:
+                mFakeWave3.scale = scale;
+                break;
+        }
+    }
+
+    protected void setTimeScale(float value)
+    {
+       // setTimeOffset(value.left);
+        mTimeData.timeScale = mTimeData.timeScale / value;
+    }
+
+    protected void setChannelState(int channel, boolean state)
+    {
+        switch (channel)
+        {
+            case 1:
+                mFakeWave1.isOn = state;
+                break;
+            case 2:
+                mFakeWave2.isOn = state;
+                break;
+            case 3:
+                mFakeWave3.isOn = state;
+                break;
+        }
+    }
+
+    protected void doAuto()
+    {
+        initTestScope();
+        try
+        {
+            Thread.sleep(1000,0);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Collect Wave Data at timed intervals
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    protected void readWave(int channel)
     {
         WaveData waveData;
         FakeWaveData fakeWaveData;
+
         switch(channel)
         {
             case 1:
@@ -141,34 +170,43 @@ public class TestScope implements BaseScope
                 break;
         }
 
-        int[] buffer = null;
-        if(isChannelOn(channel))
+        synchronized (mControllerLock)
         {
-            buffer = new int[(int)(SAMPLE_LENGTH * mTimeData.timeScale)];
-            double sampleRate = 10.0;
-            double freq = fakeWaveData.freq;
-            // double freq = Math.random() * 80000 + 10000;
-            for (int cnt = (int)mTimeData.timeOffset, i = 0; i < buffer.length; cnt++, i++)
+            int[] buffer = null;
+            if (isChannelOn(channel))
             {
-                double time = cnt / sampleRate;
-                double sinValue =
-                        (Math.sin(2 * Math.PI * freq * time) +
-                                Math.sin(2 * Math.PI * (freq / 1.8) * time) +
-                                Math.sin(2 * Math.PI * (freq / 1.5) * time)) / 3.0;
-                int byteValue = (byte) (125 * sinValue + 125);
-                byteValue = (byteValue & 0xFF);
-                byteValue = (int)(byteValue * fakeWaveData.scale + fakeWaveData.offset);
-                if(byteValue > 255)
-                    byteValue = 255;
-                else if(byteValue < 0)
-                    byteValue = 0;
-                buffer[i] = byteValue;
+                int size = (int) (SAMPLE_LENGTH * mTimeData.timeScale);
+                if(size < 50)
+                {
+                    size = 50;
+                    mTimeData.timeScale = 51f / SAMPLE_LENGTH;
+                }
+                buffer = new int[size];
+                double sampleRate = 10.0;
+                double freq = fakeWaveData.freq;
+                // double freq = Math.random() * 80000 + 10000;
+                for (int cnt = (int) mTimeData.timeOffset, i = 0; i < buffer.length; cnt++, i++)
+                {
+                    double time = cnt / sampleRate;
+                    double sinValue =
+                            (Math.sin(2 * Math.PI * freq * time) +
+                                    Math.sin(2 * Math.PI * (freq / 1.8) * time) +
+                                    Math.sin(2 * Math.PI * (freq / 1.5) * time)) / 3.0;
+                    int byteValue = (byte) (125 * sinValue + 125);
+                    byteValue = (byteValue & 0xFF);
+                    byteValue = (int) (byteValue * fakeWaveData.scale + fakeWaveData.offset);
+                    if (byteValue > 255)
+                        byteValue = 255;
+                    else if (byteValue < 0)
+                        byteValue = 0;
+                    buffer[i] = byteValue;
+                }
             }
-        }
 
-        waveData.data = buffer;
-        waveData.voltageScale = 1.0/fakeWaveData.scale;
-        waveData.voltageOffset = fakeWaveData.offset;
+            waveData.data = buffer;
+            waveData.voltageScale = 1.0 / fakeWaveData.scale;
+            waveData.voltageOffset = fakeWaveData.offset;
+        }
 
         switch (channel)
         {
@@ -184,20 +222,11 @@ public class TestScope implements BaseScope
         }
     }
 
-    private Runnable mReadRunnable = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-         //   if(mIsChan1On)
-                generateTone(1);
-        //    if(mIsChan2On)
-                generateTone(2);
-        //    if(mIsChan3On)
-                generateTone(3);
-            mReadHandler.postDelayed(this, READ_RATE);
-        }
-    };
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Class to imitate a scope
+    //
+    //////////////////////////////////////////////////////////////////////////
 
     private class FakeWaveData
     {

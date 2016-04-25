@@ -1,14 +1,14 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
-//import android.support.v7.app.AppCompatActivity;
 import android.app.Activity;
-import android.os.Handler;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.Locale;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
 
-public class RigolScope implements BaseScope
+public class RigolScope extends BaseScope
 {
     private static final int RIGOL_VENDOR_ID = 6833;
     private static final int RIGOL_PRODUCT_ID = 1416;
@@ -17,25 +17,11 @@ public class RigolScope implements BaseScope
     private static final String CHAN_2 = "CHAN2";
     private static final String CHAN_MATH = "MATH";
 
-    private static final int READ_RATE = 100;
+    /*private static final double[] POSSIBLE_VOLT_VALUES =
+            {2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10};*/
 
-    // private AppCompatActivity mActivity;
-    private Activity mActivity;
-    private final Object mControllerLock = new Object();
+    private final Activity mActivity;
     private UsbController mUsbController = null;
-    private boolean mIsConnected = false;
-    private OnReceivedName mOnReceivedName;
-
-    private WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
-    private WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    private WaveRequestPool mWavesM = new WaveRequestPool(POOL_SIZE);
-    private TimeData mTimeData = new TimeData();
-
-    //   private boolean mIsChan1On = false;
-    //   private boolean mIsChan2On = false;
-    //   private boolean mIsChanMOn = false;
-
-    private Handler mReadHandler = new Handler();
 
     public RigolScope(Activity activity)
     {
@@ -44,8 +30,9 @@ public class RigolScope implements BaseScope
 
     public void open(OnReceivedName onReceivedName)
     {
+        super.open(onReceivedName);
+
         final RigolScope scope = this;
-        mOnReceivedName = onReceivedName;
 
         mUsbController = new UsbController(mActivity, RIGOL_VENDOR_ID, RIGOL_PRODUCT_ID);
         mUsbController.open(new UsbController.OnDeviceChange()
@@ -54,7 +41,7 @@ public class RigolScope implements BaseScope
             public void start()
             {
                 mIsConnected = true;
-                doCommand(Command.GET_NAME, 0, false);
+                doCommand(Command.GET_NAME, 0, false, null);
                 initSettings();
             }
 
@@ -69,27 +56,27 @@ public class RigolScope implements BaseScope
 
     public void close()
     {
-        stop();
+        super.close();
 
         if (mUsbController != null)
             mUsbController.close();
         mUsbController = null;
     }
 
-    public void start()
-    {
-        stop();
-        mReadHandler.postDelayed(mReadRunnable, 0);
-    }
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Scope Functions
+    //
+    //////////////////////////////////////////////////////////////////////////
 
-    public void stop()
+    public int doCommand(Command command, int channel, boolean force, Object specialData)
     {
-        mReadHandler.removeCallbacks(mReadRunnable);
-    }
+        int val = 0;
 
-    public boolean isConnected()
-    {
-        return mIsConnected;
+        if (mUsbController == null)
+            return val;
+
+        return super.doCommand(command, channel, force, specialData);
     }
 
     private void initSettings()
@@ -100,64 +87,12 @@ public class RigolScope implements BaseScope
         synchronized (mControllerLock)
         {
             mUsbController.write(":WAV:POIN:MODE NOR");
+            setRunStop(true);
             forceCommand();
         }
     }
 
-    public int doCommand(Command command, int channel, boolean force)
-    {
-        int val = 0;
-
-        if (mUsbController == null || !mIsConnected)
-            return val;
-
-        synchronized (mControllerLock)
-        {
-            switch (command)
-            {
-                case IS_CHANNEL_ON:
-                    val = isChannelOn(channel) ? 1 : 0;
-                    break;
-                case GET_NAME:
-                    String name = getName();
-                    if (mOnReceivedName != null)
-                        mOnReceivedName.returnName(name);
-                case NO_COMMAND:
-                default:
-                    break;
-            }
-
-            if (force)
-                forceCommand();
-        }
-
-        return val;
-    }
-
-    public WaveData getWave(int chan)
-    {
-        WaveData waveData = null;
-        switch (chan)
-        {
-            case 1:
-                waveData = mWaves1.peek();
-                break;
-            case 2:
-                waveData = mWaves2.peek();
-                break;
-            case 3:
-                waveData = mWavesM.peek();
-                break;
-        }
-        return waveData;
-    }
-
-    public TimeData getTimeData()
-    {
-        return mTimeData;
-    }
-
-    private String getName()
+    protected String getName()
     {
         mUsbController.write("*IDN?");
         int[] data = mUsbController.read(300);
@@ -167,7 +102,89 @@ public class RigolScope implements BaseScope
         return parts[0] + " " + parts[1];
     }
 
-    private String getChannel(int chan)
+    protected boolean isChannelOn(int channel)
+    {
+        mUsbController.write(":" + getChannelName(channel) + ":DISP?");
+        int[] on = mUsbController.read(20);
+        return on != null && on.length > 0 && on[0] == 49;
+    }
+
+    protected void setVoltageOffset(int channel, float value)
+    {
+        WaveData data = getWave(channel);
+        double offset = (value * data.voltageScale) + data.voltageOffset;
+        String command = String.format(Locale.getDefault(), ":%s:OFFS %f", getChannelName(channel), offset);
+
+        mUsbController.write(command);
+    }
+
+    protected void setTimeOffset(float value)
+    {
+        double offset = (value * mTimeData.timeScale) + mTimeData.timeOffset;
+        String command = String.format(Locale.getDefault(), ":TIM:OFFS %.10f",offset);
+
+        mUsbController.write(command);
+    }
+
+    protected void setVoltageScale(int channel, float value)
+    {
+        WaveData data = getWave(channel);
+        double scale = data.voltageScale / value;
+        scale = getClosestVoltValue(scale);
+        String command = String.format(Locale.getDefault(), ":%s:SCAL %f", getChannelName(channel), scale);
+
+        mUsbController.write(command);
+    }
+
+    protected void setTimeScale(float value)
+    {
+        double scale = mTimeData.timeScale / value;
+        String command = String.format(Locale.getDefault(), ":TIM:SCAL %.10f",scale);
+
+        mUsbController.write(command);
+    }
+
+    protected void setChannelState(int channel, boolean state)
+    {
+        String onOff = state ? "ON" : "OFF";
+        String command = String.format(":%s:DISP %s", getChannelName(channel), onOff);
+
+        mUsbController.write(command);
+    }
+
+    protected void setRunStop(boolean run)
+    {
+        String command = run ? ":RUN" : ":STOP";
+
+        mUsbController.write(command);
+    }
+
+    protected void doAuto()
+    {
+        mUsbController.write(":AUTO");
+        try
+        {
+            Thread.sleep(5000,0);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    // use to re-allow human actions with the scope
+    protected void forceCommand()
+    {
+        mUsbController.write(":KEY:FORC");
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Helper utility functions
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    private String getChannelName(int chan)
     {
         String channel;
         switch (chan)
@@ -185,15 +202,6 @@ public class RigolScope implements BaseScope
         }
 
         return channel;
-    }
-
-    private boolean isChannelOn(int channel)
-    {
-        mUsbController.write(":" + getChannel(channel) + ":DISP?");
-        int[] on = mUsbController.read(20);
-        boolean isOn = on.length > 0 && on[0] == 49;
-
-        return isOn;
     }
 
     private byte[] intArrayToByteArray(int[] intArray)
@@ -214,44 +222,63 @@ public class RigolScope implements BaseScope
     private double bytesToDouble(int[] data)
     {
         double value = 0.0;
-        try
+        if(data != null)
         {
-            String strValue = new String(intArrayToByteArray(data), "UTF-8");
-            value = Double.parseDouble(strValue);
+            try
+            {
+                String strValue = new String(intArrayToByteArray(data), "UTF-8");
+                value = Double.parseDouble(strValue);
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
         }
-        catch(UnsupportedEncodingException e)
-        {
-            e.printStackTrace();
-        }
-        catch(NumberFormatException e)
-        {
-            e.printStackTrace();
-        }
+
         return value;
     }
 
-    // use to re-allow human reaction with the scope
-    private void forceCommand()
+    private double getClosestVoltValue(double value)
     {
-        mUsbController.write(":KEY:FORC");
+        int scale;
+        if(value < 10E-3)
+            scale = 3;
+        else if(value < 100E-3)
+            scale = 2;
+        else if(value < 1)
+            scale = 1;
+        else
+            scale = 0;
+
+        BigDecimal number = BigDecimal.valueOf(value);
+        number = number.setScale(scale, BigDecimal.ROUND_HALF_EVEN);
+        return number.doubleValue();
+
+
+
+
+        /*double minDist = Math.abs(POSSIBLE_VOLT_VALUES[0] - value);
+        int minIndex = 0;
+        for(int i = 1; i < POSSIBLE_VOLT_VALUES.length; i++)
+        {
+            double dist = Math.abs(POSSIBLE_VOLT_VALUES[i] - value);
+            if(dist < minDist)
+            {
+                minDist = dist;
+                minIndex = i;
+            }
+        }
+
+        return POSSIBLE_VOLT_VALUES[minIndex];*/
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Collect Wave Data at timed intervals
+    //
+    //////////////////////////////////////////////////////////////////////////
 
-    private Runnable mReadRunnable = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            readWave(1);
-            readWave(2);
-            readWave(3);
-            readTimeData();
-
-            mReadHandler.postDelayed(this, READ_RATE);
-        }
-    };
-
-    private void readWave(int channel)
+    protected void readWave(int channel)
     {
         WaveData waveData;
         switch(channel)
@@ -264,7 +291,7 @@ public class RigolScope implements BaseScope
                 break;
             case 3:
             default:
-                waveData = mWavesM.requestWaveData();
+                waveData = mWaves3.requestWaveData();
                 break;
         }
 
@@ -272,16 +299,15 @@ public class RigolScope implements BaseScope
         {
             if(isChannelOn(channel))
             {
-                // get the raw data
-                mUsbController.write(":WAV:DATA? " + getChannel(channel));
+                mUsbController.write(":WAV:DATA? " + getChannelName(channel));
                 waveData.data = mUsbController.read(SAMPLE_LENGTH);
 
                 //Get the voltage scale
-                mUsbController.write(":" + getChannel(channel) + ":SCAL?");
+                mUsbController.write(":" + getChannelName(channel) + ":SCAL?");
                 waveData.voltageScale = bytesToDouble(mUsbController.read(20));
 
                 // And the voltage offset
-                mUsbController.write(":" + getChannel(channel) + ":OFFS?");
+                mUsbController.write(":" + getChannelName(channel) + ":OFFS?");
                 waveData.voltageOffset = bytesToDouble(mUsbController.read(20));
             }
             else
@@ -299,12 +325,12 @@ public class RigolScope implements BaseScope
                 mWaves2.add(waveData);
                 break;
             case 3:
-                mWavesM.add(waveData);
+                mWaves3.add(waveData);
                 break;
         }
     }
 
-    private void readTimeData()
+    protected void readTimeData()
     {
         synchronized(mControllerLock)
         {
@@ -318,19 +344,5 @@ public class RigolScope implements BaseScope
 
             forceCommand();
         }
-    }
-
-    public static double actualVoltage(double offset, double scale, int point)
-    {
-        // Walk through the data, and map it to actual voltages
-        // This mapping is from Cibo Mahto
-        // First invert the data
-        double tPoint = point * -1 + 255;
-
-        // Now, we know from experimentation that the scope display range is actually
-        // 30-229.  So shift by 130 - the voltage offset in counts, then scale to
-        // get the actual voltage.
-        tPoint = (tPoint - 130.0 - (offset / scale * 25)) / 25 * scale;
-        return tPoint;
     }
 }

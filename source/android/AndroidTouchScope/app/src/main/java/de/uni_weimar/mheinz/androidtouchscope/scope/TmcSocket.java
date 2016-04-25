@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedList;
 
-public class TmcSocket
+class TmcSocket
 {
     /*
      * Size of driver internal IO buffer. Must be multiple of 4 and at least as
@@ -96,6 +96,8 @@ public class TmcSocket
 
     public int write(String command)
     {
+    //    Log.d(TAG, "Write::" + command);
+
         byte[] buf = command.getBytes();
         int remaining = buf.length;
         int done = 0;
@@ -108,7 +110,7 @@ public class TmcSocket
         {
             while(remaining > 0)
             {
-                int retval = 0;
+                int retval;
                 if(remaining > USBTMC_SIZE_IOBUFFER - 12)
                 {
                     this_part = USBTMC_SIZE_IOBUFFER - 12;
@@ -167,6 +169,8 @@ public class TmcSocket
 
     public int[] read(int length)
     {
+    //    Log.d(TAG, "Read::" + length);
+
         int remaining = length;
         int this_part;
         int done = 0;

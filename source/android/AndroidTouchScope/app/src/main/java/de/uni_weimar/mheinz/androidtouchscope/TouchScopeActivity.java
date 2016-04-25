@@ -1,14 +1,24 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
+import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import android.os.Handler;
+import android.view.TouchDelegate;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
@@ -22,14 +32,14 @@ public class TouchScopeActivity extends AppCompatActivity
     private static final String TAG = "TouchScopeActivity";
     private static final int REFRESH_RATE = 100;
 
-    private BaseScope mActiveScope = null;
+    private ScopeInterface mActiveScope = null;
     private ScopeView mScopeView = null;
 
- //   private int mIsChan1On = 0;
- //   private int mIsChan2On = 0;
- //   private int mIsMathOn = 0;
+    private DrawerLayout mDrawerLayout;
+    private ActionBarDrawerToggle mLeftDrawerToggle;
+    NavigationView mLeftDrawer;
 
-    private Handler mRefreshHandler = new Handler();
+    private final Handler mRefreshHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -37,30 +47,81 @@ public class TouchScopeActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_touch_scope);
 
-      //  if(savedInstanceState != null)
-      //      return;
-
         Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        assert mDrawerLayout != null;
+        mDrawerLayout.setScrimColor(Color.TRANSPARENT);
+        mDrawerLayout.post(new ExpandScopeViewArea());
+
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null)
+        {
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
+
+        mLeftDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
+                R.string.drawer_open, R.string.drawer_close);
+
+        mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
+
+        mLeftDrawer = (NavigationView)findViewById(R.id.left_drawer);
+        assert mLeftDrawer != null;
+        mLeftDrawer.setNavigationItemSelectedListener(mLeftDrawerSelectedListener);
+
+        NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
+        assert rightDrawer != null;
+        rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
-        ToggleButton readButton = (ToggleButton)findViewById(R.id.testRead);
-        readButton.setChecked(false);
+        mScopeView.setOnDoCommand(new ScopeView.OnDoCommand()
+        {
+            @Override
+            public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
+            {
+                if(mActiveScope != null)
+                {
+                    mActiveScope.doCommand(command, channel, true, specialData);
+                }
+            }
+        });
+
+        ToggleButton runStopButton = (ToggleButton)findViewById(R.id.buttonRunStop);
+        assert runStopButton != null;
+        runStopButton.setChecked(true);
 
         // test if it is emulator
-        if(Build.BRAND.contains("generic"))
+        initScope(!Build.FINGERPRINT.contains("generic"));
+    }
+
+    private void initScope(boolean doReal)
+    {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.scope_toolbar);
+        assert toolbar != null;
+        ((TextView) toolbar.findViewById(R.id.toolbar_title)).setText(R.string.app_name);
+
+        if(mActiveScope != null)
         {
-            Log.i(TAG, "Emulator detected, using TestScope");
-            mActiveScope = new TestScope();
+            mRefreshHandler.removeCallbacks(mRefreshRunnable);
+            mActiveScope.close();
         }
-        else
+
+        if(doReal)
         {
             Log.i(TAG, "Device detected, try to find RigolScope");
             mActiveScope = new RigolScope(this);
+            mLeftDrawer.getMenu().getItem(0).setChecked(true);
         }
-
-        mActiveScope.open(new BaseScope.OnReceivedName()
+        else
+        {
+            Log.i(TAG, "Emulator detected, using TestScope");
+            mActiveScope = new TestScope();
+            mLeftDrawer.getMenu().getItem(1).setChecked(true);
+        }
+        mActiveScope.open(new ScopeInterface.OnReceivedName()
         {
             @Override
             public void returnName(String name)
@@ -71,117 +132,249 @@ public class TouchScopeActivity extends AppCompatActivity
                     @Override
                     public void run()
                     {
-                        Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
-                        ((TextView)toolbar.findViewById(R.id.toolbar_title)).setText(scopeName);
+                        Toolbar toolbar = (Toolbar) findViewById(R.id.scope_toolbar);
+                        assert toolbar != null;
+                        ((TextView) toolbar.findViewById(R.id.toolbar_title)).setText(scopeName);
                     }
                 });
             }
         });
     }
 
+    private void startRunnableAndScope()
+    {
+        mActiveScope.start();
+        new Thread(new Runnable()
+        {
+            public void run()
+            {
+                if (mActiveScope != null)
+                {
+                    mRefreshHandler.removeCallbacks(mRefreshRunnable);
+                    mRefreshHandler.postDelayed(mRefreshRunnable, 0);
+
+                }
+            }
+        }).start();
+    }
+
     @Override
     public void onDestroy()
     {
+        mRefreshHandler.removeCallbacks(mRefreshRunnable);
+
         if(mActiveScope != null)
             mActiveScope.close();
+        mActiveScope = null;
 
-        mRefreshHandler.removeCallbacks(mRefreshRunnable);
         super.onDestroy();
     }
 
-    public void onTestRead(View v)
+    @Override
+    public void onPause()
     {
-        if(!mActiveScope.isConnected())
-        {
-            ((ToggleButton)v).setChecked(false);
-        }
-        if(((ToggleButton)v).isChecked())
-        {
-            mActiveScope.start();
-            new Thread(new Runnable()
-            {
-                public void run()
-                {
-                    if (mActiveScope != null)
-                    {
-                        mRefreshHandler.removeCallbacks(mRefreshRunnable);
+        super.onPause();
+        mRefreshHandler.removeCallbacks(mRefreshRunnable);
+        if(mActiveScope != null)
+            mActiveScope.stop();//.close();
+    }
 
-                    //    mIsChan1On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 1, false);
-                    //    mIsChan2On = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 2, false);
-                    //    mIsMathOn = mActiveScope.doCommand(BaseScope.Command.IS_CHANNEL_ON, 3, true);
+    @Override
+    public void onResume()
+    {
+        super.onResume();
 
-                        mRefreshHandler.postDelayed(mRefreshRunnable, 0);
-                    }
-                }
-            }).start();
-        }
-        else
+        if(mActiveScope == null)
         {
-            mActiveScope.stop();
-            mRefreshHandler.removeCallbacks(mRefreshRunnable);
+            initScope(!Build.FINGERPRINT.contains("generic"));
         }
+
+        startRunnableAndScope();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
         getMenuInflater().inflate(R.menu.menu_touch_scope, menu);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings)
+        if (mLeftDrawerToggle.onOptionsItemSelected(item))
         {
             return true;
+        }
+
+        int id = item.getItemId();
+        if(id == R.id.action_rightDrawer)
+        {
+            mDrawerLayout.openDrawer(GravityCompat.END);
+        }
+        else
+        {
+            mDrawerLayout.closeDrawer(GravityCompat.END);
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private Runnable mRefreshRunnable = new Runnable()
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState)
+    {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mLeftDrawerToggle.syncState();
+    }
+
+    private final NavigationView.OnNavigationItemSelectedListener mLeftDrawerSelectedListener =
+            new NavigationView.OnNavigationItemSelectedListener()
+    {
+        @Override
+        public boolean onNavigationItemSelected(MenuItem item)
+        {
+            mDrawerLayout.closeDrawers();
+
+            item.setChecked(!item.isChecked());
+
+            switch (item.getItemId())
+            {
+                case R.id.navigation_real:
+                    initScope(true);
+                    break;
+                case R.id.navigation_test:
+                    initScope(false);
+                    break;
+            }
+            startRunnableAndScope();
+            return true;
+        }
+    };
+
+    private final NavigationView.OnNavigationItemSelectedListener mRightDrawerSelectedListener =
+            new NavigationView.OnNavigationItemSelectedListener()
+    {
+        @Override
+        public boolean onNavigationItemSelected(MenuItem item)
+        {
+            //Closing drawer on item click
+            mDrawerLayout.closeDrawers();
+
+            if (mActiveScope == null)
+                return true;
+
+            item.setChecked(!item.isChecked());
+
+            //Check to see which item was being clicked and perform appropriate action
+            switch (item.getItemId())
+            {
+                case R.id.navigation_channel1:
+                    mActiveScope.doCommand(
+                            ScopeInterface.Command.SET_CHANNEL_STATE,
+                            1,
+                            true,
+                            (Boolean) item.isChecked());
+                    break;
+                case R.id.navigation_channel2:
+                    mActiveScope.doCommand(
+                            ScopeInterface.Command.SET_CHANNEL_STATE,
+                            2,
+                            true,
+                            (Boolean) item.isChecked());
+                    break;
+                case R.id.navigation_channel3:
+                    mActiveScope.doCommand(
+                            ScopeInterface.Command.SET_CHANNEL_STATE,
+                            3,
+                            true,
+                            (Boolean) item.isChecked());
+                    break;
+            }
+            return false;
+        }
+    };
+
+    private final Runnable mRefreshRunnable = new Runnable()
     {
         @Override
         public void run()
         {
             TimeData timeData = mActiveScope.getTimeData();
-          //  if(mIsChan1On == 1)
-            {
-                WaveData waveData = mActiveScope.getWave(1);
-                mScopeView.setChannelData(1, waveData,timeData);
-            }
-         /*   else if(mIsChan1On == 0)
-            {
-                mScopeView.setChannelData(1, null);
-                mIsChan1On = -1;
-            }*/
 
-        //    if(mIsChan2On == 1)
-            {
-                WaveData waveData = mActiveScope.getWave(2);
-                mScopeView.setChannelData(2, waveData,timeData);
-            }
-          /*  else if(mIsChan2On == 0)
-            {
-                mScopeView.setChannelData(2, null);
-                mIsChan2On = -1;
-            }*/
+            WaveData waveData = mActiveScope.getWave(1);
+            mScopeView.setChannelData(1, waveData,timeData);
 
-        //    if(mIsMathOn == 1)
-            {
-                WaveData waveData = mActiveScope.getWave(3);
-                mScopeView.setChannelData(3, waveData,timeData);
-            }
-           /* else if(mIsMathOn == 0)
-            {
-                mScopeView.setChannelData(3, null);
-                mIsMathOn = -1;
-            }*/
+            waveData = mActiveScope.getWave(2);
+            mScopeView.setChannelData(2, waveData,timeData);
+
+            waveData = mActiveScope.getWave(3);
+            mScopeView.setChannelData(3, waveData,timeData);
 
             mRefreshHandler.postDelayed(this, REFRESH_RATE);
         }
     };
+
+   // private final Runnable mExpandTouchView = new Runnable()
+    private class ExpandScopeViewArea implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
+            assert scopeView != null;
+
+            Display display = getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+
+           // scopeView.getHitRect(delegateArea);
+            //set to available size
+            Rect delegateArea = new Rect();
+            delegateArea.left = 0;
+            delegateArea.top = 0;
+            delegateArea.right = size.x;
+            delegateArea.bottom = size.y;
+            TouchDelegate touchDelegate = new TouchDelegate(delegateArea, scopeView);
+
+            if(View.class.isInstance(scopeView.getParent()))
+            {
+                ((View)scopeView.getParent()).setTouchDelegate(touchDelegate);
+            }
+        }
+    }
+
+    public void onRunStop(View view)
+    {
+        final boolean isChecked = ((ToggleButton)view).isChecked();
+
+        if(mActiveScope != null)
+            mActiveScope.doCommand(
+                    ScopeInterface.Command.SET_RUN_STOP,
+                    0,
+                    true,
+                    isChecked);
+    }
+
+    public void onAuto(View view)
+    {
+        final ToggleButton button = (ToggleButton)view;
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(mActiveScope != null)
+                    mActiveScope.doCommand(
+                            ScopeInterface.Command.DO_AUTO,
+                            0,
+                            true,
+                            button.isChecked());
+
+                Log.i(TAG, "Auto Completed");
+                button.setChecked(false);
+            }
+        }, 0);
+    }
 }
