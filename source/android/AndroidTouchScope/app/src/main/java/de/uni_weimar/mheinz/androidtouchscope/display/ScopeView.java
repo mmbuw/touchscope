@@ -1,4 +1,4 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -733,7 +733,7 @@ public class ScopeView extends View
     //
     //////////////////////////////////////////////////////////////////////////
 
-    interface OnDoCommand
+    public interface OnDoCommand
     {
         void doCommand(ScopeInterface.Command command, int channel, Object specialData);
     }

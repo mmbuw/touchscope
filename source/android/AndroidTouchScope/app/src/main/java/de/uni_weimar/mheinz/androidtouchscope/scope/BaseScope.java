@@ -20,10 +20,10 @@ public class BaseScope implements ScopeInterface
     protected static final float MAX_TIME_SCALE = 50f;
     protected static final float MIN_TIME_SCALE = 2.0E-9f;*/
 
-    protected WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
-    protected WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    protected WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
-    protected TimeData mTimeData = new TimeData();
+    protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
+    protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
+    protected final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
+    protected final TimeData mTimeData = new TimeData();
 
     protected final Object mControllerLock = new Object();
     protected boolean mIsConnected = false;
@@ -237,7 +237,7 @@ public class BaseScope implements ScopeInterface
         return false;
     }
 
-    protected Runnable mReadRunnable = new Runnable()
+    protected final Runnable mReadRunnable = new Runnable()
     {
         @Override
         public void run()
