@@ -11,6 +11,7 @@ import de.uni_weimar.mheinz.androidtouchscope.R;
 
 public class HostView extends ViewGroup
 {
+    private ScopeView mScopeView;
     private Cursor mChan1Cursor;
     private Cursor mChan2Cursor;
     private Cursor mTimeCursor;
@@ -37,21 +38,20 @@ public class HostView extends ViewGroup
     private void init()
     {
         mChan1Cursor = new Cursor(getContext());
-        mChan1Cursor.setAttributes(Color.YELLOW, "Chan1");
+        mChan1Cursor.setAttributes(Color.YELLOW, "1", Cursor.HandelDirection.RIGHT);
         addView(mChan1Cursor);
 
         mChan2Cursor = new Cursor(getContext());
-        mChan2Cursor.setAttributes(Color.BLUE, "Chan2");
+        mChan2Cursor.setAttributes(Color.BLUE, "2", Cursor.HandelDirection.RIGHT);
         addView(mChan2Cursor);
 
         mTimeCursor = new Cursor(getContext());
-        mTimeCursor.setAttributes(Color.GREEN, "Time");
+        mTimeCursor.setAttributes(Color.rgb(255,215,0), "T", Cursor.HandelDirection.DOWN);
         addView(mTimeCursor);
 
         mTrigCursor = new Cursor(getContext());
-        mTrigCursor.setAttributes(Color.YELLOW, "Trig");
+        mTrigCursor.setAttributes(Color.rgb(255,215,0), "T", Cursor.HandelDirection.LEFT);
         addView(mTrigCursor);
-
     }
 
     @Override
@@ -71,25 +71,52 @@ public class HostView extends ViewGroup
     protected void onSizeChanged(int w, int h, int oldw, int oldh)
     {
         super.onSizeChanged(w, h, oldw, oldh);
+
         // These are the far left and right edges in which we are performing layout.
         int leftPos = getPaddingLeft();
         int rightPos = w - leftPos - getPaddingRight();
-        final int midH = (rightPos - leftPos) / 2;
+    //    final int midH = (rightPos - leftPos) / 2;
 
         // These are the top and bottom edges in which we are performing layout.
-        final int parentTop = getPaddingTop();
-        final int parentBottom =  h - parentTop - getPaddingBottom();
-        final int midV = (parentBottom - parentTop) / 2;
+        final int topPos = getPaddingTop();
+        final int bottomPos =  h - topPos - getPaddingBottom();
 
-        int cursorWidth = mChan1Cursor.getMeasuredWidth();
-        int cursorHeight = mChan1Cursor.getMeasuredHeight();
+        int cursorLength = mChan1Cursor.getHandelLength();
+        int cursorBreadth = mTimeCursor.getHandelBreadth();
 
-        mChan1Cursor.layout(leftPos, midV, leftPos + cursorWidth, midV + cursorHeight);
-        mChan2Cursor.layout(leftPos, midV + cursorHeight, leftPos + cursorWidth, midV + 2*cursorHeight);
-        mTimeCursor.layout(midH, parentTop, midH + cursorWidth, parentTop + cursorHeight);
-        mTrigCursor.layout(rightPos - cursorWidth, midV, rightPos, midV + cursorHeight);
+        View buttonRow = findViewById(R.id.button_row);
+        int buttonHeight = buttonRow.getMeasuredHeight();
 
-        View scopeView = findViewById(R.id.scopeView);
-        scopeView.layout(leftPos + cursorWidth, parentTop + cursorHeight,rightPos - cursorWidth, parentBottom);
+        int cursorBottom = bottomPos - buttonHeight + cursorBreadth / 2;
+
+     //   int scopeWidth = rightPos - leftPos - 2 * cursorWidth;
+     //   int scopeHeight = bottomPos - topPos - cursorHeight;
+
+        mChan1Cursor.layout(
+                leftPos,
+                topPos + cursorLength - cursorBreadth / 2,
+                leftPos + cursorLength,
+                cursorBottom);
+        mChan2Cursor.layout(
+                leftPos,
+                topPos + cursorLength - cursorBreadth / 2,
+                leftPos + cursorLength,
+                cursorBottom);
+        mTimeCursor.layout(
+                leftPos + cursorLength - cursorBreadth / 2,
+                topPos,
+                rightPos - cursorLength + cursorBreadth / 2,
+                topPos + cursorLength);
+        mTrigCursor.layout(
+                rightPos - cursorLength,
+                topPos + cursorLength - cursorBreadth / 2,
+                rightPos,
+                cursorBottom);
+
+        mScopeView = (ScopeView)findViewById(R.id.scopeView);
+        mScopeView.layout(leftPos + cursorLength, topPos + cursorLength,rightPos - cursorLength, bottomPos - buttonHeight);
+
+        buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos - cursorLength, bottomPos);
+
     }
 }
