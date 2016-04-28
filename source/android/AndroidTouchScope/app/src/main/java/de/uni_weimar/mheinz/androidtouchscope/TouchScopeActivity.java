@@ -1,8 +1,6 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -12,18 +10,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import android.os.Handler;
-import android.view.TouchDelegate;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
-import de.uni_weimar.mheinz.androidtouchscope.display.ScopeView;
+import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
+import de.uni_weimar.mheinz.androidtouchscope.display.OnDoCommand;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -34,7 +31,8 @@ public class TouchScopeActivity extends AppCompatActivity
     private static final int REFRESH_RATE = 100;
 
     private ScopeInterface mActiveScope = null;
-    private ScopeView mScopeView = null;
+   // private ScopeView mScopeView = null;
+    private HostView mHostView = null;
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mLeftDrawerToggle;
@@ -54,7 +52,7 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         assert mDrawerLayout != null;
         mDrawerLayout.setScrimColor(Color.TRANSPARENT);
-        mDrawerLayout.post(new ExpandScopeViewArea());
+       // mDrawerLayout.post(new ExpandScopeViewArea());
 
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null)
@@ -77,8 +75,10 @@ public class TouchScopeActivity extends AppCompatActivity
         assert rightDrawer != null;
         rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
 
-        mScopeView = (ScopeView) findViewById(R.id.scopeView);
-        mScopeView.setOnDoCommand(new ScopeView.OnDoCommand()
+        //mScopeView = (ScopeView) findViewById(R.id.scopeView);
+        //mScopeView.setOnDoCommand(new OnDoCommand()
+        mHostView = (HostView)findViewById(R.id.hostView);
+        mHostView.setOnDoCommand(new OnDoCommand()
         {
             @Override
             public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
@@ -87,6 +87,16 @@ public class TouchScopeActivity extends AppCompatActivity
                 {
                     mActiveScope.doCommand(command, channel, true, specialData);
                 }
+            }
+
+            @Override
+            public void moveWave(int channel, float pos)
+            {
+            }
+
+            @Override
+            public void moveTime(float pos)
+            {
             }
         });
 
@@ -284,13 +294,13 @@ public class TouchScopeActivity extends AppCompatActivity
                             true,
                             (Boolean) item.isChecked());
                     break;
-                case R.id.navigation_channel3:
+                /*case R.id.navigation_channel3:
                     mActiveScope.doCommand(
                             ScopeInterface.Command.SET_CHANNEL_STATE,
                             3,
                             true,
                             (Boolean) item.isChecked());
-                    break;
+                    break;*/
             }
             return false;
         }
@@ -304,46 +314,19 @@ public class TouchScopeActivity extends AppCompatActivity
             TimeData timeData = mActiveScope.getTimeData();
 
             WaveData waveData = mActiveScope.getWave(1);
-            mScopeView.setChannelData(1, waveData,timeData);
+            mHostView.setChannelData(1, waveData,timeData);
+            //mScopeView.setChannelData(1, waveData,timeData);
 
             waveData = mActiveScope.getWave(2);
-            mScopeView.setChannelData(2, waveData,timeData);
+            mHostView.setChannelData(2, waveData,timeData);
+           // mScopeView.setChannelData(2, waveData,timeData);
 
-            waveData = mActiveScope.getWave(3);
-            mScopeView.setChannelData(3, waveData,timeData);
+            /*waveData = mActiveScope.getWave(3);
+            mScopeView.setChannelData(3, waveData,timeData);*/
 
             mRefreshHandler.postDelayed(this, REFRESH_RATE);
         }
     };
-
-   // private final Runnable mExpandTouchView = new Runnable()
-    private class ExpandScopeViewArea implements Runnable
-    {
-        @Override
-        public void run()
-        {
-            ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
-            assert scopeView != null;
-
-            Display display = getWindowManager().getDefaultDisplay();
-            Point size = new Point();
-            display.getSize(size);
-
-           // scopeView.getHitRect(delegateArea);
-            //set to available size
-            Rect delegateArea = new Rect();
-            delegateArea.left = 0;
-            delegateArea.top = 0;
-            delegateArea.right = size.x;
-            delegateArea.bottom = size.y;
-            TouchDelegate touchDelegate = new TouchDelegate(delegateArea, scopeView);
-
-            if(View.class.isInstance(scopeView.getParent()))
-            {
-                ((View)scopeView.getParent()).setTouchDelegate(touchDelegate);
-            }
-        }
-    }
 
     public void onRunStop(View view)
     {

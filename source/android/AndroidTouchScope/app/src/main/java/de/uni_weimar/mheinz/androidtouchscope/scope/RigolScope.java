@@ -15,7 +15,7 @@ public class RigolScope extends BaseScope
 
     private static final String CHAN_1 = "CHAN1";
     private static final String CHAN_2 = "CHAN2";
-    private static final String CHAN_MATH = "MATH";
+  //  private static final String CHAN_MATH = "MATH";
 
     /*private static final double[] POSSIBLE_VOLT_VALUES =
             {2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10};*/
@@ -186,19 +186,19 @@ public class RigolScope extends BaseScope
 
     private String getChannelName(int chan)
     {
-        String channel;
+        String channel = "";
         switch (chan)
         {
+            case 1:
+                channel = CHAN_1;
+                break;
             case 2:
                 channel = CHAN_2;
                 break;
-            case 3:
-                channel = CHAN_MATH;
-                break;
-            case 1:
-            default:
-                channel = CHAN_1;
-                break;
+          //  case 3:
+          //      channel = CHAN_MATH;
+          //      break;
+
         }
 
         return channel;
@@ -280,7 +280,7 @@ public class RigolScope extends BaseScope
 
     protected void readWave(int channel)
     {
-        WaveData waveData;
+        WaveData waveData = null;
         switch(channel)
         {
             case 1:
@@ -289,11 +289,14 @@ public class RigolScope extends BaseScope
             case 2:
                 waveData = mWaves2.requestWaveData();
                 break;
-            case 3:
-            default:
-                waveData = mWaves3.requestWaveData();
-                break;
+           // case 3:
+           // default:
+           //     waveData = mWaves3.requestWaveData();
+           //     break;
         }
+
+        if(waveData == null)
+            return;
 
         synchronized(mControllerLock)
         {
@@ -324,9 +327,9 @@ public class RigolScope extends BaseScope
             case 2:
                 mWaves2.add(waveData);
                 break;
-            case 3:
-                mWaves3.add(waveData);
-                break;
+           // case 3:
+           //     mWaves3.add(waveData);
+           //     break;
         }
     }
 

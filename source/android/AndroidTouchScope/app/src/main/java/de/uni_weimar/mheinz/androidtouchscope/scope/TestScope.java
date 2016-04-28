@@ -6,7 +6,7 @@ public class TestScope extends BaseScope
 {
     private FakeWaveData mFakeWave1;
     private FakeWaveData mFakeWave2;
-    private FakeWaveData mFakeWave3;
+  //  private FakeWaveData mFakeWave3;
 
     public TestScope()
     {
@@ -18,7 +18,7 @@ public class TestScope extends BaseScope
     {
         mFakeWave1 = new FakeWaveData(59909.986179362626);
         mFakeWave2 = new FakeWaveData(36135.1315588236);
-        mFakeWave3 = new FakeWaveData(48039.920311455244);
+       // mFakeWave3 = new FakeWaveData(48039.920311455244);
         mFakeWave1.isOn = true;
     }
 
@@ -50,9 +50,9 @@ public class TestScope extends BaseScope
             case 2:
                 isOn = mFakeWave2.isOn;
                 break;
-            case 3:
+            /*case 3:
                 isOn = mFakeWave3.isOn;
-                break;
+                break;*/
         }
 
         return isOn;
@@ -71,9 +71,9 @@ public class TestScope extends BaseScope
             case 2:
                 mFakeWave2.offset = offset;
                 break;
-            case 3:
+            /*case 3:
                 mFakeWave3.offset = offset;
-                break;
+                break;*/
         }
     }
 
@@ -101,9 +101,9 @@ public class TestScope extends BaseScope
             case 2:
                 mFakeWave2.scale = scale;
                 break;
-            case 3:
+            /*case 3:
                 mFakeWave3.scale = scale;
-                break;
+                break;*/
         }
     }
 
@@ -123,9 +123,9 @@ public class TestScope extends BaseScope
             case 2:
                 mFakeWave2.isOn = state;
                 break;
-            case 3:
+            /*case 3:
                 mFakeWave3.isOn = state;
-                break;
+                break;*/
         }
     }
 
@@ -150,8 +150,8 @@ public class TestScope extends BaseScope
 
     protected void readWave(int channel)
     {
-        WaveData waveData;
-        FakeWaveData fakeWaveData;
+        WaveData waveData = null;
+        FakeWaveData fakeWaveData = null;
 
         switch(channel)
         {
@@ -163,12 +163,16 @@ public class TestScope extends BaseScope
                 waveData = mWaves2.requestWaveData();
                 fakeWaveData = mFakeWave2;
                 break;
-            case 3:
+            /*case 3:
             default:
                 waveData = mWaves3.requestWaveData();
                 fakeWaveData = mFakeWave3;
-                break;
+                break;*/
         }
+
+        if(waveData == null || fakeWaveData == null)
+            return;
+
 
         synchronized (mControllerLock)
         {
@@ -216,9 +220,9 @@ public class TestScope extends BaseScope
             case 2:
                 mWaves2.add(waveData);
                 break;
-            case 3:
+            /*case 3:
                 mWaves3.add(waveData);
-                break;
+                break;*/
         }
     }
 

@@ -48,25 +48,26 @@ public class ScopeView extends View
     /****  Drawing  ****/
     private final ShapeDrawable mDrawableChan1 = new ShapeDrawable();
     private final ShapeDrawable mDrawableChan2 = new ShapeDrawable();
-    private final ShapeDrawable mDrawableMath = new ShapeDrawable();
+  //  private final ShapeDrawable mDrawableMath = new ShapeDrawable();
     private final ShapeDrawable mDrawableGridH = new ShapeDrawable();
     private final ShapeDrawable mDrawableGridV = new ShapeDrawable();
 
     private final Path mPathChan1 = new Path();
     private final Path mPathChan2 = new Path();
-    private final Path mPathMath = new Path();
+ //   private final Path mPathMath = new Path();
     private final Path mPathGridH = new Path();
     private final Path mPathGridV = new Path();
 
     private final Paint mChan1TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mChan2TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  //  private final Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private String mChan1Text = "";
     private String mChan2Text = "";
-    private String mMathText = "";
+   // private String mMathText = "";
     private String mTimeText = "";
+    private double mTimeOffset;
 
     private Point mTextPos;
 
@@ -138,12 +139,12 @@ public class ScopeView extends View
 
         initDrawable(mDrawableChan1, mPathChan1, Color.YELLOW, mContentWidth, mContentHeight);
         initDrawable(mDrawableChan2, mPathChan2, Color.BLUE, mContentWidth, mContentHeight);
-        initDrawable(mDrawableMath, mPathMath, Color.MAGENTA, mContentWidth, mContentHeight);
+   //     initDrawable(mDrawableMath, mPathMath, Color.MAGENTA, mContentWidth, mContentHeight);
         initGridH(mDrawableGridH, mPathGridH, Color.GRAY, mContentWidth, mContentHeight);
         initGridV(mDrawableGridV, mPathGridV, Color.GRAY, mContentWidth, mContentHeight);
         initText(mChan1TextPaint, 15, Color.YELLOW);
         initText(mChan2TextPaint, 15, Color.BLUE);
-        initText(mMathTextPaint, 15, Color.MAGENTA);
+    //    initText(mMathTextPaint, 15, Color.MAGENTA);
         initText(mTimeTextPaint, 15, Color.WHITE);
     }
 
@@ -219,7 +220,7 @@ public class ScopeView extends View
             {
                 if(mInMovement || mInScaling)
                     break;
-                updatePath(mPathChan1, waveData);
+                updatePath(channel, mPathChan1, waveData);
                 mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
             }
@@ -227,25 +228,32 @@ public class ScopeView extends View
             {
                 if(mInMovement || mInScaling)
                     break;
-                updatePath(mPathChan2, waveData);
+                updatePath(channel, mPathChan2, waveData);
                 mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
             }
-            case 3:
+            /*case 3:
             {
                 if(mInMovement || mInScaling)
                     break;
                 updatePath(mPathMath, waveData);
                 mMathText = updateVoltText(waveData, "Math");
                 break;
-            }
+            }*/
         }
         mTimeText = updateTimeText(timeData);
+
+        if(!mInMovement && mOnDoCommand != null && mChangeDelay <= 0)
+        {
+            float offset = (float)(-timeData.timeOffset / timeData.timeScale) * mContentWidth / NUM_COLUMNS;
+            mTimeOffset = offset + mContentWidth / 2;
+            mOnDoCommand.moveTime((float)mTimeOffset);
+        }
 
         postInvalidate();
     }
 
-    private int updatePath(Path path, WaveData waveData)
+    private int updatePath(int channel, Path path, WaveData waveData)
     {
 
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
@@ -305,6 +313,13 @@ public class ScopeView extends View
         {
           //  attempts++;
             mChangeDelay--;
+        }
+
+        if(mOnDoCommand != null)
+        {
+            RectF bounds = new RectF();
+            path.computeBounds(bounds, false);
+            mOnDoCommand.moveWave(channel, bounds.bottom);
         }
         return 0;
     }
@@ -395,8 +410,8 @@ public class ScopeView extends View
         count += measure.getLength() > 0 ? 1 : 0;
         measure.setPath(mPathChan2,false);
         count += measure.getLength() > 0 ? 1 : 0;
-        measure.setPath(mPathMath,false);
-        count += measure.getLength() > 0 ? 1 : 0;
+       // measure.setPath(mPathMath,false);
+      //  count += measure.getLength() > 0 ? 1 : 0;
 
         return count;
     }
@@ -414,13 +429,13 @@ public class ScopeView extends View
 
         mDrawableChan1.draw(canvas);
         mDrawableChan2.draw(canvas);
-        mDrawableMath.draw(canvas);
+      //  mDrawableMath.draw(canvas);
         mDrawableGridH.draw(canvas);
         mDrawableGridV.draw(canvas);
         canvas.drawText(mChan1Text, mTextPos.x, mTextPos.y, mChan1TextPaint);
         canvas.drawText(mChan2Text,mTextPos.x + 150,mTextPos.y,mChan2TextPaint);
-        canvas.drawText(mMathText,mTextPos.x + 300,mTextPos.y,mMathTextPaint);
-        canvas.drawText(mTimeText,mTextPos.x + 450,mTextPos.y,mTimeTextPaint);
+    //    canvas.drawText(mMathText,mTextPos.x + 300,mTextPos.y,mMathTextPaint);
+        canvas.drawText(mTimeText,mContentWidth - 150,mTextPos.y,mTimeTextPaint);
 
         super.onDraw(canvas);
     }
@@ -459,8 +474,8 @@ public class ScopeView extends View
         mDrawableChan1.getPaint().setStrokeWidth(1);
         mDrawableChan2.getPaint().clearShadowLayer();
         mDrawableChan2.getPaint().setStrokeWidth(1);
-        mDrawableMath.getPaint().clearShadowLayer();
-        mDrawableMath.getPaint().setStrokeWidth(1);
+      //  mDrawableMath.getPaint().clearShadowLayer();
+      //  mDrawableMath.getPaint().setStrokeWidth(1);
 
         switch(mSelectedPath)
         {
@@ -472,10 +487,10 @@ public class ScopeView extends View
                 mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,Color.BLUE);
                 mDrawableChan2.getPaint().setStrokeWidth(1.5f);
                 break;
-            case 3:
+            /*case 3:
                 mDrawableMath.getPaint().setShadowLayer(10f,0f,0f,Color.MAGENTA);
                 mDrawableMath.getPaint().setStrokeWidth(1.5f);
-                break;
+                break;*/
             default:
                 break;
         }
@@ -515,14 +530,13 @@ public class ScopeView extends View
         if(dist < minDist)
         {
             selected = 2;
-            minDist = dist;
         }
 
-        dist = smallestDistanceToPath(mPathMath,x,y);
+        /*dist = smallestDistanceToPath(mPathMath,x,y);
         if(dist < minDist)
         {
             selected = 3;
-        }
+        }*/
 
         return selected;
     }
@@ -590,18 +604,36 @@ public class ScopeView extends View
                 {
                     case 1:
                         mPathChan1.offset(0, -distanceY);
+                        if(mOnDoCommand != null)
+                        {
+                            RectF bounds = new RectF();
+                            mPathChan1.computeBounds(bounds, false);
+                            mOnDoCommand.moveWave(1, bounds.bottom);
+                        }
                         break;
                     case 2:
                         mPathChan2.offset(0, -distanceY);
+                        if(mOnDoCommand != null)
+                        {
+                            RectF bounds = new RectF();
+                            mPathChan2.computeBounds(bounds, false);
+                            mOnDoCommand.moveWave(2, bounds.bottom);
+                        }
                         break;
-                    case 3:
+                    /*case 3:
                         mPathMath.offset(0, -distanceY);
-                        break;
+                        break;*/
                 }
 
                 mPathChan1.offset(-distanceX, 0);
                 mPathChan2.offset(-distanceX, 0);
-                mPathMath.offset(-distanceX, 0);
+               // mPathMath.offset(-distanceX, 0);
+
+                if(mOnDoCommand != null)
+                {
+                    mTimeOffset = mTimeOffset - distanceX;
+                    mOnDoCommand.moveTime((float)mTimeOffset);
+                }
 
                 invalidate();
             }
@@ -674,11 +706,11 @@ public class ScopeView extends View
                     scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathChan2.transform(scaleMatrix);
                     break;
-                case 3:
+                /*case 3:
                     mPathMath.computeBounds(rectF, true);
                     scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathMath.transform(scaleMatrix);
-                    break;
+                    break;*/
             }
 
             scaleMatrix = new Matrix();
@@ -688,7 +720,7 @@ public class ScopeView extends View
 
             mPathChan1.transform(scaleMatrix);
             mPathChan2.transform(scaleMatrix);
-            mPathMath.transform(scaleMatrix);
+         //   mPathMath.transform(scaleMatrix);
 
             invalidate();
 
@@ -733,8 +765,8 @@ public class ScopeView extends View
     //
     //////////////////////////////////////////////////////////////////////////
 
-    public interface OnDoCommand
+    /*public interface OnDoCommand
     {
         void doCommand(ScopeInterface.Command command, int channel, Object specialData);
-    }
+    }*/
 }

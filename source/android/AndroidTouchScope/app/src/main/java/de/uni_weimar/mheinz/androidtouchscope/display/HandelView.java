@@ -18,13 +18,13 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class Cursor extends View
+public class HandelView extends View
 {
     private static final int HANDLE_LENGTH = 50;
     private static final int HANDLE_BREADTH = 25;
 
     private final ShapeDrawable mShapeDrawable = new ShapeDrawable();
-    private final Path mCursorHandel = new Path();
+    private final Path mHandelPath = new Path();
     private final Paint mMainTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private GestureDetectorCompat mGestureDetector;
@@ -37,32 +37,50 @@ public class Cursor extends View
 
     private float mHandelPos = HANDLE_BREADTH / 2;
 
-    public Cursor(Context context)
+    public HandelView(Context context)
     {
         super(context);
         init();
     }
 
-    public Cursor(Context context, AttributeSet attrs)
+    public HandelView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
         init();
     }
 
-    public Cursor(Context context, AttributeSet attrs, int defStyleAttr)
+    public HandelView(Context context, AttributeSet attrs, int defStyleAttr)
     {
         super(context, attrs, defStyleAttr);
         init();
+    }
+
+    public void setHandlePosition(float pos)
+    {
+        //only move handle if move is big enough
+       /* if(Math.abs(pos - mHandelPos) < 5)
+            return;*/
+
+        if(mOrientation == HandelDirection.UP || mOrientation == HandelDirection.DOWN)
+        {
+            mHandelPos = Math.max(mBounds.left, Math.min(mBounds.right, pos));
+        }
+        else
+        {
+            mHandelPos = Math.max(mBounds.top, Math.min(mBounds.bottom, pos));
+        }
+        makeHandel();
     }
 
     private void init()
     {
         mGestureDetector = new GestureDetectorCompat(getContext(), new SimpleGestureListener());
 
-        mShapeDrawable.setShape(new PathShape(mCursorHandel, mBounds.width(), mBounds.height()));
+        mShapeDrawable.setShape(new PathShape(mHandelPath, mBounds.width(), mBounds.height()));
         mShapeDrawable.getPaint().setStyle(Paint.Style.FILL_AND_STROKE);
         mShapeDrawable.getPaint().setColor(mColor);
         mShapeDrawable.setBounds(0, 0, (int)mBounds.width(), (int)mBounds.height());
+        setLayerType(LAYER_TYPE_SOFTWARE, mShapeDrawable.getPaint());
         makeHandel();
 
         /*mPaint.setStyle(Paint.Style.STROKE);
@@ -78,48 +96,50 @@ public class Cursor extends View
 
     public void setAttributes(int color, String mainText, HandelDirection orientation)
     {
-    //    mColor = color;
+        mColor = color;
         mMainText = mainText;
         mOrientation = orientation;
         mShapeDrawable.getPaint().setColor(color);
+        mShapeDrawable.getPaint().setShadowLayer(1,1,1,Color.GRAY);
 
         invalidate();
     }
 
     private void makeHandel()
     {
-        mCursorHandel.rewind();
+        mHandelPath.rewind();
 
         if(mOrientation == HandelDirection.RIGHT)
         {
-            mCursorHandel.moveTo(5, mHandelPos);
-            mCursorHandel.lineTo(5, mHandelPos + HANDLE_BREADTH / 2);
-            mCursorHandel.lineTo(5 + HANDLE_LENGTH * 3/4, mHandelPos + HANDLE_BREADTH / 2);
-            mCursorHandel.lineTo(mBounds.right, mHandelPos);
-            mCursorHandel.lineTo(5 + HANDLE_LENGTH * 3/4, mHandelPos - HANDLE_BREADTH / 2);
-            mCursorHandel.lineTo(5, mHandelPos - HANDLE_BREADTH / 2);
-            mCursorHandel.close();
+            mHandelPath.moveTo(5, mHandelPos);
+            mHandelPath.lineTo(5, mHandelPos + HANDLE_BREADTH / 2);
+            mHandelPath.lineTo(5 + HANDLE_LENGTH * 3/4, mHandelPos + HANDLE_BREADTH / 2);
+            mHandelPath.lineTo(mBounds.right, mHandelPos);
+            mHandelPath.lineTo(5 + HANDLE_LENGTH * 3/4, mHandelPos - HANDLE_BREADTH / 2);
+            mHandelPath.lineTo(5, mHandelPos - HANDLE_BREADTH / 2);
+            mHandelPath.close();
         }
         else if(mOrientation == HandelDirection.LEFT)
         {
-            mCursorHandel.moveTo(mBounds.right - 5, mHandelPos);
-            mCursorHandel.lineTo(mBounds.right - 5, mHandelPos + HANDLE_BREADTH / 2);
-            mCursorHandel.lineTo(mBounds.right - 5 - HANDLE_LENGTH * 3/4, mHandelPos + HANDLE_BREADTH / 2);
-            mCursorHandel.lineTo(mBounds.left, mHandelPos);
-            mCursorHandel.lineTo(mBounds.right - 5 - HANDLE_LENGTH * 3/4, mHandelPos - HANDLE_BREADTH / 2);
-            mCursorHandel.lineTo(mBounds.right - 5, mHandelPos - HANDLE_BREADTH / 2);
-            mCursorHandel.close();
+            mHandelPath.moveTo(mBounds.right - 5, mHandelPos);
+            mHandelPath.lineTo(mBounds.right - 5, mHandelPos + HANDLE_BREADTH / 2);
+            mHandelPath.lineTo(mBounds.right - 5 - HANDLE_LENGTH * 3/4, mHandelPos + HANDLE_BREADTH / 2);
+            mHandelPath.lineTo(mBounds.left, mHandelPos);
+            mHandelPath.lineTo(mBounds.right - 5 - HANDLE_LENGTH * 3/4, mHandelPos - HANDLE_BREADTH / 2);
+            mHandelPath.lineTo(mBounds.right - 5, mHandelPos - HANDLE_BREADTH / 2);
+            mHandelPath.close();
         }
         else if(mOrientation == HandelDirection.DOWN)
         {
-            mCursorHandel.moveTo(mHandelPos, 5);
-            mCursorHandel.lineTo(mHandelPos + HANDLE_BREADTH / 2, 5);
-            mCursorHandel.lineTo(mHandelPos + HANDLE_BREADTH / 2, 5 + HANDLE_LENGTH * 3/4);
-            mCursorHandel.lineTo(mHandelPos, mBounds.bottom);
-            mCursorHandel.lineTo(mHandelPos - HANDLE_BREADTH / 2, 5 + HANDLE_LENGTH * 3/4);
-            mCursorHandel.lineTo(mHandelPos - HANDLE_BREADTH / 2, 5);
-            mCursorHandel.close();
+            mHandelPath.moveTo(mHandelPos, 5);
+            mHandelPath.lineTo(mHandelPos + HANDLE_BREADTH / 2, 5);
+            mHandelPath.lineTo(mHandelPos + HANDLE_BREADTH / 2, 5 + HANDLE_LENGTH * 3/4);
+            mHandelPath.lineTo(mHandelPos, mBounds.bottom);
+            mHandelPath.lineTo(mHandelPos - HANDLE_BREADTH / 2, 5 + HANDLE_LENGTH * 3/4);
+            mHandelPath.lineTo(mHandelPos - HANDLE_BREADTH / 2, 5);
+            mHandelPath.close();
         }
+        invalidate();
     }
 
     private PointF getCircleCenter()
@@ -143,13 +163,8 @@ public class Cursor extends View
     {
         super.onDraw(canvas);
 
-       // mPaint.setStyle(Paint.Style.STROKE);
-       // mPaint.setColor(mColor);
         mShapeDrawable.draw(canvas);
 
-        PointF center = getCircleCenter();
-
-      //  canvas.drawCircle(center.x, center.y, CIRCLE_RADIUS, mPaint);
 
         /*if(mSelected)
         {
@@ -158,6 +173,7 @@ public class Cursor extends View
             canvas.drawCircle(center.x, center.y, CIRCLE_RADIUS, mPaint);
         }*/
 
+        PointF center = getCircleCenter();
         Rect textBounds = new Rect();
         mMainTextPaint.getTextBounds(mMainText, 0, mMainText.length(), textBounds);
         canvas.drawText(mMainText, center.x, center.y + textBounds.height() / 2, mMainTextPaint);
@@ -240,15 +256,12 @@ public class Cursor extends View
             {
                 if(mOrientation == HandelDirection.UP || mOrientation == HandelDirection.DOWN)
                 {
-                    mHandelPos = Math.max(mBounds.left, Math.min(mBounds.right, mHandelPos - distanceX));
+                    setHandlePosition(mHandelPos - distanceX);
                 }
                 else
                 {
-                    mHandelPos = Math.max(mBounds.top, Math.min(mBounds.bottom, mHandelPos - distanceY));
+                    setHandlePosition(mHandelPos - distanceY);
                 }
-                makeHandel();
-
-                invalidate();
             }
             return true;
         }

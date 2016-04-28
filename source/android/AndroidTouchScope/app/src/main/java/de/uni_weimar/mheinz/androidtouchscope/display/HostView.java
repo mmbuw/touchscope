@@ -3,19 +3,28 @@ package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewGroup;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
+import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class HostView extends ViewGroup
 {
     private ScopeView mScopeView;
-    private Cursor mChan1Cursor;
-    private Cursor mChan2Cursor;
-    private Cursor mTimeCursor;
-    private Cursor mTrigCursor;
+    private HandelView mChan1Handel;
+    private HandelView mChan2Handel;
+    private HandelView mTimeHandel;
+    private HandelView mTrigHandel;
+
+    private OnDoCommand mOnDoCommand = null;
+
 
     public HostView(Context context)
     {
@@ -35,23 +44,34 @@ public class HostView extends ViewGroup
         init();
     }
 
+    public void setOnDoCommand(OnDoCommand onDoCommand)
+    {
+        mOnDoCommand = onDoCommand;
+    }
+
+    public void setChannelData(int channel, WaveData waveData, TimeData timeData)
+    {
+
+        mScopeView.setChannelData(channel, waveData, timeData);
+    }
+
     private void init()
     {
-        mChan1Cursor = new Cursor(getContext());
-        mChan1Cursor.setAttributes(Color.YELLOW, "1", Cursor.HandelDirection.RIGHT);
-        addView(mChan1Cursor);
+        mChan1Handel = new HandelView(getContext());
+        mChan1Handel.setAttributes(Color.YELLOW, "CH1", HandelView.HandelDirection.RIGHT);
+        addView(mChan1Handel);
 
-        mChan2Cursor = new Cursor(getContext());
-        mChan2Cursor.setAttributes(Color.BLUE, "2", Cursor.HandelDirection.RIGHT);
-        addView(mChan2Cursor);
+        mChan2Handel = new HandelView(getContext());
+        mChan2Handel.setAttributes(Color.BLUE, "CH2", HandelView.HandelDirection.RIGHT);
+        addView(mChan2Handel);
 
-        mTimeCursor = new Cursor(getContext());
-        mTimeCursor.setAttributes(Color.rgb(255,215,0), "T", Cursor.HandelDirection.DOWN);
-        addView(mTimeCursor);
+        mTimeHandel = new HandelView(getContext());
+        mTimeHandel.setAttributes(Color.rgb(255,215,0), "T", HandelView.HandelDirection.DOWN);
+        addView(mTimeHandel);
 
-        mTrigCursor = new Cursor(getContext());
-        mTrigCursor.setAttributes(Color.rgb(255,215,0), "T", Cursor.HandelDirection.LEFT);
-        addView(mTrigCursor);
+        mTrigHandel = new HandelView(getContext());
+        mTrigHandel.setAttributes(Color.rgb(255,215,0), "T", HandelView.HandelDirection.LEFT);
+        addView(mTrigHandel);
     }
 
     @Override
@@ -81,8 +101,8 @@ public class HostView extends ViewGroup
         final int topPos = getPaddingTop();
         final int bottomPos =  h - topPos - getPaddingBottom();
 
-        int cursorLength = mChan1Cursor.getHandelLength();
-        int cursorBreadth = mTimeCursor.getHandelBreadth();
+        int cursorLength = mChan1Handel.getHandelLength();
+        int cursorBreadth = mTimeHandel.getHandelBreadth();
 
         View buttonRow = findViewById(R.id.button_row);
         int buttonHeight = buttonRow.getMeasuredHeight();
@@ -92,22 +112,22 @@ public class HostView extends ViewGroup
      //   int scopeWidth = rightPos - leftPos - 2 * cursorWidth;
      //   int scopeHeight = bottomPos - topPos - cursorHeight;
 
-        mChan1Cursor.layout(
+        mChan1Handel.layout(
                 leftPos,
                 topPos + cursorLength - cursorBreadth / 2,
                 leftPos + cursorLength,
                 cursorBottom);
-        mChan2Cursor.layout(
+        mChan2Handel.layout(
                 leftPos,
                 topPos + cursorLength - cursorBreadth / 2,
                 leftPos + cursorLength,
                 cursorBottom);
-        mTimeCursor.layout(
+        mTimeHandel.layout(
                 leftPos + cursorLength - cursorBreadth / 2,
                 topPos,
                 rightPos - cursorLength + cursorBreadth / 2,
                 topPos + cursorLength);
-        mTrigCursor.layout(
+        mTrigHandel.layout(
                 rightPos - cursorLength,
                 topPos + cursorLength - cursorBreadth / 2,
                 rightPos,
@@ -115,8 +135,61 @@ public class HostView extends ViewGroup
 
         mScopeView = (ScopeView)findViewById(R.id.scopeView);
         mScopeView.layout(leftPos + cursorLength, topPos + cursorLength,rightPos - cursorLength, bottomPos - buttonHeight);
+        mScopeView.setOnDoCommand(new OnDoCommand()
+        {
+            @Override
+            public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
+            {
+                if(mOnDoCommand != null)
+                    mOnDoCommand.doCommand(command, channel, specialData);
+            }
+
+            @Override
+            public void moveWave(int channel, float pos)
+            {
+                if(channel == 1)
+                    mChan1Handel.setHandlePosition(pos + mChan1Handel.getHandelBreadth() / 2);
+                else if(channel == 2)
+                    mChan2Handel.setHandlePosition(pos + mChan2Handel.getHandelBreadth() / 2);
+            }
+
+            @Override
+            public void moveTime(float pos)
+            {
+                mTimeHandel.setHandlePosition(pos + mTimeHandel.getHandelBreadth() / 2);
+            }
+        });
 
         buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos - cursorLength, bottomPos);
 
+        post(new ExpandScopeViewArea());
+    }
+
+    private class ExpandScopeViewArea implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
+            assert scopeView != null;
+
+            //Display display = getWindowManager().getDefaultDisplay();
+            Point size = new Point(getWidth(), getHeight());
+           // display.getSize(size);
+
+            // scopeView.getHitRect(delegateArea);
+            //set to available size
+            Rect delegateArea = new Rect();
+            delegateArea.left = 0;
+            delegateArea.top = 0;
+            delegateArea.right = size.x;
+            delegateArea.bottom = size.y;
+            TouchDelegate touchDelegate = new TouchDelegate(delegateArea, scopeView);
+
+            if(View.class.isInstance(scopeView.getParent()))
+            {
+                ((View)scopeView.getParent()).setTouchDelegate(touchDelegate);
+            }
+        }
     }
 }

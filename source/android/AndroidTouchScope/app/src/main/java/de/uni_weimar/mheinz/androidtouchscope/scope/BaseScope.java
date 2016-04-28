@@ -22,7 +22,7 @@ public class BaseScope implements ScopeInterface
 
     protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    protected final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
+ //   protected final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
     protected final TimeData mTimeData = new TimeData();
 
     protected final Object mControllerLock = new Object();
@@ -87,9 +87,9 @@ public class BaseScope implements ScopeInterface
             case 2:
                 waveData = mWaves2.peek();
                 break;
-            case 3:
-                waveData = mWaves3.peek();
-                break;
+           // case 3:
+           //     waveData = mWaves3.peek();
+           //     break;
         }
         return waveData;
     }
@@ -244,7 +244,7 @@ public class BaseScope implements ScopeInterface
         {
             readWave(1);
             readWave(2);
-            readWave(3);
+          //  readWave(3);
             readTimeData();
 
             mReadHandler.postDelayed(this, READ_RATE);
