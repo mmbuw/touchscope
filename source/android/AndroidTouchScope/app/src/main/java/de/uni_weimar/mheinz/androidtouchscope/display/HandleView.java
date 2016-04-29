@@ -18,6 +18,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+//TODO: when offset is off screen, moving handel should offset data back to screen
 public class HandleView extends View
 {
     private static final int HANDLE_LENGTH = 50;
@@ -275,11 +276,11 @@ public class HandleView extends View
             {
                 if(mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
                 {
-                    mOnDataChanged.moveWave(mId, mFirstTouch.y - mHandlePos, false);
+                    mOnDataChanged.moveWave(mId, mFirstTouch.y - mHandlePos - HANDLE_BREADTH / 2, false);
                 }
                 else if(mId == HostView.ID_HANDLE_TIME)
                 {
-                    mOnDataChanged.moveTime(mFirstTouch.x - mHandlePos, false);
+                    mOnDataChanged.moveTime(mFirstTouch.x - mHandlePos - HANDLE_BREADTH / 2, false);
                 }
             }
             mIsMoving = false;
