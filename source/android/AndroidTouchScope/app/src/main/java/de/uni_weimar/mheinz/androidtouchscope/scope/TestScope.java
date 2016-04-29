@@ -16,6 +16,8 @@ public class TestScope extends BaseScope
 
     private void initTestScope()
     {
+        mTimeData.timeOffset = 0;
+        mTimeData.timeScale = 1;
         mFakeWave1 = new FakeWaveData(59909.986179362626);
         mFakeWave2 = new FakeWaveData(36135.1315588236);
        // mFakeWave3 = new FakeWaveData(48039.920311455244);
@@ -153,29 +155,28 @@ public class TestScope extends BaseScope
         WaveData waveData = null;
         FakeWaveData fakeWaveData = null;
 
-        switch(channel)
-        {
-            case 1:
-                waveData = mWaves1.requestWaveData();
-                fakeWaveData = mFakeWave1;
-                break;
-            case 2:
-                waveData = mWaves2.requestWaveData();
-                fakeWaveData = mFakeWave2;
-                break;
-            /*case 3:
-            default:
-                waveData = mWaves3.requestWaveData();
-                fakeWaveData = mFakeWave3;
-                break;*/
-        }
-
-        if(waveData == null || fakeWaveData == null)
-            return;
-
-
         synchronized (mControllerLock)
         {
+            switch(channel)
+            {
+                case 1:
+                    waveData = mWaves1.requestWaveData();
+                    fakeWaveData = mFakeWave1;
+                    break;
+                case 2:
+                    waveData = mWaves2.requestWaveData();
+                    fakeWaveData = mFakeWave2;
+                    break;
+                /*case 3:
+                default:
+                    waveData = mWaves3.requestWaveData();
+                    fakeWaveData = mFakeWave3;
+                    break;*/
+            }
+
+            if(waveData == null || fakeWaveData == null)
+                return;
+
             int[] buffer = null;
             if (isChannelOn(channel))
             {
@@ -210,19 +211,19 @@ public class TestScope extends BaseScope
             waveData.data = buffer;
             waveData.voltageScale = 1.0 / fakeWaveData.scale;
             waveData.voltageOffset = fakeWaveData.offset;
-        }
 
-        switch (channel)
-        {
-            case 1:
-                mWaves1.add(waveData);
-                break;
-            case 2:
-                mWaves2.add(waveData);
-                break;
+            switch (channel)
+            {
+                case 1:
+                    mWaves1.add(waveData);
+                    break;
+                case 2:
+                    mWaves2.add(waveData);
+                    break;
             /*case 3:
                 mWaves3.add(waveData);
                 break;*/
+            }
         }
     }
 

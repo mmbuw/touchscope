@@ -20,7 +20,7 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
-import de.uni_weimar.mheinz.androidtouchscope.display.OnDoCommand;
+import de.uni_weimar.mheinz.androidtouchscope.display.OnDataChanged;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -52,7 +52,6 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         assert mDrawerLayout != null;
         mDrawerLayout.setScrimColor(Color.TRANSPARENT);
-       // mDrawerLayout.post(new ExpandScopeViewArea());
 
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null)
@@ -64,8 +63,18 @@ public class TouchScopeActivity extends AppCompatActivity
 
         mLeftDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
                 R.string.drawer_open, R.string.drawer_close);
-
         mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
+
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        assert toolbar != null;
+        toolbar.setNavigationOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                mDrawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
 
         mLeftDrawer = (NavigationView)findViewById(R.id.left_drawer);
         assert mLeftDrawer != null;
@@ -76,9 +85,9 @@ public class TouchScopeActivity extends AppCompatActivity
         rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
 
         //mScopeView = (ScopeView) findViewById(R.id.scopeView);
-        //mScopeView.setOnDoCommand(new OnDoCommand()
+        //mScopeView.setOnDoCommand(new OnDataChanged()
         mHostView = (HostView)findViewById(R.id.hostView);
-        mHostView.setOnDoCommand(new OnDoCommand()
+        mHostView.setOnDoCommand(new OnDataChanged()
         {
             @Override
             public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
@@ -90,12 +99,12 @@ public class TouchScopeActivity extends AppCompatActivity
             }
 
             @Override
-            public void moveWave(int channel, float pos)
+            public void moveWave(int channel, float pos, boolean moving)
             {
             }
 
             @Override
-            public void moveTime(float pos)
+            public void moveTime(float pos, boolean moving)
             {
             }
         });
