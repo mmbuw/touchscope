@@ -23,6 +23,7 @@ import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
 import de.uni_weimar.mheinz.androidtouchscope.display.OnDataChanged;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class TouchScopeActivity extends AppCompatActivity
@@ -321,13 +322,14 @@ public class TouchScopeActivity extends AppCompatActivity
         public void run()
         {
             TimeData timeData = mActiveScope.getTimeData();
+            TriggerData trigData = mActiveScope.getTriggerData();
 
             WaveData waveData = mActiveScope.getWave(1);
-            mHostView.setChannelData(1, waveData,timeData);
+            mHostView.setChannelData(1, waveData,timeData, trigData);
             //mScopeView.setChannelData(1, waveData,timeData);
 
             waveData = mActiveScope.getWave(2);
-            mHostView.setChannelData(2, waveData,timeData);
+            mHostView.setChannelData(2, waveData,timeData, trigData);
            // mScopeView.setChannelData(2, waveData,timeData);
 
             /*waveData = mActiveScope.getWave(3);

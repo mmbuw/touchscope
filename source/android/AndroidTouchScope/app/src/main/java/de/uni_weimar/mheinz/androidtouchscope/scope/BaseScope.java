@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveRequestPool;
 
@@ -24,6 +25,7 @@ public class BaseScope implements ScopeInterface
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
  //   protected final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
     protected final TimeData mTimeData = new TimeData();
+    protected final TriggerData mTrigData = new TriggerData();
 
     protected final Object mControllerLock = new Object();
     protected boolean mIsConnected = false;
@@ -52,7 +54,8 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "start");
 
         stop();
-        mReadHandler.postDelayed(mReadRunnable, 0);
+        if(mIsConnected)
+            mReadHandler.postDelayed(mReadRunnable, 0);
     }
 
     @Override
@@ -97,6 +100,11 @@ public class BaseScope implements ScopeInterface
     public TimeData getTimeData()
     {
         return mTimeData;
+    }
+
+    public TriggerData getTriggerData()
+    {
+        return mTrigData;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -246,6 +254,9 @@ public class BaseScope implements ScopeInterface
             readWave(2);
           //  readWave(3);
             readTimeData();
+            readTriggerData();
+
+            forceCommand();
 
             mReadHandler.postDelayed(this, READ_RATE);
         }
@@ -256,6 +267,10 @@ public class BaseScope implements ScopeInterface
     }
 
     protected void readTimeData()
+    {
+    }
+
+    protected void readTriggerData()
     {
     }
 

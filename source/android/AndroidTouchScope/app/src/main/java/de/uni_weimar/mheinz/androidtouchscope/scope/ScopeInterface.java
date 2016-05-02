@@ -1,6 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public interface ScopeInterface
@@ -12,6 +13,7 @@ public interface ScopeInterface
     boolean isConnected();
     WaveData getWave(int chan);
     TimeData getTimeData();
+    TriggerData getTriggerData();
     int doCommand(Command command, int channel, boolean force, Object specialData);
 
     enum Command

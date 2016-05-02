@@ -29,6 +29,7 @@ import java.util.Locale;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.BaseScope;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 //TODO: display offset values (somehow)
@@ -46,29 +47,28 @@ public class ScopeView extends View
 
     private int mSelectedPath = -1; // -1 if not selected
     private OnDataChanged mOnDataChanged = null;
+    //private
 
     /****  Drawing  ****/
     private final ShapeDrawable mDrawableChan1 = new ShapeDrawable();
     private final ShapeDrawable mDrawableChan2 = new ShapeDrawable();
-  //  private final ShapeDrawable mDrawableMath = new ShapeDrawable();
     private final ShapeDrawable mDrawableGridH = new ShapeDrawable();
     private final ShapeDrawable mDrawableGridV = new ShapeDrawable();
 
     private final Path mPathChan1 = new Path();
     private final Path mPathChan2 = new Path();
- //   private final Path mPathMath = new Path();
     private final Path mPathGridH = new Path();
     private final Path mPathGridV = new Path();
 
     private final Paint mChan1TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mChan2TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-  //  private final Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mTriggerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private String mChan1Text = "";
     private String mChan2Text = "";
-   // private String mMathText = "";
     private String mTimeText = "";
+    private String mTriggerText = "";
     private double mTimeOffset;
 
     private Point mTextPos;
@@ -142,13 +142,12 @@ public class ScopeView extends View
 
         initDrawable(mDrawableChan1, mPathChan1, Color.YELLOW, mContentWidth, mContentHeight);
         initDrawable(mDrawableChan2, mPathChan2, Color.BLUE, mContentWidth, mContentHeight);
-   //     initDrawable(mDrawableMath, mPathMath, Color.MAGENTA, mContentWidth, mContentHeight);
         initGridH(mDrawableGridH, mPathGridH, Color.GRAY, mContentWidth, mContentHeight);
         initGridV(mDrawableGridV, mPathGridV, Color.GRAY, mContentWidth, mContentHeight);
         initText(mChan1TextPaint, 15, Color.YELLOW);
         initText(mChan2TextPaint, 15, Color.BLUE);
-    //    initText(mMathTextPaint, 15, Color.MAGENTA);
         initText(mTimeTextPaint, 15, Color.WHITE);
+        initText(mTriggerTextPaint, 15, Color.rgb(255,215,0));
     }
 
     private void initDrawable(ShapeDrawable drawable, Path path, int color, int width, int height)
@@ -221,7 +220,7 @@ public class ScopeView extends View
         }
     }
 
-    public void setChannelData(int channel, WaveData waveData, TimeData timeData)
+    public void setChannelData(int channel, WaveData waveData, TimeData timeData, TriggerData trigData)
     {
     //    Log.d(TAG,"setChannelData::" + channel);
 
@@ -253,6 +252,7 @@ public class ScopeView extends View
             }*/
         }
         mTimeText = updateTimeText(timeData);
+        mTriggerText = updateTriggerText(trigData);
 
         if(!mInMovement && mOnDataChanged != null && mChangeDelay <= 0)
         {
@@ -392,6 +392,28 @@ public class ScopeView extends View
         return String.format(Locale.getDefault(),"Time: %.2f%s",value,end);
     }
 
+    private String updateTriggerText(TriggerData trigData)
+    {
+        if(trigData == null)
+            return "";
+
+        double value;
+        String end;
+
+        if (trigData.mLevel < 1)
+        {
+            value = trigData.mLevel * 1e3;
+            end = "mV";
+        }
+        else
+        {
+            value = trigData.mLevel;
+            end = "V";
+        }
+
+        return String.format(Locale.getDefault(),"Trigger: %.2f%s", value, end);
+    }
+
     //////////////////////////////////////////////////////////////////////////
     //
     // Helper functions
@@ -440,13 +462,12 @@ public class ScopeView extends View
 
         mDrawableChan1.draw(canvas);
         mDrawableChan2.draw(canvas);
-      //  mDrawableMath.draw(canvas);
         mDrawableGridH.draw(canvas);
         mDrawableGridV.draw(canvas);
         canvas.drawText(mChan1Text, mTextPos.x, mTextPos.y, mChan1TextPaint);
-        canvas.drawText(mChan2Text,mTextPos.x + 150,mTextPos.y,mChan2TextPaint);
-    //    canvas.drawText(mMathText,mTextPos.x + 300,mTextPos.y,mMathTextPaint);
-        canvas.drawText(mTimeText,mContentWidth - 150,mTextPos.y,mTimeTextPaint);
+        canvas.drawText(mChan2Text, mTextPos.x + 150, mTextPos.y, mChan2TextPaint);
+        canvas.drawText(mTimeText, mContentWidth - 150, mTextPos.y, mTimeTextPaint);
+        canvas.drawText(mTriggerText, mContentWidth - 150, 20, mTriggerTextPaint);
 
         super.onDraw(canvas);
     }

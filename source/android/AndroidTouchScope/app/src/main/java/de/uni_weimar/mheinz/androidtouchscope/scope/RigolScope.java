@@ -43,6 +43,7 @@ public class RigolScope extends BaseScope
                 mIsConnected = true;
                 doCommand(Command.GET_NAME, 0, false, null);
                 initSettings();
+                scope.start();
             }
 
             @Override
@@ -87,6 +88,8 @@ public class RigolScope extends BaseScope
         synchronized (mControllerLock)
         {
             mUsbController.write(":WAV:POIN:MODE NOR");
+            mUsbController.write("TRIG:MODE EDGE");
+
             setRunStop(true);
             forceCommand();
         }
@@ -344,8 +347,38 @@ public class RigolScope extends BaseScope
             // Get the timescale offset
             mUsbController.write(":TIM:OFFS?");
             mTimeData.timeOffset = bytesToDouble(mUsbController.read(20));
+        }
+    }
 
-            forceCommand();
+    protected void readTriggerData()
+    {
+        synchronized(mControllerLock)
+        {
+            // get the trigger source
+            mUsbController.write(":TRIG:EDGE:SOUR?");
+            try
+            {
+                String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+                mTrigData.mSource = TriggerData.TriggerSrc.toTriggerSrc(strValue);
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
+
+            mUsbController.write(":TRIG:EDGE:SLOP?");
+            try
+            {
+                String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+                mTrigData.mEdge = TriggerData.TriggerEdge.toTriggerEdge(strValue);
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
+
+            mUsbController.write(":TRIG:EDGE:LEV?");
+            mTrigData.mLevel = bytesToDouble(mUsbController.read(20));
         }
     }
 }

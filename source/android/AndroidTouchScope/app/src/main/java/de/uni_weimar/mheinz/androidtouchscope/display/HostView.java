@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import de.uni_weimar.mheinz.androidtouchscope.R;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public class HostView extends ViewGroup
@@ -54,10 +55,10 @@ public class HostView extends ViewGroup
         mOnDataChanged = onDataChanged;
     }
 
-    public void setChannelData(int channel, WaveData waveData, TimeData timeData)
+    public void setChannelData(int channel, WaveData waveData, TimeData timeData, TriggerData trigData)
     {
         if(mScopeView != null)
-            mScopeView.setChannelData(channel, waveData, timeData);
+            mScopeView.setChannelData(channel, waveData, timeData, trigData);
 
         if(mChan1Handle != null && channel == 1)
         {
