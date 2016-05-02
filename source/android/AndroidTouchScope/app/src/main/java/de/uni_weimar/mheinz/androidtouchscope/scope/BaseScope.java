@@ -23,7 +23,6 @@ public class BaseScope implements ScopeInterface
 
     protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
- //   protected final WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
     protected final TimeData mTimeData = new TimeData();
     protected final TriggerData mTrigData = new TriggerData();
 
@@ -31,6 +30,7 @@ public class BaseScope implements ScopeInterface
     protected boolean mIsConnected = false;
 
     private OnReceivedName mOnReceivedName;
+    private byte mSlowerReadCounter = 0;
     private final Handler mReadHandler = new Handler();
 
     @Override
@@ -164,6 +164,12 @@ public class BaseScope implements ScopeInterface
                     setTimeScale(scale);
                     break;
                 }
+                case SET_TRIGGER_LEVEL:
+                {
+                    float level = (Float) specialData;
+                    setTriggerLevel(level);
+                    break;
+                }
                 case SET_CHANNEL_STATE:
                 {
                     Boolean state = (Boolean)specialData;
@@ -233,6 +239,11 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "setVoltageOffset");
     }
 
+    protected void setTriggerLevel(float level)
+    {
+        Log.d(TAG, "setTriggerLevel");
+    }
+
     protected String getName()
     {
         Log.d(TAG, "getName");
@@ -252,9 +263,12 @@ public class BaseScope implements ScopeInterface
         {
             readWave(1);
             readWave(2);
-          //  readWave(3);
-            readTimeData();
-            readTriggerData();
+
+           // if(++mSlowerReadCounter % 10 == 0)
+            {
+                readTimeData();
+                readTriggerData();
+            }
 
             forceCommand();
 

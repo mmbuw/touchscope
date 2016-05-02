@@ -25,6 +25,7 @@ public interface ScopeInterface
         SET_TIME_OFFSET,
         SET_VOLTAGE_SCALE,
         SET_TIME_SCALE,
+        SET_TRIGGER_LEVEL,
         SET_CHANNEL_STATE,
         SET_RUN_STOP,
         DO_AUTO,

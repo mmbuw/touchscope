@@ -18,6 +18,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
+
 //TODO: when offset is off screen, moving handel should offset data back to screen
 public class HandleView extends View
 {
@@ -29,7 +31,7 @@ public class HandleView extends View
     private final Paint mMainTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private GestureDetectorCompat mGestureDetector;
-    private OnDataChanged mOnDataChanged = null;
+    private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
 
     private int mId = 0;
     private int mColor = Color.BLUE;
@@ -68,7 +70,7 @@ public class HandleView extends View
         mId = id;
     }
 
-    public void setOnDoCommand(OnDataChanged onDataChanged)
+    public void setOnDoCommand(OnDataChangedInterface.OnDataChanged onDataChanged)
     {
         mOnDataChanged = onDataChanged;
     }
@@ -202,16 +204,6 @@ public class HandleView extends View
             mShapeDrawable.draw(canvas);
         }
 
-     //   mShapeDrawable.draw(canvas);
-
-
-        /*if(mSelected)
-        {
-            mPaint.setStyle(Paint.Style.FILL);
-            mPaint.setAlpha(100);
-            canvas.drawCircle(center.x, center.y, CIRCLE_RADIUS, mPaint);
-        }*/
-
         PointF center = getCircleCenter();
         mMainTextPaint.getTextBounds(mMainText, 0, mMainText.length(), mTextBounds);
         canvas.drawText(mMainText, center.x, center.y + mTextBounds.height() / 2, mMainTextPaint);
@@ -258,7 +250,7 @@ public class HandleView extends View
            y >= point.y - HANDLE_LENGTH && y <= point.y + HANDLE_LENGTH)
         {
             selected = true;
-            invalidate();
+          //  invalidate();
         }
 
         return selected;
@@ -281,6 +273,10 @@ public class HandleView extends View
                 else if(mId == HostView.ID_HANDLE_TIME)
                 {
                     mOnDataChanged.moveTime(mFirstTouch.x - mHandlePos - HANDLE_BREADTH / 2, false);
+                }
+                else if(mId == HostView.ID_HANDLE_TRIG)
+                {
+                    mOnDataChanged.moveTrigger(mFirstTouch.y - mHandlePos /*- HANDLE_BREADTH / 2*/, false);
                 }
             }
             mIsMoving = false;
@@ -322,6 +318,10 @@ public class HandleView extends View
                     else if (mId == HostView.ID_HANDLE_TIME)
                     {
                         mOnDataChanged.moveTime(-distanceX, true);
+                    }
+                    else if (mId == HostView.ID_HANDLE_TRIG)
+                    {
+                        mOnDataChanged.moveTrigger(-distanceY, true);
                     }
                 }
             }

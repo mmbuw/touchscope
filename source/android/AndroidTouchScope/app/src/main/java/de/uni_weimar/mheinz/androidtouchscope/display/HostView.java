@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
+import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
@@ -29,7 +30,7 @@ public class HostView extends ViewGroup
     static final int ID_HANDLE_TIME = 3;
     static final int ID_HANDLE_TRIG = 4;
 
-    private OnDataChanged mOnDataChanged = null;
+    private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
 
 
     public HostView(Context context)
@@ -50,7 +51,7 @@ public class HostView extends ViewGroup
         init();
     }
 
-    public void setOnDoCommand(OnDataChanged onDataChanged)
+    public void setOnDoCommand(OnDataChangedInterface.OnDataChanged onDataChanged)
     {
         mOnDataChanged = onDataChanged;
     }
@@ -160,7 +161,7 @@ public class HostView extends ViewGroup
 
         mScopeView = (ScopeView)findViewById(R.id.scopeView);
         mScopeView.layout(leftPos + cursorLength, topPos + cursorLength,rightPos - cursorLength, bottomPos - buttonHeight);
-        mScopeView.setOnDoCommand(new OnDataChanged()
+        mScopeView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
         {
             @Override
             public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
@@ -183,6 +184,12 @@ public class HostView extends ViewGroup
             {
                 mTimeHandle.setHandlePosition(pos + mTimeHandle.getHandleBreadth() / 2);
             }
+
+            @Override
+            public void moveTrigger(float pos, boolean moving)
+            {
+                mTrigHandle.setHandlePosition(pos + mChan2Handle.getHandleBreadth() / 2);
+            }
         });
 
         buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos - cursorLength, bottomPos);
@@ -190,13 +197,9 @@ public class HostView extends ViewGroup
         post(new ExpandScopeViewArea());
     }
 
-    private OnDataChanged mHandleOnDataChanged = new OnDataChanged()
+    private OnDataChangedInterface.OnDataChanged mHandleOnDataChanged
+            = new OnDataChangedInterface.OnDataChanged()
     {
-        @Override
-        public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
-        {
-        }
-
         @Override
         public void moveWave(int channel, float pos, boolean moving)
         {
@@ -209,6 +212,13 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTime(pos, !moving);
+        }
+
+        @Override
+        public void moveTrigger(float pos, boolean moving)
+        {
+            mScopeView.setInMovement(moving);
+            mScopeView.moveTrigger(pos, !moving);
         }
     };
 

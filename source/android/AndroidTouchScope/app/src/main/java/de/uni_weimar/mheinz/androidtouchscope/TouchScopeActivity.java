@@ -20,7 +20,7 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
-import de.uni_weimar.mheinz.androidtouchscope.display.OnDataChanged;
+import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
@@ -88,7 +88,7 @@ public class TouchScopeActivity extends AppCompatActivity
         //mScopeView = (ScopeView) findViewById(R.id.scopeView);
         //mScopeView.setOnDoCommand(new OnDataChanged()
         mHostView = (HostView)findViewById(R.id.hostView);
-        mHostView.setOnDoCommand(new OnDataChanged()
+        mHostView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
         {
             @Override
             public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
@@ -97,16 +97,6 @@ public class TouchScopeActivity extends AppCompatActivity
                 {
                     mActiveScope.doCommand(command, channel, true, specialData);
                 }
-            }
-
-            @Override
-            public void moveWave(int channel, float pos, boolean moving)
-            {
-            }
-
-            @Override
-            public void moveTime(float pos, boolean moving)
-            {
             }
         });
 

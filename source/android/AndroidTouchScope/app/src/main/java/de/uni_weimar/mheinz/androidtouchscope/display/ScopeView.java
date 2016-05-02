@@ -26,6 +26,7 @@ import android.view.View;
 
 import java.util.Locale;
 
+import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.BaseScope;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
@@ -33,7 +34,6 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 //TODO: display offset values (somehow)
-//TODO: trigger display
 public class ScopeView extends View
 {
     private static final String TAG = "ScopeView";
@@ -46,7 +46,7 @@ public class ScopeView extends View
     private int mContentHeight = 0;
 
     private int mSelectedPath = -1; // -1 if not selected
-    private OnDataChanged mOnDataChanged = null;
+    private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
     //private
 
     /****  Drawing  ****/
@@ -103,7 +103,7 @@ public class ScopeView extends View
         init();
     }
 
-    public void setOnDoCommand(OnDataChanged onDataChanged)
+    public void setOnDoCommand(OnDataChangedInterface.OnDataChanged onDataChanged)
     {
         mOnDataChanged = onDataChanged;
     }
@@ -216,7 +216,7 @@ public class ScopeView extends View
         if(moving)
         {
             int numOn = channelOnCount();
-            mChangeDelay = 4 * numOn;
+            mChangeDelay = 4 * numOn + 4;
         }
     }
 
@@ -256,9 +256,22 @@ public class ScopeView extends View
 
         if(!mInMovement && mOnDataChanged != null && mChangeDelay <= 0)
         {
-            float offset = (float)(-timeData.timeOffset / timeData.timeScale) * mContentWidth / NUM_COLUMNS;
-            mTimeOffset = offset + mContentWidth / 2;
-            mOnDataChanged.moveTime((float)mTimeOffset, false);
+            if(timeData != null)
+            {
+                float offset = (float) (-timeData.timeOffset / timeData.timeScale) * mContentWidth / NUM_COLUMNS;
+                mTimeOffset = offset + mContentWidth / 2;
+                mOnDataChanged.moveTime((float) mTimeOffset, false);
+            }
+
+            if(trigData != null && waveData != null &&
+                ((trigData.mSource == TriggerData.TriggerSrc.CHAN1 && channel == 1) ||
+                  trigData.mSource == TriggerData.TriggerSrc.CHAN2 && channel == 2))
+            {
+                float offset = (float) ( -(waveData.voltageOffset + trigData.mLevel) /
+                                           waveData.voltageScale) * mContentHeight / NUM_ROWS;
+                offset = offset + mContentHeight / 2;
+                mOnDataChanged.moveTrigger(offset, false);
+            }
         }
 
         postInvalidate();
@@ -506,8 +519,6 @@ public class ScopeView extends View
         mDrawableChan1.getPaint().setStrokeWidth(1);
         mDrawableChan2.getPaint().clearShadowLayer();
         mDrawableChan2.getPaint().setStrokeWidth(1);
-      //  mDrawableMath.getPaint().clearShadowLayer();
-      //  mDrawableMath.getPaint().setStrokeWidth(1);
 
         switch(mSelectedPath)
         {
@@ -519,10 +530,6 @@ public class ScopeView extends View
                 mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,Color.BLUE);
                 mDrawableChan2.getPaint().setStrokeWidth(1.5f);
                 break;
-            /*case 3:
-                mDrawableMath.getPaint().setShadowLayer(10f,0f,0f,Color.MAGENTA);
-                mDrawableMath.getPaint().setStrokeWidth(1.5f);
-                break;*/
             default:
                 break;
         }
@@ -563,12 +570,6 @@ public class ScopeView extends View
         {
             selected = 2;
         }
-
-        /*dist = smallestDistanceToPath(mPathMath,x,y);
-        if(dist < minDist)
-        {
-            selected = 3;
-        }*/
 
         return selected;
     }
@@ -614,6 +615,21 @@ public class ScopeView extends View
         {
             mPathChan1.offset(dist, 0);
             mPathChan2.offset(dist, 0);
+            // mPathMath.offset(-distanceX, 0);
+        }
+    }
+
+    public void moveTrigger(float dist, boolean endMove)
+    {
+        if(endMove)
+        {
+            mOnDataChanged.doCommand(
+                    ScopeInterface.Command.SET_TRIGGER_LEVEL,
+                    0,
+                    (Float) (dist / (mContentHeight / NUM_ROWS)));
+        }
+        else
+        {
             // mPathMath.offset(-distanceX, 0);
         }
     }

@@ -147,6 +147,21 @@ public class RigolScope extends BaseScope
         mUsbController.write(command);
     }
 
+    protected void setTriggerLevel(float level)
+    {
+        int channel = 1;
+        if(mTrigData.mSource == TriggerData.TriggerSrc.CHAN1)
+            channel = 1;
+        else if(mTrigData.mSource == TriggerData.TriggerSrc.CHAN2)
+            channel = 2;
+
+        WaveData data = getWave(channel);
+        double value = (level * data.voltageScale) + mTrigData.mLevel;
+        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:LEV %.10f", value);
+
+        mUsbController.write(command);
+    }
+
     protected void setChannelState(int channel, boolean state)
     {
         String onOff = state ? "ON" : "OFF";

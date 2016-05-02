@@ -18,7 +18,8 @@ public class TriggerData
     public enum TriggerEdge
     {
         NEGATIVE("NEGATIVE"),
-        POSITIVE("POSITIVE");
+        POSITIVE("POSITIVE"),
+        BOTH("ALTERNATION");
 
         private final String mText;
 
@@ -39,17 +40,21 @@ public class TriggerData
             {
                 return NEGATIVE;
             }
-            else
+            else if(text.compareToIgnoreCase(POSITIVE.toString()) == 0)
             {
                 return POSITIVE;
+            }
+            else
+            {
+                return BOTH;
             }
         }
     }
 
     public enum TriggerSrc
     {
-        CHAN1("CHAN1"),
-        CHAN2("CHAN2"),
+        CHAN1("CH1"),
+        CHAN2("CH2"),
         EXT("EXT"),
         AC("ACLINE");
 
