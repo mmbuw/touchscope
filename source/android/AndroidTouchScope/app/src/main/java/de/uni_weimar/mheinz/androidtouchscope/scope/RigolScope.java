@@ -213,10 +213,6 @@ public class RigolScope extends BaseScope
             case 2:
                 channel = CHAN_2;
                 break;
-          //  case 3:
-          //      channel = CHAN_MATH;
-          //      break;
-
         }
 
         return channel;
@@ -307,10 +303,6 @@ public class RigolScope extends BaseScope
             case 2:
                 waveData = mWaves2.requestWaveData();
                 break;
-           // case 3:
-           // default:
-           //     waveData = mWaves3.requestWaveData();
-           //     break;
         }
 
         if(waveData == null)
@@ -345,9 +337,6 @@ public class RigolScope extends BaseScope
             case 2:
                 mWaves2.add(waveData);
                 break;
-           // case 3:
-           //     mWaves3.add(waveData);
-           //     break;
         }
     }
 

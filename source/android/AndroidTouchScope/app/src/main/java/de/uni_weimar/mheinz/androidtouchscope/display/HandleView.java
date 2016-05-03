@@ -42,8 +42,9 @@ public class HandleView extends View
     private Rect mTextBounds = new Rect();
 
     private float mHandlePos = HANDLE_BREADTH / 2;
+    private float mOldHandlePos = 0;
 
-    private PointF mFirstTouch;
+ //   private PointF mFirstTouch;
     private boolean mTouched = false;
     private boolean mIsMoving = false;
 
@@ -268,15 +269,18 @@ public class HandleView extends View
             {
                 if(mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
                 {
-                    mOnDataChanged.moveWave(mId, mFirstTouch.y - mHandlePos - HANDLE_BREADTH / 2, false);
+                   // mOnDataChanged.moveWave(mId, mFirstTouch.y - mHandlePos - HANDLE_BREADTH / 2, false);
+                    mOnDataChanged.moveWave(mId, mOldHandlePos - mHandlePos, false);
                 }
                 else if(mId == HostView.ID_HANDLE_TIME)
                 {
-                    mOnDataChanged.moveTime(mFirstTouch.x - mHandlePos - HANDLE_BREADTH / 2, false);
+                 //   mOnDataChanged.moveTime(mFirstTouch.x - mHandlePos - HANDLE_BREADTH / 2, false);
+                    mOnDataChanged.moveTime(mOldHandlePos - mHandlePos, false);
                 }
                 else if(mId == HostView.ID_HANDLE_TRIG)
                 {
-                    mOnDataChanged.moveTrigger(mFirstTouch.y - mHandlePos /*- HANDLE_BREADTH / 2*/, false);
+                   // mOnDataChanged.moveTrigger(mFirstTouch.y - mHandlePos /*- HANDLE_BREADTH / 2*/, false);
+                    mOnDataChanged.moveTrigger(mOldHandlePos - mHandlePos, false);
                 }
             }
             mIsMoving = false;
@@ -297,7 +301,7 @@ public class HandleView extends View
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
         {
-            if(mFirstTouch != null && mTouched)
+            if(mTouched)
             {
                 mIsMoving = true;
                 if(mOrientation == HandleDirection.UP || mOrientation == HandleDirection.DOWN)
@@ -331,11 +335,8 @@ public class HandleView extends View
         @Override
         public boolean onDown(MotionEvent event)
         {
-            int index = MotionEventCompat.getActionIndex(event);
-            float x = MotionEventCompat.getX(event, index);
-            float y = MotionEventCompat.getY(event, index);
             mTouched = touchSelectCursor(event);
-            mFirstTouch = new PointF(x,y);
+            mOldHandlePos = mHandlePos;
 
             return true;
         }

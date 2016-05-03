@@ -85,8 +85,6 @@ public class TouchScopeActivity extends AppCompatActivity
         assert rightDrawer != null;
         rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
 
-        //mScopeView = (ScopeView) findViewById(R.id.scopeView);
-        //mScopeView.setOnDoCommand(new OnDataChanged()
         mHostView = (HostView)findViewById(R.id.hostView);
         mHostView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
         {
@@ -294,13 +292,6 @@ public class TouchScopeActivity extends AppCompatActivity
                             true,
                             (Boolean) item.isChecked());
                     break;
-                /*case R.id.navigation_channel3:
-                    mActiveScope.doCommand(
-                            ScopeInterface.Command.SET_CHANNEL_STATE,
-                            3,
-                            true,
-                            (Boolean) item.isChecked());
-                    break;*/
             }
             return false;
         }
@@ -316,14 +307,9 @@ public class TouchScopeActivity extends AppCompatActivity
 
             WaveData waveData = mActiveScope.getWave(1);
             mHostView.setChannelData(1, waveData,timeData, trigData);
-            //mScopeView.setChannelData(1, waveData,timeData);
 
             waveData = mActiveScope.getWave(2);
             mHostView.setChannelData(2, waveData,timeData, trigData);
-           // mScopeView.setChannelData(2, waveData,timeData);
-
-            /*waveData = mActiveScope.getWave(3);
-            mScopeView.setChannelData(3, waveData,timeData);*/
 
             mRefreshHandler.postDelayed(this, REFRESH_RATE);
         }

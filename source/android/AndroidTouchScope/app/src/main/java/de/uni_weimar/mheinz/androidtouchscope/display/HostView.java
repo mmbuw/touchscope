@@ -121,7 +121,6 @@ public class HostView extends ViewGroup
         // These are the far left and right edges in which we are performing layout.
         int leftPos = getPaddingLeft();
         int rightPos = w - leftPos - getPaddingRight();
-    //    final int midH = (rightPos - leftPos) / 2;
 
         // These are the top and bottom edges in which we are performing layout.
         final int topPos = getPaddingTop();
@@ -134,9 +133,6 @@ public class HostView extends ViewGroup
         int buttonHeight = buttonRow.getMeasuredHeight();
 
         int cursorBottom = bottomPos - buttonHeight + cursorBreadth / 2;
-
-     //   int scopeWidth = rightPos - leftPos - 2 * cursorWidth;
-     //   int scopeHeight = bottomPos - topPos - cursorHeight;
 
         mChan1Handle.layout(
                 leftPos,
