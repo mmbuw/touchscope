@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/channel_visible"
+        android:layout_width="@dimen/handle_dialog_button_width"
+        android:layout_height="@dimen/handle_dialog_button_height"
+        android:orientation="vertical"
+        style="@style/Widget.AppCompat.Button">
+
+        <TextView
+            android:id="@+id/channel_visible_maintext"
+            android:text="Visible"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Button"/>
+
+        <ImageView
+            android:id="@+id/channel_visible_subImage"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/handle_dialog_button_sub_height"
+            android:background="@android:color/darker_gray"
+            android:src="@drawable/oscilloscope"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/channel_coupling"
+        android:layout_width="@dimen/handle_dialog_button_width"
+        android:layout_height="@dimen/handle_dialog_button_height"
+        android:orientation="vertical"
+        style="@style/Widget.AppCompat.Button">
+
+        <TextView
+            android:id="@+id/channel_coupling_maintext"
+            android:text="Coupling"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Button"/>
+
+        <TextView
+            android:id="@+id/channel_coupling_subtext"
+            android:text="DC"
+            android:layout_height="@dimen/handle_dialog_button_sub_height"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:background="@android:color/darker_gray"
+            style="@style/TextAppearance.AppCompat.Large"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/channel_probe"
+        android:layout_width="@dimen/handle_dialog_button_width"
+        android:layout_height="@dimen/handle_dialog_button_height"
+        android:orientation="vertical"
+        style="@style/Widget.AppCompat.Button">
+
+        <TextView
+            android:id="@+id/channel_probe_maintext"
+            android:text="Probe"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Button"/>
+
+        <TextView
+            android:id="@+id/channel_probe_subtext"
+            android:text="1X"
+            android:layout_height="@dimen/handle_dialog_button_sub_height"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:background="@android:color/darker_gray"
+            style="@style/TextAppearance.AppCompat.Large"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/trigger_source"
+        android:layout_width="@dimen/handle_dialog_button_width"
+        android:layout_height="@dimen/handle_dialog_button_height"
+        android:orientation="vertical"
+        style="@style/Widget.AppCompat.Button">
+
+        <TextView
+            android:id="@+id/trigger_source_maintext"
+            android:text="Source"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Button"/>
+
+        <TextView
+            android:id="@+id/trigger_source_subtext"
+            android:text="CH1"
+            android:layout_height="@dimen/handle_dialog_button_sub_height"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:background="@android:color/darker_gray"
+            style="@style/TextAppearance.AppCompat.Large"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/trigger_slope"
+        android:layout_width="@dimen/handle_dialog_button_width"
+        android:layout_height="@dimen/handle_dialog_button_height"
+        android:orientation="vertical"
+        style="@style/Widget.AppCompat.Button">
+
+        <TextView
+            android:id="@+id/trigger_slope_maintext"
+            android:text="Slope"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Button"/>
+
+        <TextView
+            android:id="@+id/trigger_slope_subtext"
+            android:text="_|-"
+            android:layout_height="@dimen/handle_dialog_button_sub_height"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:background="@android:color/darker_gray"
+            style="@style/TextAppearance.AppCompat.Large"/>
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/trigger_50"
+        android:layout_width="@dimen/handle_dialog_button_width"
+        android:layout_height="@dimen/handle_dialog_button_height"
+        android:text="50%"/>
+
+</LinearLayout>
