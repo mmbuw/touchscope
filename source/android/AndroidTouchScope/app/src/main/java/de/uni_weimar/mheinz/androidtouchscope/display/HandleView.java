@@ -1,6 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope.display;
 
 
+import android.app.DialogFragment;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,18 +12,24 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
 
 //TODO: when offset is off screen, moving handel should offset data back to screen
-public class HandleView extends View
+public class HandleView extends View implements HandlePopup.HandlePopupListener
 {
+    private static final String TAG = "ScopeView";
+
     private static final int HANDLE_LENGTH = 50;
     private static final int HANDLE_BREADTH = 25;
 
@@ -78,10 +85,6 @@ public class HandleView extends View
 
     public void setHandlePosition(float pos)
     {
-        //only move handle if move is big enough
-       /* if(Math.abs(pos - mHandlePos) < 5)
-            return;*/
-
         if(mOrientation == HandleDirection.UP || mOrientation == HandleDirection.DOWN)
         {
             mHandlePos = Math.max(mBounds.left, Math.min(mBounds.right, pos));
@@ -101,10 +104,6 @@ public class HandleView extends View
         mShapeDrawable.setBounds(0, 0, (int)mBounds.width(), (int)mBounds.height());
         setLayerType(LAYER_TYPE_SOFTWARE, mShapeDrawable.getPaint());
         makeHandle();
-
-        /*mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(3);
-        mPaint.setColor(mColor);*/
 
         mIsOn = true;
 
@@ -344,9 +343,77 @@ public class HandleView extends View
         @Override
         public boolean onSingleTapConfirmed(MotionEvent event)
         {
-            //TODO: add menu to change settings for each handle type
-            return touchSelectCursor(event);
+            boolean hit = touchSelectCursor(event);
+            if(hit)
+            {
+                int[] location = new int[2];
+                getLocationOnScreen(location);
+
+                HandlePopup popup = new HandlePopup(getContext());
+                popup.setHandleListener(HandleView.this);
+
+                if(mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
+                {
+                    popup.setButtonMask(HandlePopup.CHANNEL_COUPLING | HandlePopup.CHANNEL_VISIBLE | HandlePopup.CHANNEL_PROBE);
+                    location[1] = (int)mHandlePos;
+                    location[0] += HANDLE_LENGTH;
+                }
+                else if(mId == HostView.ID_HANDLE_TRIG)
+                {
+                    popup.setButtonMask(HandlePopup.TRIGGER_50 | HandlePopup.TRIGGER_SLOPE | HandlePopup.TRIGGER_SOURCE);
+                    location[1] = (int)mHandlePos;
+                    location[0] -= popup.getAproxWidth();
+                }
+                else
+                {
+                }
+
+                popup.showAtLocation(getRootView(), Gravity.NO_GRAVITY, location[0], location[1]);
+            }
+
+            return hit;
         }
+    }
+
+    @Override
+    public void onChannelVisible(View view)
+    {
+        Log.i(TAG, "onChannelVisible");
+    }
+
+    @Override
+    public void onChannelProbe(View view)
+    {
+        Log.i(TAG, "onChannelProbe");
+
+    }
+
+    @Override
+    public void onChannelCoupling(View view)
+    {
+        Log.i(TAG, "onChannelCoupling");
+
+    }
+
+    @Override
+    public void onTriggerSource(View view)
+    {
+        Log.i(TAG, "onTriggerSource");
+
+    }
+
+    @Override
+    public void onTriggerSlope(View view)
+    {
+        Log.i(TAG, "onTriggerSlope");
+
+    }
+
+    @Override
+    public void onTrigger50(View view)
+    {
+        Log.i(TAG, "onTrigger50");
+
     }
 
     public enum HandleDirection

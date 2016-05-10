@@ -75,17 +75,17 @@ public class HostView extends ViewGroup
 
     private void init()
     {
-        mChan1Handle = new HandleView(getContext());
-        mChan1Handle.setHandleId(ID_HANDLE_1);
-        mChan1Handle.setAttributes(Color.YELLOW, "CH1", HandleView.HandleDirection.RIGHT);
-        mChan1Handle.setOnDoCommand(mHandleOnDataChanged);
-        addView(mChan1Handle);
-
         mChan2Handle = new HandleView(getContext());
         mChan2Handle.setHandleId(ID_HANDLE_2);
         mChan2Handle.setAttributes(Color.BLUE, "CH2", HandleView.HandleDirection.RIGHT);
         mChan2Handle.setOnDoCommand(mHandleOnDataChanged);
         addView(mChan2Handle);
+
+        mChan1Handle = new HandleView(getContext());
+        mChan1Handle.setHandleId(ID_HANDLE_1);
+        mChan1Handle.setAttributes(Color.YELLOW, "CH1", HandleView.HandleDirection.RIGHT);
+        mChan1Handle.setOnDoCommand(mHandleOnDataChanged);
+        addView(mChan1Handle);
 
         mTimeHandle = new HandleView(getContext());
         mTimeHandle.setHandleId(ID_HANDLE_TIME);

@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
 
     <LinearLayout
         android:id="@+id/channel_visible"
         android:layout_width="@dimen/handle_dialog_button_width"
         android:layout_height="@dimen/handle_dialog_button_height"
         android:orientation="vertical"
-        style="@style/Widget.AppCompat.Button">
+        style="@style/Widget.AppCompat.Button"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/channel_visible_maintext"
@@ -24,15 +25,17 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/handle_dialog_button_sub_height"
             android:background="@android:color/darker_gray"
-            android:src="@drawable/oscilloscope"/>
-    </LinearLayout>
+            android:src="@drawable/visible_channel"
+            android:paddingBottom="3dp"/>
+    </LinearLayout>`
 
     <LinearLayout
         android:id="@+id/channel_coupling"
         android:layout_width="@dimen/handle_dialog_button_width"
         android:layout_height="@dimen/handle_dialog_button_height"
         android:orientation="vertical"
-        style="@style/Widget.AppCompat.Button">
+        style="@style/Widget.AppCompat.Button"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/channel_coupling_maintext"
@@ -49,7 +52,9 @@
             android:layout_width="match_parent"
             android:gravity="center"
             android:background="@android:color/darker_gray"
-            style="@style/TextAppearance.AppCompat.Large"/>
+            style="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@android:color/white"
+            android:paddingBottom="3dp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -57,7 +62,8 @@
         android:layout_width="@dimen/handle_dialog_button_width"
         android:layout_height="@dimen/handle_dialog_button_height"
         android:orientation="vertical"
-        style="@style/Widget.AppCompat.Button">
+        style="@style/Widget.AppCompat.Button"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/channel_probe_maintext"
@@ -74,7 +80,9 @@
             android:layout_width="match_parent"
             android:gravity="center"
             android:background="@android:color/darker_gray"
-            style="@style/TextAppearance.AppCompat.Large"/>
+            style="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@android:color/white"
+            android:paddingBottom="3dp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -82,7 +90,8 @@
         android:layout_width="@dimen/handle_dialog_button_width"
         android:layout_height="@dimen/handle_dialog_button_height"
         android:orientation="vertical"
-        style="@style/Widget.AppCompat.Button">
+        style="@style/Widget.AppCompat.Button"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/trigger_source_maintext"
@@ -99,7 +108,9 @@
             android:layout_width="match_parent"
             android:gravity="center"
             android:background="@android:color/darker_gray"
-            style="@style/TextAppearance.AppCompat.Large"/>
+            style="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@android:color/white"
+            android:paddingBottom="3dp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -107,7 +118,8 @@
         android:layout_width="@dimen/handle_dialog_button_width"
         android:layout_height="@dimen/handle_dialog_button_height"
         android:orientation="vertical"
-        style="@style/Widget.AppCompat.Button">
+        style="@style/Widget.AppCompat.Button"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/trigger_slope_maintext"
@@ -117,14 +129,13 @@
             android:gravity="center"
             style="@style/TextAppearance.AppCompat.Button"/>
 
-        <TextView
-            android:id="@+id/trigger_slope_subtext"
-            android:text="_|-"
-            android:layout_height="@dimen/handle_dialog_button_sub_height"
+        <ImageView
+            android:id="@+id/trigger_slope_subImage"
             android:layout_width="match_parent"
-            android:gravity="center"
+            android:layout_height="@dimen/handle_dialog_button_sub_height"
             android:background="@android:color/darker_gray"
-            style="@style/TextAppearance.AppCompat.Large"/>
+            android:src="@drawable/positive_slope"
+            android:paddingBottom="3dp"/>
     </LinearLayout>
 
 
@@ -132,6 +143,9 @@
         android:id="@+id/trigger_50"
         android:layout_width="@dimen/handle_dialog_button_width"
         android:layout_height="@dimen/handle_dialog_button_height"
-        android:text="50%"/>
+        android:text="50%"
+        android:textColor="@android:color/white"
+        style="@style/TextAppearance.AppCompat.Large"
+        android:visibility="gone"/>
 
 </LinearLayout>
