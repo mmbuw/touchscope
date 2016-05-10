@@ -27,7 +27,7 @@
             android:background="@android:color/darker_gray"
             android:src="@drawable/visible_channel"
             android:paddingBottom="3dp"/>
-    </LinearLayout>`
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/channel_coupling"
