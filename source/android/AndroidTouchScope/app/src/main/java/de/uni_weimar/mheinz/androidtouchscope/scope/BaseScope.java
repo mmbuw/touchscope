@@ -30,7 +30,7 @@ public class BaseScope implements ScopeInterface
     protected boolean mIsConnected = false;
 
     private OnReceivedName mOnReceivedName;
-    private byte mSlowerReadCounter = 0;
+   // private byte mSlowerReadCounter = 0;
     private final Handler mReadHandler = new Handler();
 
     @Override
@@ -187,6 +187,31 @@ public class BaseScope implements ScopeInterface
                     doAuto();
                     break;
                 }
+                case DO_TRIG_50:
+                {
+                    doTrig50();
+                    break;
+                }
+                case SET_CHANNEL_COUPLING:
+                {
+                    setChannelCoupling(channel, (String)specialData);
+                    break;
+                }
+                case SET_CHANNEL_PROBE:
+                {
+                    setChannelProbe(channel, (Integer)specialData);
+                    break;
+                }
+                case SET_TRIGGER_SOURCE:
+                {
+                    setTriggerSource((String)specialData);
+                    break;
+                }
+                case SET_TRIGGER_SLOPE:
+                {
+                    setTriggerSlope((String)specialData);
+                    break;
+                }
                 case NO_COMMAND:
                 default:
                     break;
@@ -219,6 +244,11 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "doAuto");
     }
 
+    protected void doTrig50()
+    {
+        Log.d(TAG, "doTrig50");
+    }
+
     protected void setRunStop(boolean run)
     {
         Log.d(TAG, "setRunStop");
@@ -240,6 +270,26 @@ public class BaseScope implements ScopeInterface
     }
 
     protected void setTriggerLevel(float level)
+    {
+        Log.d(TAG, "setTriggerLevel");
+    }
+
+    protected void setChannelCoupling(int channel, String coupling)
+    {
+        Log.d(TAG, "setChannelCoupling");
+    }
+
+    protected void setChannelProbe(int channel, int probe)
+    {
+        Log.d(TAG, "setChannelProbe");
+    }
+
+    protected void setTriggerSource(String source)
+    {
+        Log.d(TAG, "setTriggerLevel");
+    }
+
+    protected void setTriggerSlope(String slope)
     {
         Log.d(TAG, "setTriggerLevel");
     }

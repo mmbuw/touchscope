@@ -150,13 +150,13 @@ public class RigolScope extends BaseScope
     protected void setTriggerLevel(float level)
     {
         int channel = 1;
-        if(mTrigData.mSource == TriggerData.TriggerSrc.CHAN1)
+        if(mTrigData.source == TriggerData.TriggerSrc.CHAN1)
             channel = 1;
-        else if(mTrigData.mSource == TriggerData.TriggerSrc.CHAN2)
+        else if(mTrigData.source == TriggerData.TriggerSrc.CHAN2)
             channel = 2;
 
         WaveData data = getWave(channel);
-        double value = (level * data.voltageScale) + mTrigData.mLevel;
+        double value = (level * data.voltageScale) + mTrigData.level;
         String command = String.format(Locale.getDefault(), ":TRIG:EDGE:LEV %.10f", value);
 
         mUsbController.write(command);
@@ -188,6 +188,35 @@ public class RigolScope extends BaseScope
         {
             e.printStackTrace();
         }
+    }
+
+    protected void doTrig50()
+    {
+        mUsbController.write(":Trig%50");
+    }
+
+    protected void setChannelCoupling(int channel, String coupling)
+    {
+        String command = String.format(Locale.getDefault(), ":%s:COUP %s", getChannelName(channel), coupling);
+        mUsbController.write(command);
+    }
+
+    protected void setChannelProbe(int channel, int probe)
+    {
+        String command = String.format(Locale.getDefault(), ":%s:PROB %d", getChannelName(channel), probe);
+        mUsbController.write(command);
+    }
+
+    protected void setTriggerSource(String source)
+    {
+        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:SOUR %s", source);
+        mUsbController.write(command);
+    }
+
+    protected void setTriggerSlope(String slope)
+    {
+        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:SLOP %s", slope);
+        mUsbController.write(command);
     }
 
     // use to re-allow human actions with the scope
@@ -322,6 +351,22 @@ public class RigolScope extends BaseScope
                 // And the voltage offset
                 mUsbController.write(":" + getChannelName(channel) + ":OFFS?");
                 waveData.voltageOffset = bytesToDouble(mUsbController.read(20));
+
+                // get coupling
+                mUsbController.write(":" + getChannelName(channel) + ":COUP?");
+                try
+                {
+                    String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+                    waveData.coupling = strValue;
+                }
+                catch (UnsupportedEncodingException e)
+                {
+                    e.printStackTrace();
+                }
+
+                // get probe
+                mUsbController.write(":" + getChannelName(channel) + ":PROB?");
+                waveData.probe = (int)bytesToDouble(mUsbController.read(20));
             }
             else
             {
@@ -363,7 +408,7 @@ public class RigolScope extends BaseScope
             try
             {
                 String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
-                mTrigData.mSource = TriggerData.TriggerSrc.toTriggerSrc(strValue);
+                mTrigData.source = TriggerData.TriggerSrc.toTriggerSrc(strValue);
             }
             catch (UnsupportedEncodingException e)
             {
@@ -374,7 +419,7 @@ public class RigolScope extends BaseScope
             try
             {
                 String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
-                mTrigData.mEdge = TriggerData.TriggerEdge.toTriggerEdge(strValue);
+                mTrigData.edge = TriggerData.TriggerEdge.toTriggerEdge(strValue);
             }
             catch (UnsupportedEncodingException e)
             {
@@ -382,7 +427,7 @@ public class RigolScope extends BaseScope
             }
 
             mUsbController.write(":TRIG:EDGE:LEV?");
-            mTrigData.mLevel = bytesToDouble(mUsbController.read(20));
+            mTrigData.level = bytesToDouble(mUsbController.read(20));
         }
     }
 }

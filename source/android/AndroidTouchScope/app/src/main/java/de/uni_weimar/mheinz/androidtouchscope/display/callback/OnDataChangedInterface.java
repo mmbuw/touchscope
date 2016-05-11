@@ -11,10 +11,10 @@ public interface OnDataChangedInterface
 
     class OnDataChanged implements OnDataChangedInterface
     {
-        public void doCommand(ScopeInterface.Command command, int channel, Object specialData){};
-        public void moveWave(int channel, float pos, boolean moving){};
-        public void moveTime(float pos, boolean moving){};
-        public void moveTrigger(float pos, boolean moving){};
+        public void doCommand(ScopeInterface.Command command, int channel, Object specialData){}
+        public void moveWave(int channel, float pos, boolean moving){}
+        public void moveTime(float pos, boolean moving){}
+        public void moveTrigger(float pos, boolean moving){}
     }
 }
 

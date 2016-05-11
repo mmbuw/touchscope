@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/handle_dialog_button_sub_height"
             android:background="@android:color/darker_gray"
-            android:src="@drawable/visible_channel"
+            android:src="@drawable/hidden_channel"
             android:paddingBottom="3dp"/>
     </LinearLayout>
 

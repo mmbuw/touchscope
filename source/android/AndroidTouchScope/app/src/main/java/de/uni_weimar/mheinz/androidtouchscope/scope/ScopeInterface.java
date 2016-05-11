@@ -29,6 +29,11 @@ public interface ScopeInterface
         SET_CHANNEL_STATE,
         SET_RUN_STOP,
         DO_AUTO,
+        DO_TRIG_50,
+        SET_CHANNEL_COUPLING,
+        SET_CHANNEL_PROBE,
+        SET_TRIGGER_SOURCE,
+        SET_TRIGGER_SLOPE,
         NO_COMMAND
     }
 

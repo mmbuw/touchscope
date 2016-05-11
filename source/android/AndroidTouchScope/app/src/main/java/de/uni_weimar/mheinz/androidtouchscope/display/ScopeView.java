@@ -33,7 +33,8 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
-//TODO: display offset values (somehow)
+// TODO: display offset values (somehow)
+// TODO: add measure cursors
 public class ScopeView extends View
 {
     private static final String TAG = "ScopeView";
@@ -47,10 +48,10 @@ public class ScopeView extends View
 
     private int mSelectedPath = -1; // -1 if not selected
     private double mTimeScreenOffset = 0;
-    private WaveData mPrevChan1 = null;
+  /*  private WaveData mPrevChan1 = null;
     private WaveData mPrevChan2 = null;
     private TimeData mPrevTime = null;
-    private TriggerData mPrevTrig = null;
+    private TriggerData mPrevTrig = null;*/
     private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
 
     /****  Drawing  ****/
@@ -238,26 +239,26 @@ public class ScopeView extends View
         {
             case 1:
             {
-                mPrevChan1 = waveData;
+              //  mPrevChan1 = waveData;
                 updatePath(channel, mPathChan1, waveData);
                 mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
             }
             case 2:
             {
-                mPrevChan2 = waveData;
+              //  mPrevChan2 = waveData;
                 updatePath(channel, mPathChan2, waveData);
                 mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
             }
         }
 
-        mPrevTrig = trigData;
+      //  mPrevTrig = trigData;
         mTriggerText = updateTriggerText(trigData);
 
         if(mOnDataChanged != null && mChangeDelay <= 0)
         {
-            mPrevTime = timeData;
+          //  mPrevTime = timeData;
             if(timeData != null)
             {
                 float offset = (float) (-timeData.timeOffset / timeData.timeScale) * mContentWidth / NUM_COLUMNS;
@@ -269,10 +270,10 @@ public class ScopeView extends View
             }
 
             if(trigData != null && waveData != null &&
-                ((trigData.mSource == TriggerData.TriggerSrc.CHAN1 && channel == 1) ||
-                  trigData.mSource == TriggerData.TriggerSrc.CHAN2 && channel == 2))
+                ((trigData.source == TriggerData.TriggerSrc.CHAN1 && channel == 1) ||
+                  trigData.source == TriggerData.TriggerSrc.CHAN2 && channel == 2))
             {
-                float offset = (float) ( -(waveData.voltageOffset + trigData.mLevel) /
+                float offset = (float) ( -(waveData.voltageOffset + trigData.level) /
                                            waveData.voltageScale) * mContentHeight / NUM_ROWS;
                 offset = offset + mContentHeight / 2;
                 mOnDataChanged.moveTrigger(offset, false);
@@ -394,14 +395,14 @@ public class ScopeView extends View
         double value;
         String end;
 
-        if (trigData.mLevel < 1)
+        if (trigData.level < 1)
         {
-            value = trigData.mLevel * 1e3;
+            value = trigData.level * 1e3;
             end = "mV";
         }
         else
         {
-            value = trigData.mLevel;
+            value = trigData.level;
             end = "V";
         }
 
@@ -750,7 +751,7 @@ public class ScopeView extends View
             float previousSpanY = detector.getPreviousSpanY();
 
             float scaleX = spanX / previousSpanX;
-            float scaleY = (float)Math.pow(spanY / previousSpanY, 2);
+            float scaleY = spanY / previousSpanY;//(float)Math.pow(spanY / previousSpanY, 2);
 
             Log.d(TAG, "onScale::x:" + scaleX + " y:" + scaleY);
 
@@ -791,7 +792,7 @@ public class ScopeView extends View
             float spanY = detector.getCurrentSpanY();
 
             float scaleX = spanX / mFirstSpanX;
-            float scaleY = (float)Math.pow(spanY / mFirstSpanY, 2);
+            float scaleY = spanY / mFirstSpanY;//(float)Math.pow(spanY / mFirstSpanY, 2);
 
             Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
 

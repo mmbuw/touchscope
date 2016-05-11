@@ -2,23 +2,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="de.uni_weimar.mheinz.androidtouchscope.TouchScopeActivity">
-
-    <item
-        android:id="@+id/action_rightDrawer"
-        android:icon="@drawable/oscilloscope"
-        android:title="O Settings"
-        app:showAsAction="always" />
-
     <!--
-    <item
-        android:id="@+id/action_scope"
-        android:orderInCategory="100"
-        android:title="Scope"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_test"
-        android:orderInCategory="100"
-        android:title="test"
-        app:showAsAction="never" />
-   -->
+        <item
+            android:id="@+id/action_rightDrawer"
+            android:icon="@drawable/oscilloscope"
+            android:title="O Settings"
+            app:showAsAction="always" />
+       -->
 </menu>

@@ -3,15 +3,15 @@ package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
 
 public class TriggerData
 {
-    public TriggerSrc mSource;
-    public TriggerEdge mEdge;
-    public double mLevel;
+    public TriggerSrc source;
+    public TriggerEdge edge;
+    public double level;
 
     public TriggerData()
     {
-        mLevel = 1.0;
-        mSource = TriggerSrc.CHAN1;
-        mEdge = TriggerEdge.NEGATIVE;
+        level = 1.0;
+        source = TriggerSrc.CHAN1;
+        edge = TriggerEdge.NEGATIVE;
     }
 
 

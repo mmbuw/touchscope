@@ -2,7 +2,6 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.graphics.Color;
 import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -26,6 +25,7 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
+// TODO: Measure and Cursor options in left drawer
 public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
@@ -66,7 +66,7 @@ public class TouchScopeActivity extends AppCompatActivity
                 R.string.drawer_open, R.string.drawer_close);
         mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
 
-        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+    /*    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         assert toolbar != null;
         toolbar.setNavigationOnClickListener(new View.OnClickListener()
         {
@@ -75,15 +75,15 @@ public class TouchScopeActivity extends AppCompatActivity
             {
                 mDrawerLayout.openDrawer(GravityCompat.START);
             }
-        });
+        });*/
 
         mLeftDrawer = (NavigationView)findViewById(R.id.left_drawer);
         assert mLeftDrawer != null;
         mLeftDrawer.setNavigationItemSelectedListener(mLeftDrawerSelectedListener);
 
-        NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
+        /*NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
         assert rightDrawer != null;
-        rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
+        rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);*/
 
         mHostView = (HostView)findViewById(R.id.hostView);
         mHostView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
@@ -216,7 +216,7 @@ public class TouchScopeActivity extends AppCompatActivity
             return true;
         }
 
-        int id = item.getItemId();
+       /* int id = item.getItemId();
         if(id == R.id.action_rightDrawer)
         {
             mDrawerLayout.openDrawer(GravityCompat.END);
@@ -224,7 +224,7 @@ public class TouchScopeActivity extends AppCompatActivity
         else
         {
             mDrawerLayout.closeDrawer(GravityCompat.END);
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }
@@ -261,7 +261,7 @@ public class TouchScopeActivity extends AppCompatActivity
         }
     };
 
-    private final NavigationView.OnNavigationItemSelectedListener mRightDrawerSelectedListener =
+   /* private final NavigationView.OnNavigationItemSelectedListener mRightDrawerSelectedListener =
             new NavigationView.OnNavigationItemSelectedListener()
     {
         @Override
@@ -295,7 +295,7 @@ public class TouchScopeActivity extends AppCompatActivity
             }
             return false;
         }
-    };
+    };*/
 
     private final Runnable mRefreshRunnable = new Runnable()
     {

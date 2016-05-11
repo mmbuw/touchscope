@@ -25,6 +25,8 @@ public class HostView extends ViewGroup
     private HandleView mTimeHandle;
     private HandleView mTrigHandle;
 
+    private View mMovableView;
+
     static final int ID_HANDLE_1 = 1;
     static final int ID_HANDLE_2 = 2;
     static final int ID_HANDLE_TIME = 3;
@@ -65,12 +67,16 @@ public class HostView extends ViewGroup
         {
             boolean off = waveData == null || waveData.data == null || waveData.data.length == 0;
             mChan1Handle.setIsOn(!off);
+            mChan1Handle.setWaveData(waveData);
         }
         if(mChan2Handle != null && channel == 2)
         {
             boolean off = waveData == null || waveData.data == null || waveData.data.length == 0;
             mChan2Handle.setIsOn(!off);
+            mChan2Handle.setWaveData(waveData);
         }
+        if(mTrigHandle != null)
+            mTrigHandle.setTriggerData(trigData);
     }
 
     private void init()
@@ -98,6 +104,10 @@ public class HostView extends ViewGroup
         mTrigHandle.setAttributes(Color.rgb(255,215,0), "T", HandleView.HandleDirection.LEFT);
         mTrigHandle.setOnDoCommand(mHandleOnDataChanged);
         addView(mTrigHandle);
+
+        mMovableView = new View(getContext());
+        mMovableView.setVisibility(INVISIBLE);
+        addView(mMovableView);
     }
 
     @Override
@@ -190,12 +200,26 @@ public class HostView extends ViewGroup
 
         buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos - cursorLength, bottomPos);
 
+        mMovableView.layout(0,0,10,10);
+
         post(new ExpandScopeViewArea());
+    }
+
+    public View getMovableView()
+    {
+        return mMovableView;
     }
 
     private OnDataChangedInterface.OnDataChanged mHandleOnDataChanged
             = new OnDataChangedInterface.OnDataChanged()
     {
+        @Override
+        public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
+        {
+            if(mOnDataChanged != null)
+                mOnDataChanged.doCommand(command, channel, specialData);
+        }
+
         @Override
         public void moveWave(int channel, float pos, boolean moving)
         {
