@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveRequestPool;
 
@@ -20,15 +21,16 @@ public class BaseScope implements ScopeInterface
     protected static final float MAX_TIME_SCALE = 50f;
     protected static final float MIN_TIME_SCALE = 2.0E-9f;*/
 
-    protected WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
-    protected WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
-    protected WaveRequestPool mWaves3 = new WaveRequestPool(POOL_SIZE);
-    protected TimeData mTimeData = new TimeData();
+    protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
+    protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
+    protected final TimeData mTimeData = new TimeData();
+    protected final TriggerData mTrigData = new TriggerData();
 
     protected final Object mControllerLock = new Object();
     protected boolean mIsConnected = false;
 
     private OnReceivedName mOnReceivedName;
+   // private byte mSlowerReadCounter = 0;
     private final Handler mReadHandler = new Handler();
 
     @Override
@@ -52,7 +54,8 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "start");
 
         stop();
-        mReadHandler.postDelayed(mReadRunnable, 0);
+        if(mIsConnected)
+            mReadHandler.postDelayed(mReadRunnable, 0);
     }
 
     @Override
@@ -87,9 +90,9 @@ public class BaseScope implements ScopeInterface
             case 2:
                 waveData = mWaves2.peek();
                 break;
-            case 3:
-                waveData = mWaves3.peek();
-                break;
+           // case 3:
+           //     waveData = mWaves3.peek();
+           //     break;
         }
         return waveData;
     }
@@ -97,6 +100,11 @@ public class BaseScope implements ScopeInterface
     public TimeData getTimeData()
     {
         return mTimeData;
+    }
+
+    public TriggerData getTriggerData()
+    {
+        return mTrigData;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -156,6 +164,12 @@ public class BaseScope implements ScopeInterface
                     setTimeScale(scale);
                     break;
                 }
+                case SET_TRIGGER_LEVEL:
+                {
+                    float level = (Float) specialData;
+                    setTriggerLevel(level);
+                    break;
+                }
                 case SET_CHANNEL_STATE:
                 {
                     Boolean state = (Boolean)specialData;
@@ -171,6 +185,31 @@ public class BaseScope implements ScopeInterface
                 case DO_AUTO:
                 {
                     doAuto();
+                    break;
+                }
+                case DO_TRIG_50:
+                {
+                    doTrig50();
+                    break;
+                }
+                case SET_CHANNEL_COUPLING:
+                {
+                    setChannelCoupling(channel, (String)specialData);
+                    break;
+                }
+                case SET_CHANNEL_PROBE:
+                {
+                    setChannelProbe(channel, (Integer)specialData);
+                    break;
+                }
+                case SET_TRIGGER_SOURCE:
+                {
+                    setTriggerSource((String)specialData);
+                    break;
+                }
+                case SET_TRIGGER_SLOPE:
+                {
+                    setTriggerSlope((String)specialData);
                     break;
                 }
                 case NO_COMMAND:
@@ -205,6 +244,11 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "doAuto");
     }
 
+    protected void doTrig50()
+    {
+        Log.d(TAG, "doTrig50");
+    }
+
     protected void setRunStop(boolean run)
     {
         Log.d(TAG, "setRunStop");
@@ -225,6 +269,31 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "setVoltageOffset");
     }
 
+    protected void setTriggerLevel(float level)
+    {
+        Log.d(TAG, "setTriggerLevel");
+    }
+
+    protected void setChannelCoupling(int channel, String coupling)
+    {
+        Log.d(TAG, "setChannelCoupling");
+    }
+
+    protected void setChannelProbe(int channel, int probe)
+    {
+        Log.d(TAG, "setChannelProbe");
+    }
+
+    protected void setTriggerSource(String source)
+    {
+        Log.d(TAG, "setTriggerLevel");
+    }
+
+    protected void setTriggerSlope(String slope)
+    {
+        Log.d(TAG, "setTriggerLevel");
+    }
+
     protected String getName()
     {
         Log.d(TAG, "getName");
@@ -237,15 +306,21 @@ public class BaseScope implements ScopeInterface
         return false;
     }
 
-    protected Runnable mReadRunnable = new Runnable()
+    protected final Runnable mReadRunnable = new Runnable()
     {
         @Override
         public void run()
         {
             readWave(1);
             readWave(2);
-            readWave(3);
-            readTimeData();
+
+           // if(++mSlowerReadCounter % 10 == 0)
+            {
+                readTimeData();
+                readTriggerData();
+            }
+
+            forceCommand();
 
             mReadHandler.postDelayed(this, READ_RATE);
         }
@@ -256,6 +331,10 @@ public class BaseScope implements ScopeInterface
     }
 
     protected void readTimeData()
+    {
+    }
+
+    protected void readTriggerData()
     {
     }
 

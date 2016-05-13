@@ -1,6 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 public interface ScopeInterface
@@ -12,6 +13,7 @@ public interface ScopeInterface
     boolean isConnected();
     WaveData getWave(int chan);
     TimeData getTimeData();
+    TriggerData getTriggerData();
     int doCommand(Command command, int channel, boolean force, Object specialData);
 
     enum Command
@@ -23,9 +25,15 @@ public interface ScopeInterface
         SET_TIME_OFFSET,
         SET_VOLTAGE_SCALE,
         SET_TIME_SCALE,
+        SET_TRIGGER_LEVEL,
         SET_CHANNEL_STATE,
         SET_RUN_STOP,
         DO_AUTO,
+        DO_TRIG_50,
+        SET_CHANNEL_COUPLING,
+        SET_CHANNEL_PROBE,
+        SET_TRIGGER_SOURCE,
+        SET_TRIGGER_SLOPE,
         NO_COMMAND
     }
 

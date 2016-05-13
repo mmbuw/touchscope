@@ -1,4 +1,4 @@
-package de.uni_weimar.mheinz.androidtouchscope;
+package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -26,15 +26,19 @@ import android.view.View;
 
 import java.util.Locale;
 
+import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.BaseScope;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
+// TODO: display offset values (somehow)
+// TODO: add measure cursors
 public class ScopeView extends View
 {
     private static final String TAG = "ScopeView";
-    private static final float NUM_COLUMNS = 10f;
+    private static final float NUM_COLUMNS = 12f;
     private static final float NUM_ROWS = 8f;
     //scope returns 12 columns worth, this is displayed ratio
     private static final float DISPLAY_RATIO = NUM_COLUMNS / 12f;
@@ -43,30 +47,37 @@ public class ScopeView extends View
     private int mContentHeight = 0;
 
     private int mSelectedPath = -1; // -1 if not selected
-    private OnDoCommand mOnDoCommand = null;
+    private double mTimeScreenOffset = 0;
+  /*  private WaveData mPrevChan1 = null;
+    private WaveData mPrevChan2 = null;
+    private TimeData mPrevTime = null;
+    private TriggerData mPrevTrig = null;*/
+    private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
 
     /****  Drawing  ****/
     private final ShapeDrawable mDrawableChan1 = new ShapeDrawable();
     private final ShapeDrawable mDrawableChan2 = new ShapeDrawable();
-    private final ShapeDrawable mDrawableMath = new ShapeDrawable();
     private final ShapeDrawable mDrawableGridH = new ShapeDrawable();
     private final ShapeDrawable mDrawableGridV = new ShapeDrawable();
 
     private final Path mPathChan1 = new Path();
     private final Path mPathChan2 = new Path();
-    private final Path mPathMath = new Path();
     private final Path mPathGridH = new Path();
     private final Path mPathGridV = new Path();
 
     private final Paint mChan1TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mChan2TextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mMathTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mTimeOffsetTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mTriggerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
+    private static final String TIME_SCALE_TEXT = "TIME: ";
+    private static final String TIME_OFFSET_TEXT = "T-> ";
     private String mChan1Text = "";
     private String mChan2Text = "";
-    private String mMathText = "";
     private String mTimeText = "";
+    private String mTimeOffsetText = "";
+    private String mTriggerText = "";
 
     private Point mTextPos;
 
@@ -77,6 +88,7 @@ public class ScopeView extends View
     private PointF mFirstTouch = null;
     private boolean mInMovement = false;
     private boolean mInScaling = false;
+    private int mChangeDelay = 0;
 
     public ScopeView(Context context)
     {
@@ -99,9 +111,9 @@ public class ScopeView extends View
         init();
     }
 
-    public void setOnDoCommand(OnDoCommand onDoCommand)
+    public void setOnDoCommand(OnDataChangedInterface.OnDataChanged onDataChanged)
     {
-        mOnDoCommand = onDoCommand;
+        mOnDataChanged = onDataChanged;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -138,13 +150,13 @@ public class ScopeView extends View
 
         initDrawable(mDrawableChan1, mPathChan1, Color.YELLOW, mContentWidth, mContentHeight);
         initDrawable(mDrawableChan2, mPathChan2, Color.BLUE, mContentWidth, mContentHeight);
-        initDrawable(mDrawableMath, mPathMath, Color.MAGENTA, mContentWidth, mContentHeight);
         initGridH(mDrawableGridH, mPathGridH, Color.GRAY, mContentWidth, mContentHeight);
         initGridV(mDrawableGridV, mPathGridV, Color.GRAY, mContentWidth, mContentHeight);
-        initText(mChan1TextPaint, 15, Color.YELLOW);
-        initText(mChan2TextPaint, 15, Color.BLUE);
-        initText(mMathTextPaint, 15, Color.MAGENTA);
-        initText(mTimeTextPaint, 15, Color.WHITE);
+        initText(mChan1TextPaint, 15, Color.YELLOW, Paint.Align.LEFT);
+        initText(mChan2TextPaint, 15, Color.BLUE, Paint.Align.LEFT);
+        initText(mTimeTextPaint, 15, Color.WHITE, Paint.Align.RIGHT);
+        initText(mTimeOffsetTextPaint, 15, Color.rgb(255,215,0), Paint.Align.RIGHT);
+        initText(mTriggerTextPaint, 15, Color.rgb(255,215,0), Paint.Align.RIGHT);
     }
 
     private void initDrawable(ShapeDrawable drawable, Path path, int color, int width, int height)
@@ -194,11 +206,11 @@ public class ScopeView extends View
         drawable.setBounds(0, 0, width, height);
     }
 
-    private void initText(Paint paint, int height, int color)
+    private void initText(Paint paint, int height, int color, Paint.Align align)
     {
         paint.setColor(color);
         paint.setTextSize(height);
-        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTextAlign(align);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -207,47 +219,72 @@ public class ScopeView extends View
     //
     //////////////////////////////////////////////////////////////////////////
 
-    private int mChangeDelay = 0;
-
-    public void setChannelData(int channel, WaveData waveData, TimeData timeData)
+    public void setInMovement(boolean moving)
     {
-    //    Log.d(TAG,"setChannelData::" + channel);
+        mInMovement = moving;
+        if(moving)
+        {
+            int numOn = channelOnCount();
+            mChangeDelay = 4 * numOn;
+        }
+    }
+
+    public void setChannelData(int channel, WaveData waveData, TimeData timeData, TriggerData trigData)
+    {
+        // being updated by user
+        if(mInMovement || mInScaling)
+            return;
 
         switch(channel)
         {
             case 1:
             {
-                if(mInMovement || mInScaling)
-                    break;
-                updatePath(mPathChan1, waveData);
+              //  mPrevChan1 = waveData;
+                updatePath(channel, mPathChan1, waveData);
                 mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
             }
             case 2:
             {
-                if(mInMovement || mInScaling)
-                    break;
-                updatePath(mPathChan2, waveData);
+              //  mPrevChan2 = waveData;
+                updatePath(channel, mPathChan2, waveData);
                 mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
             }
-            case 3:
+        }
+
+      //  mPrevTrig = trigData;
+        mTriggerText = updateTriggerText(trigData);
+
+        if(mOnDataChanged != null && mChangeDelay <= 0)
+        {
+          //  mPrevTime = timeData;
+            if(timeData != null)
             {
-                if(mInMovement || mInScaling)
-                    break;
-                updatePath(mPathMath, waveData);
-                mMathText = updateVoltText(waveData, "Math");
-                break;
+                float offset = (float) (-timeData.timeOffset / timeData.timeScale) * mContentWidth / NUM_COLUMNS;
+                mTimeScreenOffset = offset + mContentWidth / 2;
+                mOnDataChanged.moveTime((float) mTimeScreenOffset, false);
+
+                mTimeText = updateTimeText(TIME_SCALE_TEXT, timeData.timeScale);
+                mTimeOffsetText = updateTimeText(TIME_OFFSET_TEXT, timeData.timeOffset);
+            }
+
+            if(trigData != null && waveData != null &&
+                ((trigData.source == TriggerData.TriggerSrc.CHAN1 && channel == 1) ||
+                  trigData.source == TriggerData.TriggerSrc.CHAN2 && channel == 2))
+            {
+                float offset = (float) ( -(waveData.voltageOffset + trigData.level) /
+                                           waveData.voltageScale) * mContentHeight / NUM_ROWS;
+                offset = offset + mContentHeight / 2;
+                mOnDataChanged.moveTrigger(offset, false);
             }
         }
-        mTimeText = updateTimeText(timeData);
 
         postInvalidate();
     }
 
-    private int updatePath(Path path, WaveData waveData)
+    private int updatePath(int channel, Path path, WaveData waveData)
     {
-
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
         {
             path.rewind();
@@ -255,7 +292,6 @@ public class ScopeView extends View
         }
 
         int length = Math.min(BaseScope.SAMPLE_LENGTH, waveData.data.length) - 10;
-        //float widthRatio = (float)(mContentWidth) / (length - 100);
         float widthRatio = (float)(mContentWidth) / (length * DISPLAY_RATIO);
         double vScale = waveData.voltageScale;
         if(vScale == 0)
@@ -264,7 +300,6 @@ public class ScopeView extends View
         Path newPath = new Path();
         float point = manipulatePoint(waveData.voltageOffset, vScale, waveData.data[10]);
 
-        //int j = -50;
         float j = -(length * (1 - DISPLAY_RATIO)) / 2;
         newPath.moveTo(j++  * widthRatio, point);
 
@@ -280,31 +315,20 @@ public class ScopeView extends View
             return 0;
         }
 
-        //check similarity, ignore if too different
-      /*  Region clip = new Region(0, 0, mContentWidth, mContentHeight);
-
-        Region oldRegion = new Region();
-        oldRegion.setPath(path,clip);
-        Rect oldRect = oldRegion.getBounds();
-        int mid = (oldRect.top + oldRect.bottom) / 2;
-        oldRect.set(oldRect.left, mid, oldRect.right, mid);
-
-        Region newRegion = new Region();
-        newRegion.setPath(newPath,clip);
-        Rect newRect = newRegion.getBounds();
-        mid = (newRect.top + newRect.bottom) / 2;
-        newRect.set(newRect.left, mid - 10, newRect.right, mid + 10);*/
-
-        //if(oldRect.intersect(newRect) || attempts > 5)
         if(mChangeDelay <= 0)
         {
             path.set(newPath);
-         //   attempts = 0;
         }
         else
         {
-          //  attempts++;
             mChangeDelay--;
+        }
+
+        if(mOnDataChanged != null)
+        {
+            RectF bounds = new RectF();
+            path.computeBounds(bounds, false);
+            mOnDataChanged.moveWave(channel, bounds.bottom, false);
         }
         return 0;
     }
@@ -335,25 +359,22 @@ public class ScopeView extends View
         }
     }
 
-    private String updateTimeText(TimeData timeData)
+    private String updateTimeText(String startText, double time)
     {
-        if(timeData == null)
-            return "";
-
         double value;
         String end;
-        double time = timeData.timeScale;
-        if(time < 1e-6)
+        double absTime = Math.abs(time);
+        if(absTime < 1e-6)
         {
             value = (time * 1e9);
             end = "nS";
         }
-        else if(time < 1e-3)
+        else if(absTime < 1e-3)
         {
             value = time * 1e6;
             end = "uS";
         }
-        else if(time < 1)
+        else if(absTime < 1)
         {
             value = time * 1e3;
             end = "mS";
@@ -363,7 +384,29 @@ public class ScopeView extends View
             value = time;
             end = "S";
         }
-        return String.format(Locale.getDefault(),"Time: %.2f%s",value,end);
+        return String.format(Locale.getDefault(),"%s%.2f%s",startText, value, end);
+    }
+
+    private String updateTriggerText(TriggerData trigData)
+    {
+        if(trigData == null)
+            return "";
+
+        double value;
+        String end;
+
+        if (trigData.level < 1)
+        {
+            value = trigData.level * 1e3;
+            end = "mV";
+        }
+        else
+        {
+            value = trigData.level;
+            end = "V";
+        }
+
+        return String.format(Locale.getDefault(),"Trig LVL: %.2f%s", value, end);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -395,8 +438,6 @@ public class ScopeView extends View
         count += measure.getLength() > 0 ? 1 : 0;
         measure.setPath(mPathChan2,false);
         count += measure.getLength() > 0 ? 1 : 0;
-        measure.setPath(mPathMath,false);
-        count += measure.getLength() > 0 ? 1 : 0;
 
         return count;
     }
@@ -410,17 +451,15 @@ public class ScopeView extends View
     @Override
     protected void onDraw(Canvas canvas)
     {
-    //    Log.d(TAG,"onDraw");
-
         mDrawableChan1.draw(canvas);
         mDrawableChan2.draw(canvas);
-        mDrawableMath.draw(canvas);
         mDrawableGridH.draw(canvas);
         mDrawableGridV.draw(canvas);
         canvas.drawText(mChan1Text, mTextPos.x, mTextPos.y, mChan1TextPaint);
-        canvas.drawText(mChan2Text,mTextPos.x + 150,mTextPos.y,mChan2TextPaint);
-        canvas.drawText(mMathText,mTextPos.x + 300,mTextPos.y,mMathTextPaint);
-        canvas.drawText(mTimeText,mTextPos.x + 450,mTextPos.y,mTimeTextPaint);
+        canvas.drawText(mChan2Text, mTextPos.x + 150, mTextPos.y, mChan2TextPaint);
+        canvas.drawText(mTimeText, mContentWidth - 5, mTextPos.y, mTimeTextPaint);
+        canvas.drawText(mTriggerText, mContentWidth - 150, mTextPos.y, mTriggerTextPaint);
+        canvas.drawText(mTimeOffsetText, mContentWidth - 5, 20, mTimeOffsetTextPaint);
 
         super.onDraw(canvas);
     }
@@ -452,15 +491,10 @@ public class ScopeView extends View
         else
             mSelectedPath = hit;
 
-        //if(mOnDoCommand != null)
-        //    mOnDoCommand.doCommand(ScopeInterface.Command.SET_ACTIVE_CHANNEL, mSelectedPath, null);
-
         mDrawableChan1.getPaint().clearShadowLayer();
         mDrawableChan1.getPaint().setStrokeWidth(1);
         mDrawableChan2.getPaint().clearShadowLayer();
         mDrawableChan2.getPaint().setStrokeWidth(1);
-        mDrawableMath.getPaint().clearShadowLayer();
-        mDrawableMath.getPaint().setStrokeWidth(1);
 
         switch(mSelectedPath)
         {
@@ -471,10 +505,6 @@ public class ScopeView extends View
             case 2:
                 mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,Color.BLUE);
                 mDrawableChan2.getPaint().setStrokeWidth(1.5f);
-                break;
-            case 3:
-                mDrawableMath.getPaint().setShadowLayer(10f,0f,0f,Color.MAGENTA);
-                mDrawableMath.getPaint().setStrokeWidth(1.5f);
                 break;
             default:
                 break;
@@ -515,16 +545,76 @@ public class ScopeView extends View
         if(dist < minDist)
         {
             selected = 2;
-            minDist = dist;
-        }
-
-        dist = smallestDistanceToPath(mPathMath,x,y);
-        if(dist < minDist)
-        {
-            selected = 3;
         }
 
         return selected;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Methods related to moving waves
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    public void moveWave(int channel, float dist, boolean endMove)
+    {
+        if(endMove)
+        {
+            float move = dist / (mContentHeight / NUM_ROWS);
+            mOnDataChanged.doCommand(
+                    ScopeInterface.Command.SET_VOLTAGE_OFFSET,
+                    channel,
+                    (Float) move);
+        }
+        else
+        {
+            if(channel == 1)
+            {
+                mPathChan1.offset(0, dist);
+            }
+            else if(channel == 2)
+            {
+                mPathChan2.offset(0, dist);
+            }
+        }
+        invalidate();
+    }
+
+    public void moveTime(float dist, boolean endMove)
+    {
+        if(endMove)
+        {
+            float move = dist / (mContentWidth / NUM_COLUMNS);
+            mOnDataChanged.doCommand(
+                    ScopeInterface.Command.SET_TIME_OFFSET,
+                    0,
+                    (Float) move);
+        }
+        else
+        {
+            mPathChan1.offset(dist, 0);
+            mPathChan2.offset(dist, 0);
+
+           /* if(mPrevTime != null)
+            {
+                float move = dist / (mContentWidth / NUM_COLUMNS);
+                mPrevTime.timeOffset = (float)(move * mPrevTime.timeScale + mPrevTime.timeOffset);
+                mTimeOffsetText = updateTimeText(TIME_SCALE_TEXT, mPrevTime.timeOffset);
+            }*/
+        }
+        invalidate();
+    }
+
+    public void moveTrigger(float dist, boolean endMove)
+    {
+        if(endMove)
+        {
+            mOnDataChanged.doCommand(
+                    ScopeInterface.Command.SET_TRIGGER_LEVEL,
+                    0,
+                    (Float) (dist / (mContentHeight / NUM_ROWS)));
+        }
+        invalidate();
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -548,29 +638,20 @@ public class ScopeView extends View
                 float x = MotionEventCompat.getX(event, pointerIndex);
                 float y = MotionEventCompat.getY(event, pointerIndex);
 
-                int numOn = channelOnCount();
-                mChangeDelay = 4 * numOn;
-
-                if(mOnDoCommand != null)
+                if(mOnDataChanged != null)
                 {
                     if(mSelectedPath > 0)
                     {
                         float distY = mFirstTouch.y - y;
-                        mOnDoCommand.doCommand(
-                                ScopeInterface.Command.SET_VOLTAGE_OFFSET,
-                                mSelectedPath,
-                                (Float) (distY / (mContentHeight / NUM_ROWS)));
+                        moveWave(mSelectedPath, distY, true);
                     }
                     float distX = mFirstTouch.x - x;
-                    mOnDoCommand.doCommand(
-                            ScopeInterface.Command.SET_TIME_OFFSET,
-                            0,
-                            (Float) (distX / (mContentWidth / NUM_COLUMNS)));
+                    moveTime(distX, true);
                 }
                 mFirstTouch = null;
             }
 
-            mInMovement = false;
+            setInMovement(false);
         }
 
         return true;
@@ -583,25 +664,38 @@ public class ScopeView extends View
         {
             if(mFirstTouch != null)
             {
-                mInMovement = true;
+                setInMovement(true);
 
                 // must have a selected channel for voltage offset
                 switch(mSelectedPath)
                 {
                     case 1:
-                        mPathChan1.offset(0, -distanceY);
+                        moveWave(1, -distanceY, false);
+                        if(mOnDataChanged != null)
+                        {
+                            RectF bounds = new RectF();
+                            mPathChan1.computeBounds(bounds, false);
+                            mOnDataChanged.moveWave(1, bounds.bottom, true);
+                        }
                         break;
                     case 2:
-                        mPathChan2.offset(0, -distanceY);
-                        break;
-                    case 3:
-                        mPathMath.offset(0, -distanceY);
+                        moveWave(2, -distanceY, false);
+                        if(mOnDataChanged != null)
+                        {
+                            RectF bounds = new RectF();
+                            mPathChan2.computeBounds(bounds, false);
+                            mOnDataChanged.moveWave(2, bounds.bottom, true);
+                        }
                         break;
                 }
 
-                mPathChan1.offset(-distanceX, 0);
-                mPathChan2.offset(-distanceX, 0);
-                mPathMath.offset(-distanceX, 0);
+                moveTime(-distanceX, false);
+
+                if(mOnDataChanged != null)
+                {
+                    mTimeScreenOffset = mTimeScreenOffset - distanceX;
+                    mOnDataChanged.moveTime((float) mTimeScreenOffset, true);
+                }
 
                 invalidate();
             }
@@ -629,6 +723,8 @@ public class ScopeView extends View
 
     private class ScopeScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener
     {
+        //TODO: continuous zooming in discrete intervals
+
         private float mFirstSpanX;
         private float mFirstSpanY;
 
@@ -655,7 +751,7 @@ public class ScopeView extends View
             float previousSpanY = detector.getPreviousSpanY();
 
             float scaleX = spanX / previousSpanX;
-            float scaleY = (float)Math.pow(spanY / previousSpanY, 2);
+            float scaleY = spanY / previousSpanY;//(float)Math.pow(spanY / previousSpanY, 2);
 
             Log.d(TAG, "onScale::x:" + scaleX + " y:" + scaleY);
 
@@ -674,11 +770,6 @@ public class ScopeView extends View
                     scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathChan2.transform(scaleMatrix);
                     break;
-                case 3:
-                    mPathMath.computeBounds(rectF, true);
-                    scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
-                    mPathMath.transform(scaleMatrix);
-                    break;
             }
 
             scaleMatrix = new Matrix();
@@ -688,7 +779,6 @@ public class ScopeView extends View
 
             mPathChan1.transform(scaleMatrix);
             mPathChan2.transform(scaleMatrix);
-            mPathMath.transform(scaleMatrix);
 
             invalidate();
 
@@ -702,20 +792,20 @@ public class ScopeView extends View
             float spanY = detector.getCurrentSpanY();
 
             float scaleX = spanX / mFirstSpanX;
-            float scaleY = (float)Math.pow(spanY / mFirstSpanY, 2);
+            float scaleY = spanY / mFirstSpanY;//(float)Math.pow(spanY / mFirstSpanY, 2);
 
             Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
 
-            if(mOnDoCommand != null)
+            if(mOnDataChanged != null)
             {
                 if(mSelectedPath > 0)
                 {
-                    mOnDoCommand.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
+                    mOnDataChanged.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
                             mSelectedPath,
                             (Float) scaleY);
                 }
 
-                mOnDoCommand.doCommand(
+                mOnDataChanged.doCommand(
                         ScopeInterface.Command.SET_TIME_SCALE,
                         0,
                         (Float)scaleX);
@@ -725,16 +815,5 @@ public class ScopeView extends View
             mChangeDelay = 4 * numOn;
             mInScaling = false;
         }
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    //
-    // Callback methods
-    //
-    //////////////////////////////////////////////////////////////////////////
-
-    interface OnDoCommand
-    {
-        void doCommand(ScopeInterface.Command command, int channel, Object specialData);
     }
 }

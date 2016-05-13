@@ -1,10 +1,7 @@
 package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -12,28 +9,31 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import android.os.Handler;
-import android.view.TouchDelegate;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
+import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
+import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
+// TODO: Measure and Cursor options in left drawer
 public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
     private static final int REFRESH_RATE = 100;
 
     private ScopeInterface mActiveScope = null;
-    private ScopeView mScopeView = null;
+   // private ScopeView mScopeView = null;
+    private HostView mHostView = null;
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mLeftDrawerToggle;
@@ -53,7 +53,6 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         assert mDrawerLayout != null;
         mDrawerLayout.setScrimColor(Color.TRANSPARENT);
-        mDrawerLayout.post(new ExpandScopeViewArea());
 
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null)
@@ -65,19 +64,29 @@ public class TouchScopeActivity extends AppCompatActivity
 
         mLeftDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
                 R.string.drawer_open, R.string.drawer_close);
-
         mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
+
+    /*    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        assert toolbar != null;
+        toolbar.setNavigationOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                mDrawerLayout.openDrawer(GravityCompat.START);
+            }
+        });*/
 
         mLeftDrawer = (NavigationView)findViewById(R.id.left_drawer);
         assert mLeftDrawer != null;
         mLeftDrawer.setNavigationItemSelectedListener(mLeftDrawerSelectedListener);
 
-        NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
+        /*NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
         assert rightDrawer != null;
-        rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);
+        rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);*/
 
-        mScopeView = (ScopeView) findViewById(R.id.scopeView);
-        mScopeView.setOnDoCommand(new ScopeView.OnDoCommand()
+        mHostView = (HostView)findViewById(R.id.hostView);
+        mHostView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
         {
             @Override
             public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
@@ -207,7 +216,7 @@ public class TouchScopeActivity extends AppCompatActivity
             return true;
         }
 
-        int id = item.getItemId();
+       /* int id = item.getItemId();
         if(id == R.id.action_rightDrawer)
         {
             mDrawerLayout.openDrawer(GravityCompat.END);
@@ -215,7 +224,7 @@ public class TouchScopeActivity extends AppCompatActivity
         else
         {
             mDrawerLayout.closeDrawer(GravityCompat.END);
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }
@@ -252,7 +261,7 @@ public class TouchScopeActivity extends AppCompatActivity
         }
     };
 
-    private final NavigationView.OnNavigationItemSelectedListener mRightDrawerSelectedListener =
+   /* private final NavigationView.OnNavigationItemSelectedListener mRightDrawerSelectedListener =
             new NavigationView.OnNavigationItemSelectedListener()
     {
         @Override
@@ -283,17 +292,10 @@ public class TouchScopeActivity extends AppCompatActivity
                             true,
                             (Boolean) item.isChecked());
                     break;
-                case R.id.navigation_channel3:
-                    mActiveScope.doCommand(
-                            ScopeInterface.Command.SET_CHANNEL_STATE,
-                            3,
-                            true,
-                            (Boolean) item.isChecked());
-                    break;
             }
             return false;
         }
-    };
+    };*/
 
     private final Runnable mRefreshRunnable = new Runnable()
     {
@@ -301,48 +303,17 @@ public class TouchScopeActivity extends AppCompatActivity
         public void run()
         {
             TimeData timeData = mActiveScope.getTimeData();
+            TriggerData trigData = mActiveScope.getTriggerData();
 
             WaveData waveData = mActiveScope.getWave(1);
-            mScopeView.setChannelData(1, waveData,timeData);
+            mHostView.setChannelData(1, waveData,timeData, trigData);
 
             waveData = mActiveScope.getWave(2);
-            mScopeView.setChannelData(2, waveData,timeData);
-
-            waveData = mActiveScope.getWave(3);
-            mScopeView.setChannelData(3, waveData,timeData);
+            mHostView.setChannelData(2, waveData,timeData, trigData);
 
             mRefreshHandler.postDelayed(this, REFRESH_RATE);
         }
     };
-
-   // private final Runnable mExpandTouchView = new Runnable()
-    private class ExpandScopeViewArea implements Runnable
-    {
-        @Override
-        public void run()
-        {
-            ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
-            assert scopeView != null;
-
-            Display display = getWindowManager().getDefaultDisplay();
-            Point size = new Point();
-            display.getSize(size);
-
-           // scopeView.getHitRect(delegateArea);
-            //set to available size
-            Rect delegateArea = new Rect();
-            delegateArea.left = 0;
-            delegateArea.top = 0;
-            delegateArea.right = size.x;
-            delegateArea.bottom = size.y;
-            TouchDelegate touchDelegate = new TouchDelegate(delegateArea, scopeView);
-
-            if(View.class.isInstance(scopeView.getParent()))
-            {
-                ((View)scopeView.getParent()).setTouchDelegate(touchDelegate);
-            }
-        }
-    }
 
     public void onRunStop(View view)
     {

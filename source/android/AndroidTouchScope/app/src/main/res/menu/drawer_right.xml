@@ -6,7 +6,5 @@
     <item
         android:id="@+id/navigation_channel2"
         android:title="Channel 2"/>
-    <item
-        android:id="@+id/navigation_channel3"
-        android:title="Math"/>
+
 </menu>

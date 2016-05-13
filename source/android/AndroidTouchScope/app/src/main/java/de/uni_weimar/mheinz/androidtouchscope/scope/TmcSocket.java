@@ -6,7 +6,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
-import android.util.Log;
+//import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -23,7 +23,7 @@ class TmcSocket
     /* Default USB timeout (in milliseconds) */
     private final int USBTMC_TIMEOUT = 5000;
 
-    private static final String TAG = "TmcSocket";
+  //  private static final String TAG = "TmcSocket";
 
     private UsbDeviceConnection mConnection = null;
     private UsbEndpoint mEndpointOut = null;
