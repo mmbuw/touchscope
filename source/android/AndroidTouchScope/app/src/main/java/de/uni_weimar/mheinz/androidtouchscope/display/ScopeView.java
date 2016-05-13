@@ -458,8 +458,8 @@ public class ScopeView extends View
         canvas.drawText(mChan1Text, mTextPos.x, mTextPos.y, mChan1TextPaint);
         canvas.drawText(mChan2Text, mTextPos.x + 150, mTextPos.y, mChan2TextPaint);
         canvas.drawText(mTimeText, mContentWidth - 5, mTextPos.y, mTimeTextPaint);
-        canvas.drawText(mTimeOffsetText, mContentWidth - 150, mTextPos.y, mTimeOffsetTextPaint);
-        canvas.drawText(mTriggerText, mContentWidth - 5, 20, mTriggerTextPaint);
+        canvas.drawText(mTriggerText, mContentWidth - 150, mTextPos.y, mTriggerTextPaint);
+        canvas.drawText(mTimeOffsetText, mContentWidth - 5, 20, mTimeOffsetTextPaint);
 
         super.onDraw(canvas);
     }

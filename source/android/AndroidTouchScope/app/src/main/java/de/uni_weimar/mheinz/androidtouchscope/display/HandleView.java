@@ -32,6 +32,7 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 //TODO: when offset is off screen, moving handel should offset data back to screen
+//TODO: Voltage handle color match selected channel
 public class HandleView extends View implements HandlePopup.HandlePopupListener
 {
     private static final String TAG = "ScopeView";
@@ -395,6 +396,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         }
     }
 
+    //TODO: see if popups can be replaced by list menus
     private PopupMenu createPopupMenu(View view, int menuId)
     {
         int[] pos = new int[2];
