@@ -43,7 +43,7 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
-import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
+import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;

@@ -49,13 +49,12 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
-import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
+import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 //TODO: when offset is off screen, moving handel should offset data back to screen
-//TODO: Voltage handle color match selected channel
 public class HandleView extends View implements HandlePopup.HandlePopupListener
 {
     private static final String TAG = "ScopeView";
@@ -170,6 +169,15 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
     public void setTriggerData(TriggerData triggerData)
     {
         mTrigData = triggerData;
+        if(mTrigData != null)
+        {
+            if(mTrigData.source == TriggerData.TriggerSrc.CHAN1)
+                mColor = HostView.CHAN1_COLOR;
+            else if(mTrigData.source == TriggerData.TriggerSrc.CHAN2)
+                mColor = HostView.CHAN2_COLOR;
+            else
+                mColor = HostView.TRIGGER_COLOR;
+        }
     }
 
     private void makeHandle()
@@ -419,7 +427,6 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         }
     }
 
-    //TODO: see if popups can be replaced by list menus
     private PopupMenu createPopupMenu(View view, int menuId)
     {
         int[] pos = new int[2];

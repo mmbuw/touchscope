@@ -34,7 +34,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
-import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
+import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
@@ -54,6 +54,10 @@ public class HostView extends ViewGroup
     static final int ID_HANDLE_2 = 2;
     static final int ID_HANDLE_TIME = 3;
     static final int ID_HANDLE_TRIG = 4;
+
+    static final int CHAN1_COLOR = Color.YELLOW;
+    static final int CHAN2_COLOR = Color.BLUE;
+    static final int TRIGGER_COLOR = Color.rgb(255,215,0);
 
     private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
 
@@ -106,25 +110,25 @@ public class HostView extends ViewGroup
     {
         mChan2Handle = new HandleView(getContext());
         mChan2Handle.setHandleId(ID_HANDLE_2);
-        mChan2Handle.setAttributes(Color.BLUE, "CH2", HandleView.HandleDirection.RIGHT);
+        mChan2Handle.setAttributes(CHAN2_COLOR, "CH2", HandleView.HandleDirection.RIGHT);
         mChan2Handle.setOnDoCommand(mHandleOnDataChanged);
         addView(mChan2Handle);
 
         mChan1Handle = new HandleView(getContext());
         mChan1Handle.setHandleId(ID_HANDLE_1);
-        mChan1Handle.setAttributes(Color.YELLOW, "CH1", HandleView.HandleDirection.RIGHT);
+        mChan1Handle.setAttributes(CHAN1_COLOR, "CH1", HandleView.HandleDirection.RIGHT);
         mChan1Handle.setOnDoCommand(mHandleOnDataChanged);
         addView(mChan1Handle);
 
         mTimeHandle = new HandleView(getContext());
         mTimeHandle.setHandleId(ID_HANDLE_TIME);
-        mTimeHandle.setAttributes(Color.rgb(255,215,0), "T", HandleView.HandleDirection.DOWN);
+        mTimeHandle.setAttributes(TRIGGER_COLOR, "T", HandleView.HandleDirection.DOWN);
         mTimeHandle.setOnDoCommand(mHandleOnDataChanged);
         addView(mTimeHandle);
 
         mTrigHandle = new HandleView(getContext());
         mTrigHandle.setHandleId(ID_HANDLE_TRIG);
-        mTrigHandle.setAttributes(Color.rgb(255,215,0), "T", HandleView.HandleDirection.LEFT);
+        mTrigHandle.setAttributes(TRIGGER_COLOR, "Trig", HandleView.HandleDirection.LEFT);
         mTrigHandle.setOnDoCommand(mHandleOnDataChanged);
         addView(mTrigHandle);
 

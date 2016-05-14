@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.uni_weimar.mheinz.androidtouchscope.display.callback;
+package de.uni_weimar.mheinz.androidtouchscope.display.handler;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 
