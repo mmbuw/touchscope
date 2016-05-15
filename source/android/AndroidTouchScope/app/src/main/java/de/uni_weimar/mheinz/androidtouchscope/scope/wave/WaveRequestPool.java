@@ -34,7 +34,7 @@ public class WaveRequestPool
     public WaveRequestPool(int capacity)
     {
         mCapacity = capacity;
-        mWaves = new ArrayDeque<WaveData>(capacity);
+        mWaves = new ArrayDeque<>(capacity);
     }
 
     public WaveData requestWaveData()

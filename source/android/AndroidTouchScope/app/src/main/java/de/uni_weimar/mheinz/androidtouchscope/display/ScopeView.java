@@ -274,14 +274,14 @@ public class ScopeView extends View
             case 1:
             {
                 mPrevChan1 = waveData;
-                updatePath(channel, mPathChan1, waveData);
+                updatePath(mPathChan1, waveData);
                 mChan1Text = updateVoltText(waveData, "Chan1");
                 break;
             }
             case 2:
             {
                 mPrevChan2 = waveData;
-                updatePath(channel, mPathChan2, waveData);
+                updatePath(mPathChan2, waveData);
                 mChan2Text = updateVoltText(waveData, "Chan2");
                 break;
             }
@@ -329,7 +329,7 @@ public class ScopeView extends View
         postInvalidate();
     }
 
-    private int updatePath(int channel, Path path, WaveData waveData)
+    private int updatePath(Path path, WaveData waveData)
     {
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
         {
@@ -639,7 +639,7 @@ public class ScopeView extends View
             mOnDataChanged.doCommand(
                     ScopeInterface.Command.SET_VOLTAGE_OFFSET,
                     channel,
-                    (Float) move);
+                    move);
         }
         else
         {
@@ -663,7 +663,7 @@ public class ScopeView extends View
             mOnDataChanged.doCommand(
                     ScopeInterface.Command.SET_TIME_OFFSET,
                     0,
-                    (Float) move);
+                    move);
         }
         else
         {
@@ -680,7 +680,7 @@ public class ScopeView extends View
             mOnDataChanged.doCommand(
                     ScopeInterface.Command.SET_TRIGGER_LEVEL,
                     0,
-                    (Float) (dist / (mContentHeight / NUM_ROWS)));
+                    (dist / (mContentHeight / NUM_ROWS)));
         }
         invalidate();
     }
@@ -860,31 +860,37 @@ public class ScopeView extends View
         @Override
         public void onScaleEnd(ScaleGestureDetector detector)
         {
-            float spanX = detector.getCurrentSpanX();
-            float spanY = detector.getCurrentSpanY();
-
-            float scaleX = spanX / mFirstSpanX;
-            float scaleY = spanY / mFirstSpanY;//(float)Math.pow(spanY / mFirstSpanY, 2);
-
-            Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
-
-            if(mOnDataChanged != null)
+            if(mInScaling)
             {
-                if(mSelectedPath > 0)
+                float spanX = detector.getCurrentSpanX();
+                float spanY = detector.getCurrentSpanY();
+
+                float scaleX = spanX / mFirstSpanX;
+                float scaleY = spanY / mFirstSpanY;//(float)Math.pow(spanY / mFirstSpanY, 2);
+
+                Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
+
+                if (mOnDataChanged != null)
                 {
-                    mOnDataChanged.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
-                            mSelectedPath,
-                            (Float) scaleY);
+                    if (mSelectedPath > 0 && scaleY != 1.0)
+                    {
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
+                                mSelectedPath,
+                                scaleY);
+                    }
+
+                    if(scaleX != 1.0)
+                    {
+                        mOnDataChanged.doCommand(
+                                ScopeInterface.Command.SET_TIME_SCALE,
+                                0,
+                                scaleX);
+                    }
                 }
 
-                mOnDataChanged.doCommand(
-                        ScopeInterface.Command.SET_TIME_SCALE,
-                        0,
-                        (Float)scaleX);
+                int numOn = channelOnCount();
+                mChangeDelay = 4 * numOn;
             }
-
-            int numOn = channelOnCount();
-            mChangeDelay = 4 * numOn;
             mInScaling = false;
         }
     }

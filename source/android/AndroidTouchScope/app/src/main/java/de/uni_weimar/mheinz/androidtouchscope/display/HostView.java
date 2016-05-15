@@ -237,7 +237,7 @@ public class HostView extends ViewGroup
         return mMovableView;
     }
 
-    private OnDataChangedInterface.OnDataChanged mHandleOnDataChanged
+    private final OnDataChangedInterface.OnDataChanged mHandleOnDataChanged
             = new OnDataChangedInterface.OnDataChanged()
     {
         @Override

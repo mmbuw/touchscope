@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:title="@string/menu_back"
+        android:id="@+id/menu_back"
+        android:icon="@drawable/ic_chevron_left_black"/>
+    <item android:title="@string/menu_cursor">
+        <menu>
+            <item
+                android:title="test 1"
+                android:id="@+id/test1"/>
+            <item
+                android:title="test 2"
+                android:id="@+id/test2"/>
+        </menu>
+    </item>
+</menu>

@@ -49,7 +49,6 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
-// TODO: Measure and Cursor options in left drawer
 public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
@@ -87,7 +86,17 @@ public class TouchScopeActivity extends AppCompatActivity
         }
 
         mLeftDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
-                R.string.drawer_open, R.string.drawer_close);
+                R.string.drawer_open, R.string.drawer_close)
+        {
+
+            @Override
+            public void onDrawerClosed(View drawerView)
+            {
+                super.onDrawerClosed(drawerView);
+                mLeftDrawer.getMenu().clear();
+                mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
+            }
+        };
         mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
 
     /*    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
@@ -146,13 +155,13 @@ public class TouchScopeActivity extends AppCompatActivity
         {
             Log.i(TAG, "Device detected, try to find RigolScope");
             mActiveScope = new RigolScope(this);
-            mLeftDrawer.getMenu().getItem(0).setChecked(true);
+            mLeftDrawer.getMenu().findItem(R.id.navigation_real).setChecked(true);
         }
         else
         {
             Log.i(TAG, "Emulator detected, using TestScope");
             mActiveScope = new TestScope();
-            mLeftDrawer.getMenu().getItem(1).setChecked(true);
+            mLeftDrawer.getMenu().findItem(R.id.navigation_test).setChecked(true);
         }
         mActiveScope.open(new ScopeInterface.OnReceivedName()
         {
@@ -267,20 +276,33 @@ public class TouchScopeActivity extends AppCompatActivity
         @Override
         public boolean onNavigationItemSelected(MenuItem item)
         {
-            mDrawerLayout.closeDrawers();
-
-            item.setChecked(!item.isChecked());
-
             switch (item.getItemId())
             {
                 case R.id.navigation_real:
+                    mDrawerLayout.closeDrawers();
+                    item.setChecked(!item.isChecked());
                     initScope(true);
+                    startRunnableAndScope();
                     break;
                 case R.id.navigation_test:
+                    mDrawerLayout.closeDrawers();
+                    item.setChecked(!item.isChecked());
                     initScope(false);
+                    startRunnableAndScope();
+                    break;
+                case R.id.measurement_menuitem:
+                    mLeftDrawer.getMenu().clear();
+                    mLeftDrawer.inflateMenu(R.menu.measurement_menu);
+                    break;
+                case R.id.cursor_menuitem:
+                    mLeftDrawer.getMenu().clear();
+                    mLeftDrawer.inflateMenu(R.menu.cursor_menu);
+                    break;
+                case R.id.menu_back:
+                    mLeftDrawer.getMenu().clear();
+                    mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
                     break;
             }
-            startRunnableAndScope();
             return true;
         }
     };

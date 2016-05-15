@@ -50,9 +50,9 @@ public class HandlePopup extends PopupWindow
     public static final int CHANNEL_POPUP = 1;
     public static final int TRIGGER_POPUP = 2;
 
-    private Context mContext;
+    private final Context mContext;
     private HandlePopupListener mListener;
-    private int mAproxWidth = 0;
+    private int mApproxWidth = 0;
 
     public HandlePopup(Context context)
     {
@@ -91,7 +91,7 @@ public class HandlePopup extends PopupWindow
                     dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             // Coupling button
             view = (LinearLayout)layout.findViewById(R.id.channel_coupling);
@@ -106,7 +106,7 @@ public class HandlePopup extends PopupWindow
                 }
             });
             if(!hidden)
-                mAproxWidth += buttonWidth;
+                mApproxWidth += buttonWidth;
 
             // Probe button
             view = (LinearLayout)layout.findViewById(R.id.channel_probe);
@@ -122,7 +122,7 @@ public class HandlePopup extends PopupWindow
                 }
             });
             if(!hidden)
-                mAproxWidth += buttonWidth;
+                mApproxWidth += buttonWidth;
 
             if(hidden)
             {
@@ -135,7 +135,9 @@ public class HandlePopup extends PopupWindow
                 imageView.setImageResource(R.drawable.visible_channel);
 
                 ((TextView)layout.findViewById(R.id.channel_coupling_subtext)).setText(waveData.coupling);
-                ((TextView)layout.findViewById(R.id.channel_probe_subtext)).setText(waveData.probe + "X");
+
+                String probe = waveData.probe + "X";
+                ((TextView)layout.findViewById(R.id.channel_probe_subtext)).setText(probe);
             }
         }
         else if(popupType == TRIGGER_POPUP)
@@ -155,7 +157,7 @@ public class HandlePopup extends PopupWindow
                 //    dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             // slope button
             view = (LinearLayout)layout.findViewById(R.id.trigger_slope);
@@ -170,7 +172,7 @@ public class HandlePopup extends PopupWindow
                  //   dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             // 50 button
             Button button = (Button)layout.findViewById(R.id.trigger_50);
@@ -185,7 +187,7 @@ public class HandlePopup extends PopupWindow
                     dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             if(trigData != null)
             {
@@ -212,9 +214,9 @@ public class HandlePopup extends PopupWindow
 
     }
 
-    public int getAproxWidth()
+    public int getApproxWidth()
     {
-        return mAproxWidth;
+        return mApproxWidth;
     }
 
     public void setHandleListener(HandlePopupListener listener)

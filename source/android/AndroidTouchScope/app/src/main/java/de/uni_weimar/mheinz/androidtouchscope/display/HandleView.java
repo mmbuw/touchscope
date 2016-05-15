@@ -347,12 +347,6 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
     private class SimpleGestureListener extends GestureDetector.SimpleOnGestureListener
     {
         @Override
-        public void onLongPress(MotionEvent e)
-        {
-            super.onLongPress(e);
-        }
-
-        @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
         {
             if(mTouched)
@@ -417,7 +411,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 {
                     mPopupWindow.setPopupType(HandlePopup.TRIGGER_POPUP, mTrigData);
                     location[1] = (int)mHandlePos;
-                    location[0] -= mPopupWindow.getAproxWidth();
+                    location[0] -= mPopupWindow.getApproxWidth();
                 }
 
                 mPopupWindow.showAtLocation(getRootView(), Gravity.NO_GRAVITY, location[0], location[1]);
@@ -464,58 +458,46 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             public boolean onMenuItemClick(MenuItem item)
             {
                 boolean handled = false;
+                String probe = "";
                 switch (item.getItemId())
                 {
                     case R.id.menu_probe_1:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("1X");
+                        probe = getResources().getString(R.string.probe_1X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1);
                         break;
                     case R.id.menu_probe_5:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 5);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("5X");
+                        probe = getResources().getString(R.string.probe_5X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 5);
                         break;
                     case R.id.menu_probe_10:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 10);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("10X");
+                        probe = getResources().getString(R.string.probe_10X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 10);
                         break;
                     case R.id.menu_probe_50:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 50);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("50X");
+                        probe = getResources().getString(R.string.probe_50X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 50);
                         break;
                     case R.id.menu_probe_100:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 100);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("100X");
+                        probe = getResources().getString(R.string.probe_100X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 100);
                         break;
                     case R.id.menu_probe_500:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 500);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("500X");
+                        probe = getResources().getString(R.string.probe_500X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 500);
                         break;
                     case R.id.menu_probe_1000:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1000);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("1000X");
+                        probe = getResources().getString(R.string.probe_1000X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1000);
                         break;
                 }
+                ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText(probe);
                 //  mPopupWindow.dismiss();
                 return handled;
             }
@@ -535,31 +517,28 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             public boolean onMenuItemClick(MenuItem item)
             {
                 boolean handled = false;
+                String coup = "";
                 switch (item.getItemId())
                 {
                     case R.id.menu_coupling_ac:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "AC");
+                        coup = getResources().getString(R.string.coupling_ac);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "AC");
 
-                        ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText("AC");
                         break;
                     case R.id.menu_coupling_dc:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "DC");
-
-                        ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText("DC");
+                        coup = getResources().getString(R.string.coupling_dc);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "DC");
                         break;
                     case R.id.menu_coupling_gnd:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "GND");
-
-                        ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText("GND");
+                        coup = getResources().getString(R.string.coupling_gnd);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "GND");
                         break;
                 }
-              //  mPopupWindow.dismiss();
+                ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText(coup);
+                //  mPopupWindow.dismiss();
                 return handled;
             }
         });
@@ -578,23 +557,21 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             public boolean onMenuItemClick(MenuItem item)
             {
                 boolean handled = false;
+                String ch = "";
                 switch (item.getItemId())
                 {
                     case R.id.menu_source_ch1:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN1");
-
-                        ((TextView)view.findViewById(R.id.trigger_source_subtext)).setText("CH1");
+                        ch = getResources().getString(R.string.source_ch1);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN1");
                         break;
                     case R.id.menu_source_ch2:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN2");
-
-                        ((TextView)view.findViewById(R.id.trigger_source_subtext)).setText("CH2");
+                        ch = getResources().getString(R.string.source_ch2);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN2");
                         break;
                 }
+                ((TextView)view.findViewById(R.id.trigger_source_subtext)).setText(ch);
                 //  mPopupWindow.dismiss();
                 return handled;
             }

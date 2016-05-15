@@ -17,7 +17,6 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            android:elevation="4dp"
             android:theme="@style/AppTheme.AppBarOverlay"
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
@@ -63,16 +62,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/buttonAuto"
-                        android:textOn="Auto"
-                        android:textOff="Auto"
+                        android:textOn="@string/auto_button"
+                        android:textOff="@string/auto_button"
                         android:onClick="onAuto"/>
 
                     <ToggleButton
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/buttonRunStop"
-                        android:textOn="Run Stop"
-                        android:textOff="Run Stop"
+                        android:textOn="@string/run_stop_button"
+                        android:textOff="@string/run_stop_button"
                         android:onClick="onRunStop"/>
                 </LinearLayout>
             </de.uni_weimar.mheinz.androidtouchscope.display.HostView>
@@ -82,10 +81,10 @@
 
     <android.support.design.widget.NavigationView
         android:id="@+id/left_drawer"
-        android:layout_width="240dp"
+        android:layout_width="140dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/drawer_left"/>
+        app:menu="@menu/drawer_left_menu"/>
 
 
    <!-- <android.support.design.widget.NavigationView
@@ -93,6 +92,6 @@
         android:layout_width="240dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        app:menu="@menu/drawer_right"/>
+        app:menu="@menu/drawer_right_menu"/>
     -->
 </android.support.v4.widget.DrawerLayout>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="@string/menu_options">
+        <menu>
+            <item
+                android:id="@+id/measurement_menuitem"
+                android:title="@string/menu_measurement" />
+            <item
+                android:id="@+id/cursor_menuitem"
+                android:title="@string/menu_cursor" />
+        </menu>
+    </item>
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/navigation_real"
+            android:title="@string/real_scope"/>
+        <item
+            android:id="@+id/navigation_test"
+            android:title="@string/test_scope"/>
+    </group>
+</menu>

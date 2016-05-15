@@ -197,7 +197,7 @@ class UsbController
             String action = intent.getAction();
             if(UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action))
             {
-                UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (isCorrectScope(device))
                 {
                     Log.i(TAG,"attaching device");
@@ -206,7 +206,7 @@ class UsbController
             }
             else if(UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action))
             {
-                UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (device != null && device.equals(mDevice))
                 {
                     Log.i(TAG,"detaching device");

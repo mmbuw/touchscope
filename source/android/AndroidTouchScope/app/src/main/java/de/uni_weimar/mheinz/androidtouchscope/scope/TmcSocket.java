@@ -52,7 +52,7 @@ class TmcSocket
     private UsbDeviceConnection mConnection = null;
     private UsbEndpoint mEndpointOut = null;
     private UsbEndpoint mEndpointIn = null;
-    private final LinkedList<UsbRequest> mInRequestPool = new LinkedList<UsbRequest>();
+    private final LinkedList<UsbRequest> mInRequestPool = new LinkedList<>();
 
     private final Object io_lock = new Object();
     private byte mTag = (byte)1;

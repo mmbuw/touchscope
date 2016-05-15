@@ -380,8 +380,7 @@ public class RigolScope extends BaseScope
                 mUsbController.write(":" + getChannelName(channel) + ":COUP?");
                 try
                 {
-                    String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
-                    waveData.coupling = strValue;
+                    waveData.coupling = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
                 }
                 catch (UnsupportedEncodingException e)
                 {

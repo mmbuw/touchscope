@@ -32,6 +32,7 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveRequestPool;
 
+// TODO: Change_Flag in wave/time object (possible speed up)
 public class BaseScope implements ScopeInterface
 {
     private static final String TAG = "BaseScope";
@@ -258,10 +259,7 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "setVoltageScale");
     }
 
-    protected void forceCommand()
-    {
-        Log.d(TAG, "forceCommand");
-    }
+    protected void forceCommand() { }
 
     protected void doAuto()
     {

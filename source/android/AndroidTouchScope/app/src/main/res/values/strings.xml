@@ -1,6 +1,44 @@
 <resources>
     <string name="app_name">Touch Scope</string>
-    <string name="action_settings">Settings</string>
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
+
+    <string name="auto_button">Auto</string>
+    <string name="run_stop_button">Run Stop</string>
+
+    <string name="real_scope">Real Scope</string>
+    <string name="test_scope">Test Scope</string>
+    <string name="menu_options">Options</string>
+    <string name="menu_measurement">Measurement</string>
+    <string name="menu_cursor">Cursor</string>
+    <string name="menu_back">Back</string>
+
+    <string name="handle_visible">Visible</string>
+    <string name="handle_coupling">Coupling</string>
+    <string name="handle_probe">Probe</string>
+    <string name="handle_source">Source</string>
+    <string name="handle_slope">Slope</string>
+    <string name="handle_50">50%</string>
+
+    <string name="coupling_ac">AC</string>
+    <string name="coupling_dc">DC</string>
+    <string name="coupling_gnd">GND</string>
+
+    <string name="probe_1X">1X</string>
+    <string name="probe_5X">5X</string>
+    <string name="probe_10X">10X</string>
+    <string name="probe_50X">50X</string>
+    <string name="probe_100X">100X</string>
+    <string name="probe_500X">500X</string>
+    <string name="probe_1000X">1000X</string>
+
+    <string name="slope_positive">Positive</string>
+    <string name="slope_negative">Negative</string>
+    <string name="slope_both">Both</string>
+
+    <string name="source_ch1">CH1</string>
+    <string name="source_ch2">CH2</string>
+
+    <string name="description_chan_visibility">channel visibility</string>
+    <string name="description_trig_slope">trigger slope</string>
 </resources>

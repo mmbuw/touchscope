@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:tools="http://schemas.android.com/tools"
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      tools:ignore="AlwaysShowAction">
+
     <item android:id="@+id/menu_source_ch1"
-          android:title="CH1"
+          android:title="@string/source_ch1"
           app:showAsAction="always"/>
     <item android:id="@+id/menu_source_ch2"
-          android:title="CH2"
+          android:title="@string/source_ch2"
           app:showAsAction="always"/>
   <!--  <item android:id="@+id/menu_source_ext"
           android:title="EXT"

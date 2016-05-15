@@ -46,7 +46,7 @@ public class TriggerData
 
         private final String mText;
 
-        private TriggerEdge(final String text)
+        TriggerEdge(final String text)
         {
             mText = text;
         }
@@ -83,7 +83,7 @@ public class TriggerData
 
         private final String mText;
 
-        private TriggerSrc(final String text)
+        TriggerSrc(final String text)
         {
             mText = text;
         }
@@ -96,7 +96,8 @@ public class TriggerData
 
         public static TriggerSrc toTriggerSrc(String text)
         {
-            if(text.compareToIgnoreCase(CHAN2.toString()) == 0)
+            if(text.compareToIgnoreCase(CHAN2.toString()) == 0 ||
+               text.compareToIgnoreCase("CHAN2") == 0)
             {
                 return CHAN2;
             }
