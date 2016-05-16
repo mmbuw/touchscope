@@ -7,11 +7,11 @@
     <item android:title="@string/menu_cursor">
         <menu>
             <item
-                android:title="test 1"
-                android:id="@+id/test1"/>
+                android:title="@string/turn_on"
+                android:id="@+id/menu_cursor_state"/>
             <item
-                android:title="test 2"
-                android:id="@+id/test2"/>
+                android:title="@string/handle_source"
+                android:id="@+id/menu_cursor_source"/>
         </menu>
     </item>
 </menu>

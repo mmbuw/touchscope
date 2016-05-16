@@ -43,6 +43,7 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
+import de.uni_weimar.mheinz.androidtouchscope.display.ScopeView;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
@@ -63,6 +64,8 @@ public class TouchScopeActivity extends AppCompatActivity
     NavigationView mLeftDrawer;
 
     private final Handler mRefreshHandler = new Handler();
+
+    private boolean mCursorsOn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -295,9 +298,33 @@ public class TouchScopeActivity extends AppCompatActivity
                     mLeftDrawer.inflateMenu(R.menu.measurement_menu);
                     break;
                 case R.id.cursor_menuitem:
+                {
                     mLeftDrawer.getMenu().clear();
                     mLeftDrawer.inflateMenu(R.menu.cursor_menu);
+                    MenuItem menuItem = mLeftDrawer.getMenu().findItem(R.id.menu_cursor_state);
+                    if (mCursorsOn)
+                        menuItem.setTitle(R.string.turn_off);
+                    else
+                        menuItem.setTitle(R.string.turn_on);
                     break;
+                }
+                case R.id.menu_cursor_state:
+                {
+                    mCursorsOn = !mCursorsOn;
+                    ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
+                    assert scopeView != null;
+                    if (mCursorsOn)
+                    {
+                        scopeView.turnCursorsOn(1);
+                        item.setTitle(R.string.turn_off);
+                    }
+                    else
+                    {
+                        scopeView.turnCursorsOff();
+                        item.setTitle(R.string.turn_on);
+                    }
+                    break;
+                }
                 case R.id.menu_back:
                     mLeftDrawer.getMenu().clear();
                     mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);

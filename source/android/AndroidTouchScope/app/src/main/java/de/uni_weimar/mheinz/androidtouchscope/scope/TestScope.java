@@ -288,6 +288,10 @@ public class TestScope extends BaseScope
                             * amplitude - vOffset; //voltage part
                     int byteValue = (byte)(value + 125.5);
                     byteValue = (byteValue & 0xFF);
+                    if (byteValue > 255)
+                        byteValue = 255;
+                    else if (byteValue < 0)
+                        byteValue = 0;
                     buffer[i] = byteValue;
                 }
             }

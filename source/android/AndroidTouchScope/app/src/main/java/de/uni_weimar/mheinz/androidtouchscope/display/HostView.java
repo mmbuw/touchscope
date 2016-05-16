@@ -26,10 +26,7 @@ package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -229,7 +226,7 @@ public class HostView extends ViewGroup
 
         mMovableView.layout(0,0,10,10);
 
-        post(new ExpandScopeViewArea());
+        //post(new ExpandScopeViewArea());
     }
 
     public View getMovableView()
@@ -269,7 +266,7 @@ public class HostView extends ViewGroup
         }
     };
 
-    private class ExpandScopeViewArea implements Runnable
+ /*   private class ExpandScopeViewArea implements Runnable
     {
         @Override
         public void run()
@@ -295,5 +292,5 @@ public class HostView extends ViewGroup
                 ((View)scopeView.getParent()).setTouchDelegate(touchDelegate);
             }
         }
-    }
+    }*/
 }
