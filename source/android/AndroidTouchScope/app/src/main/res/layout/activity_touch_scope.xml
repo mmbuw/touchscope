@@ -55,8 +55,29 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:id="@+id/button_row"
-                    android:paddingLeft="@dimen/activity_horizontal_margin"
+                    android:paddingLeft="0dp"
                     android:paddingRight="@dimen/activity_horizontal_margin">
+
+                    <ToggleButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/buttonMeasure"
+                        android:textOn="@string/menu_measurement"
+                        android:textOff="@string/menu_measurement"
+                        android:onClick="onMeasure"/>
+
+                    <ToggleButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/buttonCursor"
+                        android:textOn="@string/menu_cursor"
+                        android:textOff="@string/menu_cursor"
+                        android:onClick="onCursor"/>
+
+                    <Button
+                        android:layout_width="50dp"
+                        android:layout_height="match_parent"
+                        android:visibility="invisible"/>
 
                     <ToggleButton
                         android:layout_width="wrap_content"
@@ -78,13 +99,16 @@
         </RelativeLayout>
     </LinearLayout>
 
-
     <android.support.design.widget.NavigationView
         android:id="@+id/left_drawer"
-        android:layout_width="140dp"
+        android:layout_width="175dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:menu="@menu/drawer_left_menu"/>
+
+    <include layout="@layout/right_menu_layout"/>
+
+
 
 
    <!-- <android.support.design.widget.NavigationView

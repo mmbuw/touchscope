@@ -26,6 +26,7 @@ package de.uni_weimar.mheinz.androidtouchscope;
 
 import android.graphics.Color;
 import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -38,6 +39,7 @@ import android.view.MenuItem;
 
 import android.os.Handler;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
@@ -56,11 +58,11 @@ public class TouchScopeActivity extends AppCompatActivity
     private static final int REFRESH_RATE = 100;
 
     private ScopeInterface mActiveScope = null;
-   // private ScopeView mScopeView = null;
     private HostView mHostView = null;
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mLeftDrawerToggle;
+    private LinearLayout mRightMenu;
     NavigationView mLeftDrawer;
 
     private final Handler mRefreshHandler = new Handler();
@@ -96,13 +98,14 @@ public class TouchScopeActivity extends AppCompatActivity
             public void onDrawerClosed(View drawerView)
             {
                 super.onDrawerClosed(drawerView);
-                mLeftDrawer.getMenu().clear();
-                mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
+             //   mLeftDrawer.getMenu().clear();
+             //   mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
             }
         };
         mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
 
-    /*    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        // disables touch-to-open
+        /*mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         assert toolbar != null;
         toolbar.setNavigationOnClickListener(new View.OnClickListener()
         {
@@ -117,9 +120,7 @@ public class TouchScopeActivity extends AppCompatActivity
         assert mLeftDrawer != null;
         mLeftDrawer.setNavigationItemSelectedListener(mLeftDrawerSelectedListener);
 
-        /*NavigationView rightDrawer = (NavigationView)findViewById(R.id.right_drawer);
-        assert rightDrawer != null;
-        rightDrawer.setNavigationItemSelectedListener(mRightDrawerSelectedListener);*/
+        mRightMenu = (LinearLayout)findViewById(R.id.right_menu);
 
         mHostView = (HostView)findViewById(R.id.hostView);
         mHostView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
@@ -252,7 +253,7 @@ public class TouchScopeActivity extends AppCompatActivity
             return true;
         }
 
-       /* int id = item.getItemId();
+        int id = item.getItemId();
         if(id == R.id.action_rightDrawer)
         {
             mDrawerLayout.openDrawer(GravityCompat.END);
@@ -260,7 +261,7 @@ public class TouchScopeActivity extends AppCompatActivity
         else
         {
             mDrawerLayout.closeDrawer(GravityCompat.END);
-        }*/
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -293,7 +294,7 @@ public class TouchScopeActivity extends AppCompatActivity
                     initScope(false);
                     startRunnableAndScope();
                     break;
-                case R.id.measurement_menuitem:
+            /*    case R.id.measurement_menuitem:
                     mLeftDrawer.getMenu().clear();
                     mLeftDrawer.inflateMenu(R.menu.measurement_menu);
                     break;
@@ -328,47 +329,11 @@ public class TouchScopeActivity extends AppCompatActivity
                 case R.id.menu_back:
                     mLeftDrawer.getMenu().clear();
                     mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
-                    break;
+                    break;*/
             }
             return true;
         }
     };
-
-   /* private final NavigationView.OnNavigationItemSelectedListener mRightDrawerSelectedListener =
-            new NavigationView.OnNavigationItemSelectedListener()
-    {
-        @Override
-        public boolean onNavigationItemSelected(MenuItem item)
-        {
-            //Closing drawer on item click
-            mDrawerLayout.closeDrawers();
-
-            if (mActiveScope == null)
-                return true;
-
-            item.setChecked(!item.isChecked());
-
-            //Check to see which item was being clicked and perform appropriate action
-            switch (item.getItemId())
-            {
-                case R.id.navigation_channel1:
-                    mActiveScope.doCommand(
-                            ScopeInterface.Command.SET_CHANNEL_STATE,
-                            1,
-                            true,
-                            (Boolean) item.isChecked());
-                    break;
-                case R.id.navigation_channel2:
-                    mActiveScope.doCommand(
-                            ScopeInterface.Command.SET_CHANNEL_STATE,
-                            2,
-                            true,
-                            (Boolean) item.isChecked());
-                    break;
-            }
-            return false;
-        }
-    };*/
 
     private final Runnable mRefreshRunnable = new Runnable()
     {
@@ -420,5 +385,34 @@ public class TouchScopeActivity extends AppCompatActivity
                 button.setChecked(false);
             }
         }, 0);
+    }
+
+    public void onMeasure(View view)
+    {
+        mRightMenu.findViewById(R.id.measure_options).setVisibility(View.VISIBLE);
+        mRightMenu.findViewById(R.id.cursor_options).setVisibility(View.GONE);
+        mDrawerLayout.openDrawer(GravityCompat.END);
+    }
+
+    public void onCursor(View view)
+    {
+        mRightMenu.findViewById(R.id.measure_options).setVisibility(View.GONE);
+        mRightMenu.findViewById(R.id.cursor_options).setVisibility(View.VISIBLE);
+        mDrawerLayout.openDrawer(GravityCompat.END);
+    }
+
+    public void onCursorMode(View view)
+    {
+        mCursorsOn = !mCursorsOn;
+        ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
+        assert scopeView != null;
+        if (mCursorsOn)
+        {
+            scopeView.turnCursorsOn(1);
+        }
+        else
+        {
+            scopeView.turnCursorsOff();
+        }
     }
 }
