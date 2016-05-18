@@ -59,15 +59,19 @@ public class TouchScopeActivity extends AppCompatActivity
 
     private ScopeInterface mActiveScope = null;
     private HostView mHostView = null;
+    private ScopeView mScopeView;
 
+    private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
-    private ActionBarDrawerToggle mLeftDrawerToggle;
     private LinearLayout mRightMenu;
     NavigationView mLeftDrawer;
 
     private final Handler mRefreshHandler = new Handler();
 
-    private boolean mCursorsOn = false;
+    CursorStruct mCursorStruct = new CursorStruct(
+            CursorStruct.CursorMode.OFF,
+            CursorStruct.CursorType.X,
+            CursorStruct.CursorSource.CH1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -75,10 +79,10 @@ public class TouchScopeActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_touch_scope);
 
-        Toolbar toolbar = (Toolbar)findViewById(R.id.scope_toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.scope_toolbar);
         setSupportActionBar(toolbar);
 
-        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         assert mDrawerLayout != null;
         mDrawerLayout.setScrimColor(Color.TRANSPARENT);
 
@@ -90,19 +94,8 @@ public class TouchScopeActivity extends AppCompatActivity
             actionBar.setHomeButtonEnabled(true);
         }
 
-        mLeftDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
-                R.string.drawer_open, R.string.drawer_close)
-        {
-
-            @Override
-            public void onDrawerClosed(View drawerView)
-            {
-                super.onDrawerClosed(drawerView);
-             //   mLeftDrawer.getMenu().clear();
-             //   mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
-            }
-        };
-        mDrawerLayout.addDrawerListener(mLeftDrawerToggle);
+        createDrawerToggle(toolbar);
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
 
         // disables touch-to-open
         /*mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
@@ -116,13 +109,13 @@ public class TouchScopeActivity extends AppCompatActivity
             }
         });*/
 
-        mLeftDrawer = (NavigationView)findViewById(R.id.left_drawer);
+        mLeftDrawer = (NavigationView) findViewById(R.id.left_drawer);
         assert mLeftDrawer != null;
         mLeftDrawer.setNavigationItemSelectedListener(mLeftDrawerSelectedListener);
 
-        mRightMenu = (LinearLayout)findViewById(R.id.right_menu);
+        mRightMenu = (LinearLayout) findViewById(R.id.right_menu);
 
-        mHostView = (HostView)findViewById(R.id.hostView);
+        mHostView = (HostView) findViewById(R.id.hostView);
         mHostView.setOnDoCommand(new OnDataChangedInterface.OnDataChanged()
         {
             @Override
@@ -135,7 +128,9 @@ public class TouchScopeActivity extends AppCompatActivity
             }
         });
 
-        ToggleButton runStopButton = (ToggleButton)findViewById(R.id.buttonRunStop);
+        mScopeView = (ScopeView) findViewById(R.id.scopeView);
+
+        ToggleButton runStopButton = (ToggleButton) findViewById(R.id.buttonRunStop);
         assert runStopButton != null;
         runStopButton.setChecked(true);
 
@@ -194,7 +189,7 @@ public class TouchScopeActivity extends AppCompatActivity
         {
             public void run()
             {
-                if (mActiveScope != null)
+                if(mActiveScope != null)
                 {
                     mRefreshHandler.removeCallbacks(mRefreshRunnable);
                     mRefreshHandler.postDelayed(mRefreshRunnable, 0);
@@ -248,7 +243,7 @@ public class TouchScopeActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        if (mLeftDrawerToggle.onOptionsItemSelected(item))
+        if(mDrawerToggle.onOptionsItemSelected(item))
         {
             return true;
         }
@@ -271,7 +266,75 @@ public class TouchScopeActivity extends AppCompatActivity
     {
         super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
-        mLeftDrawerToggle.syncState();
+        mDrawerToggle.syncState();
+    }
+
+    private void setCursorModeState(CursorStruct.CursorMode cursorMode)
+    {
+        View typeView = findViewById(R.id.cursor_type);
+        View sourceView = findViewById(R.id.cursor_source);
+        assert typeView != null && sourceView != null;
+
+        if(cursorMode == CursorStruct.CursorMode.OFF)
+        {
+            typeView.setVisibility(View.INVISIBLE);
+            sourceView.setVisibility(View.INVISIBLE);
+
+            TextView textView = (TextView)findViewById(R.id.cursor_mode_subtext);
+            assert textView != null;
+            textView.setText(R.string.cursor_mode_off);
+        }
+        else if(cursorMode == CursorStruct.CursorMode.MANUAL)
+        {
+            typeView.setVisibility(View.VISIBLE);
+            sourceView.setVisibility(View.VISIBLE);
+
+            TextView textView = (TextView)findViewById(R.id.cursor_mode_subtext);
+            assert textView != null;
+            textView.setText(R.string.cursor_mode_manual);
+        }
+    }
+
+    private void createDrawerToggle(Toolbar toolbar)
+    {
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
+                R.string.drawer_open, R.string.drawer_close)
+        {
+            @SuppressWarnings("ConstantConditions")
+            @Override
+            public void onDrawerOpened(View drawerView)
+            {
+                if(drawerView.getId() == R.id.right_menu)
+                {
+                    if(findViewById(R.id.cursor_options).getVisibility() == View.VISIBLE)
+                    {
+                        ((ToggleButton) findViewById(R.id.buttonCursor)).setChecked(true);
+
+                        setCursorModeState(mCursorStruct.cursorMode);
+                    }
+                    else if(findViewById(R.id.measure_options).getVisibility() == View.VISIBLE)
+                    {
+                        ((ToggleButton) findViewById(R.id.buttonMeasure)).setChecked(true);
+                    }
+                }
+                super.onDrawerOpened(drawerView);
+            }
+
+            @SuppressWarnings("ConstantConditions")
+            @Override
+            public void onDrawerClosed(View drawerView)
+            {
+                super.onDrawerClosed(drawerView);
+
+                if(drawerView.getId() == R.id.right_menu)
+                {
+                    ((ToggleButton) findViewById(R.id.buttonCursor)).setChecked(false);
+                    ((ToggleButton) findViewById(R.id.buttonMeasure)).setChecked(false);
+                }
+                //   mLeftDrawer.getMenu().clear();
+                //   mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
+            }
+        };
     }
 
     private final NavigationView.OnNavigationItemSelectedListener mLeftDrawerSelectedListener =
@@ -294,42 +357,6 @@ public class TouchScopeActivity extends AppCompatActivity
                     initScope(false);
                     startRunnableAndScope();
                     break;
-            /*    case R.id.measurement_menuitem:
-                    mLeftDrawer.getMenu().clear();
-                    mLeftDrawer.inflateMenu(R.menu.measurement_menu);
-                    break;
-                case R.id.cursor_menuitem:
-                {
-                    mLeftDrawer.getMenu().clear();
-                    mLeftDrawer.inflateMenu(R.menu.cursor_menu);
-                    MenuItem menuItem = mLeftDrawer.getMenu().findItem(R.id.menu_cursor_state);
-                    if (mCursorsOn)
-                        menuItem.setTitle(R.string.turn_off);
-                    else
-                        menuItem.setTitle(R.string.turn_on);
-                    break;
-                }
-                case R.id.menu_cursor_state:
-                {
-                    mCursorsOn = !mCursorsOn;
-                    ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
-                    assert scopeView != null;
-                    if (mCursorsOn)
-                    {
-                        scopeView.turnCursorsOn(1);
-                        item.setTitle(R.string.turn_off);
-                    }
-                    else
-                    {
-                        scopeView.turnCursorsOff();
-                        item.setTitle(R.string.turn_on);
-                    }
-                    break;
-                }
-                case R.id.menu_back:
-                    mLeftDrawer.getMenu().clear();
-                    mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
-                    break;*/
             }
             return true;
         }
@@ -385,6 +412,10 @@ public class TouchScopeActivity extends AppCompatActivity
                 button.setChecked(false);
             }
         }, 0);
+
+        mCursorStruct.cursorMode = CursorStruct.CursorMode.OFF;
+        setCursorModeState(CursorStruct.CursorMode.OFF);
+        mScopeView.setCursorsState(mCursorStruct);
     }
 
     public void onMeasure(View view)
@@ -403,16 +434,63 @@ public class TouchScopeActivity extends AppCompatActivity
 
     public void onCursorMode(View view)
     {
-        mCursorsOn = !mCursorsOn;
-        ScopeView scopeView = (ScopeView) findViewById(R.id.scopeView);
-        assert scopeView != null;
-        if (mCursorsOn)
+        if (mCursorStruct.cursorMode == CursorStruct.CursorMode.OFF)
         {
-            scopeView.turnCursorsOn(1);
+            mCursorStruct.cursorMode = CursorStruct.CursorMode.MANUAL;
+            setCursorModeState(CursorStruct.CursorMode.MANUAL);
+
         }
         else
         {
-            scopeView.turnCursorsOff();
+            mCursorStruct.cursorMode = CursorStruct.CursorMode.OFF;
+            setCursorModeState(CursorStruct.CursorMode.OFF);
         }
+        mScopeView.setCursorsState(mCursorStruct);
+    }
+
+    public void onCursorType(View view)
+    {
+        if(mCursorStruct.cursorType == CursorStruct.CursorType.X)
+        {
+            mCursorStruct.cursorType = CursorStruct.CursorType.Y;
+
+            TextView textView = (TextView)findViewById(R.id.cursor_type_subtext);
+            assert textView != null;
+            textView.setText(R.string.cursor_type_y);
+        }
+        else
+        {
+            mCursorStruct.cursorType = CursorStruct.CursorType.X;
+
+            TextView textView = (TextView)findViewById(R.id.cursor_type_subtext);
+            assert textView != null;
+            textView.setText(R.string.cursor_type_x);
+        }
+        mScopeView.setCursorsState(mCursorStruct);
+    }
+
+    public void onCursorSource(View view)
+    {
+        if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH1)
+        {
+            mCursorStruct.cursorSource = CursorStruct.CursorSource.CH2;
+
+            TextView textView = (TextView)findViewById(R.id.cursor_source_subtext);
+            assert textView != null;
+            textView.setText(R.string.source_ch2);
+        }
+        else
+        {
+            mCursorStruct.cursorSource = CursorStruct.CursorSource.CH1;
+
+            TextView textView = (TextView)findViewById(R.id.cursor_source_subtext);
+            assert textView != null;
+            textView.setText(R.string.source_ch1);
+        }
+        mScopeView.setCursorsState(mCursorStruct);
+    }
+
+    public void onMeasureSource(View view)
+    {
     }
 }

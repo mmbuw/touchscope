@@ -52,6 +52,7 @@ import android.view.ViewGroup;
 
 import java.util.Locale;
 
+import de.uni_weimar.mheinz.androidtouchscope.CursorStruct;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.ScaleGestureDetector;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
@@ -103,6 +104,7 @@ public class ScopeView extends ViewGroup
     private final Paint mTimeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mTimeOffsetTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mTriggerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mCursorTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private static final String TIME_SCALE_TEXT = "Time: ";
     private static final String TIME_OFFSET_TEXT = "T-> ";
@@ -114,6 +116,7 @@ public class ScopeView extends ViewGroup
     private String mTimeText = "";
     private String mTimeOffsetText = "";
     private String mTriggerText = "";
+    private String mCursorText = "";
 
     private Point mTextPos;
 
@@ -124,6 +127,7 @@ public class ScopeView extends ViewGroup
     private PointF mFirstTouch = null;
     private boolean mInMovement = false;
     private boolean mInScaling = false;
+    private boolean mCursorUpdateNeeded = false;
     private int mChangeDelay = 0;
     private int mHitCursorId = -1;
 
@@ -169,7 +173,7 @@ public class ScopeView extends ViewGroup
         canvas.drawText(mChan2Text, mTextPos.x + 150, mTextPos.y, mChan2TextPaint);
         canvas.drawText(mChan2OffsetText, mTextPos.x + 150, mTextPos.y - 20, mChan2TextPaint);
         canvas.drawText(mTimeOffsetText, mContentWidth - 5, mTextPos.y, mTimeOffsetTextPaint);
-        canvas.drawText(mTimeText, mContentWidth - 150, mTextPos.y, mTimeTextPaint);
+        canvas.drawText(mTimeText, mContentWidth - 100, mTextPos.y, mTimeTextPaint);
 
         if(mPrevTrig != null)
         {
@@ -181,6 +185,8 @@ public class ScopeView extends ViewGroup
                 mTriggerTextPaint.setColor(HostView.TRIGGER_COLOR);
         }
         canvas.drawText(mTriggerText, mContentWidth - 5, 20, mTriggerTextPaint);
+
+        canvas.drawText(mCursorText, mTextPos.x, 20, mCursorTextPaint);
 
         super.onDraw(canvas);
     }
@@ -196,40 +202,86 @@ public class ScopeView extends ViewGroup
         mOnDataChanged = onDataChanged;
     }
 
-    public void turnCursorsOn(int source)
+    public void setCursorsState(CursorStruct cursorStruct)
     {
-        if(mCursorArray.size() == 0)
+        if(cursorStruct.cursorMode == CursorStruct.CursorMode.MANUAL)
         {
-            int index = 1;
-            CursorView cursorView = new CursorView(getContext());
-            addView(cursorView);
-            cursorView.layout(0,0,mContentWidth,mContentHeight);
+            if(mCursorArray.size() == 0)
+            {
+                int index = 1;
+                CursorView cursorView = new CursorView(getContext());
+                addView(cursorView);
+                cursorView.layout(0, 0, mContentWidth, mContentHeight);
 
-            cursorView.setSource(source);
-            cursorView.changeLocation(250, 150);
-            cursorView.setIndex(index++);
-            mCursorArray.put(cursorView.getIndex(), cursorView);
+                cursorView.setCursorStruct(cursorStruct);
+                cursorView.changeLocation(250, 150);
+                cursorView.setIndex(index++);
+                mCursorArray.put(cursorView.getIndex(), cursorView);
 
 
-            cursorView = new CursorView(getContext());
-            addView(cursorView);
-            cursorView.layout(0,0,mContentWidth,mContentHeight);
+                cursorView = new CursorView(getContext());
+                addView(cursorView);
+                cursorView.layout(0, 0, mContentWidth, mContentHeight);
 
-            cursorView.setSource(source);
-            cursorView.changeLocation(300, 200);
-            cursorView.setIndex(index);
-            mCursorArray.put(cursorView.getIndex(), cursorView);
-
+                cursorView.setCursorStruct(cursorStruct);
+                cursorView.changeLocation(300, 200);
+                cursorView.setIndex(index);
+                mCursorArray.put(cursorView.getIndex(), cursorView);
+            }
+            else
+            {
+                for(CursorView cursorView : mCursorArray.values())
+                {
+                    cursorView.setCursorStruct(cursorStruct);
+                }
+            }
+        }
+        else if(cursorStruct.cursorMode == CursorStruct.CursorMode.OFF)
+        {
+            for(CursorView cursorView : mCursorArray.values())
+            {
+                removeView(cursorView);
+            }
+            mCursorArray.clear();
+            mCursorText = "";
         }
     }
 
-    public void turnCursorsOff()
+    private void updateCursorDifferenceText()
     {
-        for(CursorView cursorView : mCursorArray.values())
+        if(mCursorArray.size() == 2)
         {
-            removeView(cursorView);
+            double firstVal = 0, secondVal = 0;
+            boolean first = true;
+            CursorStruct cursorStruct = null;
+            for(CursorView cursorView : mCursorArray.values())
+            {
+                if(first)
+                {
+                    firstVal = cursorView.getValue();
+                    cursorStruct = cursorView.getCursorStruct();
+                    first = false;
+                }
+                else
+                {
+                    secondVal = cursorView.getValue();
+                }
+            }
+
+            assert cursorStruct != null;
+            if(cursorStruct.cursorType == CursorStruct.CursorType.Y)
+            {
+                double dist = Math.abs(secondVal - firstVal);
+                mCursorText = updateVoltText("|ΔY| = ", dist);
+            }
+            else
+            {
+                double dist = Math.abs(secondVal - firstVal);
+                mCursorText = updateTimeText("|ΔX| = ", dist);
+            }
         }
-        mCursorArray.clear();
+        else
+            mCursorText = "";
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -266,6 +318,7 @@ public class ScopeView extends ViewGroup
         initText(mTimeTextPaint, 15, Color.WHITE, Paint.Align.RIGHT);
         initText(mTimeOffsetTextPaint, 15, HostView.TRIGGER_COLOR, Paint.Align.RIGHT);
         initText(mTriggerTextPaint, 15, HostView.TRIGGER_COLOR, Paint.Align.RIGHT);
+        initText(mCursorTextPaint, 15, Color.GREEN, Paint.Align.LEFT);
 
         for(CursorView cursorView : mCursorArray.values())
         {
@@ -341,6 +394,7 @@ public class ScopeView extends ViewGroup
         {
             int numOn = channelOnCount();
             mChangeDelay = 4 * numOn;
+            mCursorUpdateNeeded = true;
         }
     }
 
@@ -404,6 +458,16 @@ public class ScopeView extends ViewGroup
                 else
                     mChan2ScreenOffset = cursorPos;
                 mOnDataChanged.moveWave(channel, (int)cursorPos, false);
+            }
+
+            if(mCursorUpdateNeeded)
+            {
+                mCursorUpdateNeeded = false;
+
+                for(CursorView cursorView : mCursorArray.values())
+                {
+                    cursorView.update();
+                }
             }
         }
 
@@ -986,6 +1050,9 @@ public class ScopeView extends ViewGroup
 
                 int numOn = channelOnCount();
                 mChangeDelay = 4 * numOn;
+
+                mChan1OffsetText = "";
+                mChan2OffsetText = "";
             }
             for(CursorView cursorView : mCursorArray.values())
             {
@@ -997,16 +1064,18 @@ public class ScopeView extends ViewGroup
 
     private class CursorView extends View
     {
-        private static final int TOUCH_RADIUS = 25;
+        private static final int TOUCH_RADIUS = 30;
 
-        private boolean mIsVertical = false;
+      //  private boolean mIsVertical = false;
         private float mPosX = 0;
         private float mPosY = 0;
         private float mWidth = 0;
         private float mHeight = 0;
+        private double mValue = 0;
         private String mText = "";
         private int mIndex = -1;
-        private int mSource = 0;
+     //   private int mSource = 0;
+        private CursorStruct mCursorStruct = new CursorStruct();
 
         private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -1036,15 +1105,24 @@ public class ScopeView extends ViewGroup
             mPaint.setColor(Color.GREEN);
 
             mTextPaint.setColor(Color.BLACK);
-            mTextPaint.setTextSize(15);
+            mTextPaint.setTextSize(12);
             mTextPaint.setTextAlign(Paint.Align.CENTER);
         }
 
-        public void setSource(int source)
+        public void setCursorStruct(CursorStruct cursorStruct)
         {
-            mSource = source;
-            mIsVertical = mSource == 0;
+            mCursorStruct = cursorStruct;
+            update();
+        }
 
+        public CursorStruct getCursorStruct()
+        {
+            return mCursorStruct;
+        }
+
+        public double getValue()
+        {
+            return mValue;
         }
 
         public void setIndex(int index)
@@ -1066,21 +1144,26 @@ public class ScopeView extends ViewGroup
 
         public void update()
         {
-            if(mSource == 0 && mPrevTime != null)
+            if(mCursorStruct.cursorType == CursorStruct.CursorType.X && mPrevTime != null)
             {
-                double value = fromScreenPosH(mPrevTime.timeScale, mPosX);
-                mText = String.format(Locale.ENGLISH, "%.2f", value);
+                mValue = mPrevTime.timeOffset - fromScreenPosH(mPrevTime.timeScale, mPosX);
+                mText = updateTimeText("", mValue);
+                //mText = String.format(Locale.ENGLISH, "%.4f", value);
             }
-            else if(mSource == 1 && mPrevChan1 != null)
+            else if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH1 && mPrevChan1 != null)
             {
-                double value = fromScreenPosV(mPrevChan1.voltageScale, mPosY);
-                mText = String.format(Locale.ENGLISH, "%.2f", value);
+                mValue = fromScreenPosV(mPrevChan1.voltageScale, mPosY) - mPrevChan1.voltageOffset;
+                mText = updateVoltText("", mValue);
+                //mText = String.format(Locale.ENGLISH, "%.2f", value);
             }
-            else if(mSource == 2 && mPrevChan2 != null)
+            else if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH2 && mPrevChan2 != null)
             {
-                double value = fromScreenPosV(mPrevChan2.voltageScale, mPosY);
-                mText = String.format(Locale.ENGLISH, "%.2f", value);
+                mValue = fromScreenPosV(mPrevChan2.voltageScale, mPosY) - mPrevChan2.voltageOffset;
+                mText = updateVoltText("", mValue);
+                //mText = String.format(Locale.ENGLISH, "%.2f", value);
             }
+
+            updateCursorDifferenceText();
             invalidate();
         }
 
@@ -1100,7 +1183,7 @@ public class ScopeView extends ViewGroup
         @Override
         protected void onDraw(Canvas canvas)
         {
-            if(mIsVertical)
+            if(mCursorStruct.cursorType == CursorStruct.CursorType.X)
             {
                 canvas.drawLine(mPosX, 0, mPosX, mHeight, mPaint);
             }
@@ -1109,7 +1192,7 @@ public class ScopeView extends ViewGroup
                 canvas.drawLine(0, mPosY, mWidth, mPosY, mPaint);
             }
             canvas.drawCircle(mPosX, mPosY, TOUCH_RADIUS, mPaint);
-            canvas.drawText(mText, mPosX, mPosY + 15/2, mTextPaint);
+            canvas.drawText(mText, mPosX, mPosY + 6, mTextPaint);
 
             super.onDraw(canvas);
         }
