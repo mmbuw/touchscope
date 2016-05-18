@@ -202,87 +202,6 @@ public class ScopeView extends ViewGroup
         mOnDataChanged = onDataChanged;
     }
 
-    public void setCursorsState(CursorStruct cursorStruct)
-    {
-        if(cursorStruct.cursorMode == CursorStruct.CursorMode.MANUAL)
-        {
-            if(mCursorArray.size() == 0)
-            {
-                int index = 1;
-                CursorView cursorView = new CursorView(getContext());
-                addView(cursorView);
-                cursorView.layout(0, 0, mContentWidth, mContentHeight);
-
-                cursorView.setCursorStruct(cursorStruct);
-                cursorView.changeLocation(250, 150);
-                cursorView.setIndex(index++);
-                mCursorArray.put(cursorView.getIndex(), cursorView);
-
-
-                cursorView = new CursorView(getContext());
-                addView(cursorView);
-                cursorView.layout(0, 0, mContentWidth, mContentHeight);
-
-                cursorView.setCursorStruct(cursorStruct);
-                cursorView.changeLocation(300, 200);
-                cursorView.setIndex(index);
-                mCursorArray.put(cursorView.getIndex(), cursorView);
-            }
-            else
-            {
-                for(CursorView cursorView : mCursorArray.values())
-                {
-                    cursorView.setCursorStruct(cursorStruct);
-                }
-            }
-        }
-        else if(cursorStruct.cursorMode == CursorStruct.CursorMode.OFF)
-        {
-            for(CursorView cursorView : mCursorArray.values())
-            {
-                removeView(cursorView);
-            }
-            mCursorArray.clear();
-            mCursorText = "";
-        }
-    }
-
-    private void updateCursorDifferenceText()
-    {
-        if(mCursorArray.size() == 2)
-        {
-            double firstVal = 0, secondVal = 0;
-            boolean first = true;
-            CursorStruct cursorStruct = null;
-            for(CursorView cursorView : mCursorArray.values())
-            {
-                if(first)
-                {
-                    firstVal = cursorView.getValue();
-                    cursorStruct = cursorView.getCursorStruct();
-                    first = false;
-                }
-                else
-                {
-                    secondVal = cursorView.getValue();
-                }
-            }
-
-            assert cursorStruct != null;
-            if(cursorStruct.cursorType == CursorStruct.CursorType.Y)
-            {
-                double dist = Math.abs(secondVal - firstVal);
-                mCursorText = updateVoltText("|ΔY| = ", dist);
-            }
-            else
-            {
-                double dist = Math.abs(secondVal - firstVal);
-                mCursorText = updateTimeText("|ΔX| = ", dist);
-            }
-        }
-        else
-            mCursorText = "";
-    }
 
     //////////////////////////////////////////////////////////////////////////
     //
@@ -1062,11 +981,99 @@ public class ScopeView extends ViewGroup
         }
     }
 
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Measurement Cursors
+    //
+    //////////////////////////////////////////////////////////////////////////
+
+    public void setCursorsState(CursorStruct cursorStruct)
+    {
+        if(cursorStruct.cursorMode == CursorStruct.CursorMode.MANUAL)
+        {
+            if(mCursorArray.size() == 0)
+            {
+                int index = 1;
+                CursorView cursorView = new CursorView(getContext());
+                addView(cursorView);
+                cursorView.layout(0, 0, mContentWidth, mContentHeight);
+
+                cursorView.setCursorStruct(cursorStruct);
+                cursorView.changeLocation(250, 150);
+                cursorView.setIndex(index++);
+                mCursorArray.put(cursorView.getIndex(), cursorView);
+
+
+                cursorView = new CursorView(getContext());
+                addView(cursorView);
+                cursorView.layout(0, 0, mContentWidth, mContentHeight);
+
+                cursorView.setCursorStruct(cursorStruct);
+                cursorView.changeLocation(300, 200);
+                cursorView.setIndex(index);
+                mCursorArray.put(cursorView.getIndex(), cursorView);
+            }
+            else
+            {
+                for(CursorView cursorView : mCursorArray.values())
+                {
+                    cursorView.setCursorStruct(cursorStruct);
+                }
+            }
+        }
+        else if(cursorStruct.cursorMode == CursorStruct.CursorMode.OFF)
+        {
+            for(CursorView cursorView : mCursorArray.values())
+            {
+                removeView(cursorView);
+            }
+            mCursorArray.clear();
+            mCursorText = "";
+        }
+    }
+
+    private void updateCursorDifferenceText()
+    {
+        if(mCursorArray.size() == 2)
+        {
+            double firstVal = 0, secondVal = 0;
+            boolean first = true;
+            CursorStruct cursorStruct = null;
+            for(CursorView cursorView : mCursorArray.values())
+            {
+                if(first)
+                {
+                    firstVal = cursorView.getValue();
+                    cursorStruct = cursorView.getCursorStruct();
+                    first = false;
+                }
+                else
+                {
+                    secondVal = cursorView.getValue();
+                }
+            }
+
+            assert cursorStruct != null;
+            if(cursorStruct.cursorType == CursorStruct.CursorType.Y)
+            {
+                double dist = Math.abs(secondVal - firstVal);
+                mCursorText = updateVoltText("|ΔY| = ", dist);
+            }
+            else
+            {
+                double dist = Math.abs(secondVal - firstVal);
+                mCursorText = updateTimeText("|ΔX| = ", dist);
+            }
+        }
+        else
+            mCursorText = "";
+    }
+
     private class CursorView extends View
     {
         private static final int TOUCH_RADIUS = 30;
 
-      //  private boolean mIsVertical = false;
         private float mPosX = 0;
         private float mPosY = 0;
         private float mWidth = 0;
@@ -1074,7 +1081,6 @@ public class ScopeView extends ViewGroup
         private double mValue = 0;
         private String mText = "";
         private int mIndex = -1;
-     //   private int mSource = 0;
         private CursorStruct mCursorStruct = new CursorStruct();
 
         private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -1148,19 +1154,16 @@ public class ScopeView extends ViewGroup
             {
                 mValue = mPrevTime.timeOffset - fromScreenPosH(mPrevTime.timeScale, mPosX);
                 mText = updateTimeText("", mValue);
-                //mText = String.format(Locale.ENGLISH, "%.4f", value);
             }
             else if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH1 && mPrevChan1 != null)
             {
                 mValue = fromScreenPosV(mPrevChan1.voltageScale, mPosY) - mPrevChan1.voltageOffset;
                 mText = updateVoltText("", mValue);
-                //mText = String.format(Locale.ENGLISH, "%.2f", value);
             }
             else if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH2 && mPrevChan2 != null)
             {
                 mValue = fromScreenPosV(mPrevChan2.voltageScale, mPosY) - mPrevChan2.voltageOffset;
                 mText = updateVoltText("", mValue);
-                //mText = String.format(Locale.ENGLISH, "%.2f", value);
             }
 
             updateCursorDifferenceText();
