@@ -32,8 +32,10 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
@@ -59,12 +61,13 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
 {
     private static final String TAG = "ScopeView";
 
-    private static final int HANDLE_LENGTH = 50;
+    private static final int HANDLE_LENGTH = 55;
     private static final int HANDLE_BREADTH = 25;
 
     private final ShapeDrawable mShapeDrawable = new ShapeDrawable();
     private final Path mHandlePath = new Path();
     private final Paint mMainTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private Drawable mPressDrawable = null;
 
     private GestureDetectorCompat mGestureDetector;
     private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
@@ -109,6 +112,11 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
     public void setHandleId(int id)
     {
         mId = id;
+
+        if(mId == HostView.ID_HANDLE_TRIG || mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
+            mPressDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_more_vert_gray);
+        else
+            mPressDrawable = null;
     }
 
     public void setOnDoCommand(OnDataChangedInterface.OnDataChanged onDataChanged)
@@ -258,7 +266,33 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
 
         PointF center = getCircleCenter();
         mMainTextPaint.getTextBounds(mMainText, 0, mMainText.length(), mTextBounds);
-        canvas.drawText(mMainText, center.x, center.y + mTextBounds.height() / 2, mMainTextPaint);
+        if(mOrientation == HandleDirection.RIGHT)
+            canvas.drawText(mMainText, center.x + 5, center.y + mTextBounds.height() / 2, mMainTextPaint);
+        else if(mOrientation == HandleDirection.LEFT)
+            canvas.drawText(mMainText, center.x - 5, center.y + mTextBounds.height() / 2, mMainTextPaint);
+        else
+            canvas.drawText(mMainText, center.x, center.y + mTextBounds.height() / 2, mMainTextPaint);
+
+        if(mPressDrawable != null)
+        {
+            if(mOrientation == HandleDirection.RIGHT)
+            {
+                mPressDrawable.setBounds(
+                        5, (int)(center.y - HANDLE_BREADTH / 2),
+                        HANDLE_BREADTH, (int)center.y + HANDLE_BREADTH / 2);
+                mPressDrawable.draw(canvas);
+            }
+            else if(mOrientation == HandleDirection.LEFT)
+            {
+                canvas.save();
+                canvas.rotate(180, HANDLE_LENGTH / 2, mHandlePos);
+                mPressDrawable.setBounds(
+                        4, (int)(center.y - HANDLE_BREADTH / 2),
+                        HANDLE_BREADTH, (int)center.y + HANDLE_BREADTH / 2);
+                mPressDrawable.draw(canvas);
+                canvas.restore();
+            }
+        }
     }
 
     @Override

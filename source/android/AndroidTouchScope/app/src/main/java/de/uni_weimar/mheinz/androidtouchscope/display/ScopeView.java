@@ -574,7 +574,7 @@ public class ScopeView extends ViewGroup
         double value;
         String end;
 
-        if (trigData.level < 1)
+        if (Math.abs(trigData.level) < 1)
         {
             value = trigData.level * 1e3;
             end = "mV";

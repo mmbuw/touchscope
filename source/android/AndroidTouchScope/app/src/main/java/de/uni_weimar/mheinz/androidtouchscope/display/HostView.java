@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 import de.uni_weimar.mheinz.androidtouchscope.R;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -44,7 +45,7 @@ public class HostView extends ViewGroup
     private HandleView mChan2Handle;
     private HandleView mTimeHandle;
     private HandleView mTrigHandle;
-
+    private MeasurementsView mMeasurementsView;
     private View mMovableView;
 
     static final int ID_HANDLE_1 = 1;
@@ -128,6 +129,10 @@ public class HostView extends ViewGroup
         mTrigHandle.setAttributes(TRIGGER_COLOR, "Trig", HandleView.HandleDirection.LEFT);
         mTrigHandle.setOnDoCommand(mHandleOnDataChanged);
         addView(mTrigHandle);
+
+        mMeasurementsView = new MeasurementsView(getContext());
+        mMeasurementsView.setVisibility(GONE);
+        addView(mMeasurementsView);
 
         mMovableView = new View(getContext());
         mMovableView.setVisibility(INVISIBLE);
@@ -224,6 +229,9 @@ public class HostView extends ViewGroup
 
         buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos - cursorLength, bottomPos);
 
+        mMeasurementsView.layout(leftPos + cursorLength, topPos + cursorLength,rightPos - cursorLength, bottomPos - buttonHeight);
+        mMeasurementsView.bringToFront();
+
         mMovableView.layout(0,0,10,10);
 
         //post(new ExpandScopeViewArea());
@@ -232,6 +240,11 @@ public class HostView extends ViewGroup
     public View getMovableView()
     {
         return mMovableView;
+    }
+
+    public MeasurementsView getMeasureView()
+    {
+        return mMeasurementsView;
     }
 
     private final OnDataChangedInterface.OnDataChanged mHandleOnDataChanged

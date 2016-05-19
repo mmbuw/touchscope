@@ -453,4 +453,77 @@ public class RigolScope extends BaseScope
             mTrigData.level = bytesToDouble(mUsbController.read(20));
         }
     }
+
+    public MeasureData getMeasureData(int channel)
+    {
+        synchronized(mControllerLock)
+        {
+            MeasureData measureData = new MeasureData();
+            String name = getChannelName(channel);
+
+            try
+            {
+                mUsbController.write(":MEAS:VPP? " + name);
+                measureData.mVPP = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VMAX? " + name);
+                measureData.mVMax = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VMIN? " + name);
+                measureData.mVMin = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VAMP? " + name);
+                measureData.mVAmp = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VTOP? " + name);
+                measureData.mVTop = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VBAS? " + name);
+                measureData.mVBase = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VAV? " + name);
+                measureData.mVAvg = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VRMS? " + name);
+                measureData.mVRMS = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:OVER? " + name);
+                measureData.mOver = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PRES? " + name);
+                measureData.mPre = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:FREQ? " + name);
+                measureData.mFreq = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:RIS? " + name);
+                measureData.mRise = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:FALL? " + name);
+                measureData.mFall = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PER? " + name);
+                measureData.mPeriod = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PWID? " + name);
+                measureData.mPWidth = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:NWID? " + name);
+                measureData.mNWidth = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PDUT? " + name);
+                measureData.mPDuty = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:NDUT? " + name);
+                measureData.mNDuty = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
+
+            mMeasureData = measureData;
+        }
+        return mMeasureData;
+    }
 }

@@ -156,7 +156,7 @@
                 android:textColor="@android:color/white"
                 android:paddingBottom="3dp"/>
         </LinearLayout>
-
+<!--
         <Button
             android:id="@+id/measure_voltage"
             android:layout_width="@dimen/handle_dialog_button_width"
@@ -180,14 +180,14 @@
             android:text="@string/measure_clear"
             android:textColor="@android:color/white"
             style="@style/TextAppearance.AppCompat.Large"/>
-
+-->
         <LinearLayout
             android:id="@+id/measure_display_all"
             android:layout_width="@dimen/handle_dialog_button_width"
             android:layout_height="@dimen/handle_dialog_button_height"
             android:orientation="vertical"
             style="@style/Widget.AppCompat.Button"
-            android:onClick="onMeasureSource">
+            android:onClick="onMeasureDisplay">
 
             <TextView
                 android:id="@+id/measure_display_all_maintext"

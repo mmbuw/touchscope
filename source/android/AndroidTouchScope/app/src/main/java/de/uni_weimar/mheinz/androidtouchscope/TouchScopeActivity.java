@@ -45,9 +45,11 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
+import de.uni_weimar.mheinz.androidtouchscope.display.MeasurementsView;
 import de.uni_weimar.mheinz.androidtouchscope.display.ScopeView;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.*;
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -56,10 +58,12 @@ public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
     private static final int REFRESH_RATE = 100;
+    private static final int MEASURE_RATE = 1000;
 
     private ScopeInterface mActiveScope = null;
     private HostView mHostView = null;
     private ScopeView mScopeView;
+    private MeasurementsView mMeasurementView;
 
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
@@ -72,6 +76,8 @@ public class TouchScopeActivity extends AppCompatActivity
             CursorStruct.CursorMode.OFF,
             CursorStruct.CursorType.X,
             CursorStruct.CursorSource.CH1);
+    MeasureStruct mMeasureStruct = new MeasureStruct(
+            MeasureStruct.MeasureDisplay.OFF, MeasureStruct.MeasureSource.CH1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -129,6 +135,7 @@ public class TouchScopeActivity extends AppCompatActivity
         });
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
+        mMeasurementView = mHostView.getMeasureView();
 
         ToggleButton runStopButton = (ToggleButton) findViewById(R.id.buttonRunStop);
         assert runStopButton != null;
@@ -147,6 +154,7 @@ public class TouchScopeActivity extends AppCompatActivity
         if(mActiveScope != null)
         {
             mRefreshHandler.removeCallbacks(mRefreshRunnable);
+            mRefreshHandler.removeCallbacks(mMeasureRunnable);
             mActiveScope.close();
         }
 
@@ -194,6 +202,8 @@ public class TouchScopeActivity extends AppCompatActivity
                     mRefreshHandler.removeCallbacks(mRefreshRunnable);
                     mRefreshHandler.postDelayed(mRefreshRunnable, 0);
 
+                    if(mMeasureStruct.measureDisplay == MeasureStruct.MeasureDisplay.ON)
+                        mRefreshHandler.postDelayed(mMeasureRunnable, 0);
                 }
             }
         }).start();
@@ -203,6 +213,7 @@ public class TouchScopeActivity extends AppCompatActivity
     public void onDestroy()
     {
         mRefreshHandler.removeCallbacks(mRefreshRunnable);
+        mRefreshHandler.removeCallbacks(mMeasureRunnable);
 
         if(mActiveScope != null)
             mActiveScope.close();
@@ -216,6 +227,7 @@ public class TouchScopeActivity extends AppCompatActivity
     {
         super.onPause();
         mRefreshHandler.removeCallbacks(mRefreshRunnable);
+        mRefreshHandler.removeCallbacks(mMeasureRunnable);
         if(mActiveScope != null)
             mActiveScope.stop();//.close();
     }
@@ -294,91 +306,6 @@ public class TouchScopeActivity extends AppCompatActivity
             textView.setText(R.string.cursor_mode_manual);
         }
     }
-
-    private void createDrawerToggle(Toolbar toolbar)
-    {
-        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
-                R.string.drawer_open, R.string.drawer_close)
-        {
-            @SuppressWarnings("ConstantConditions")
-            @Override
-            public void onDrawerOpened(View drawerView)
-            {
-                if(drawerView.getId() == R.id.right_menu)
-                {
-                    if(findViewById(R.id.cursor_options).getVisibility() == View.VISIBLE)
-                    {
-                        ((ToggleButton) findViewById(R.id.buttonCursor)).setChecked(true);
-
-                        setCursorModeState(mCursorStruct.cursorMode);
-                    }
-                    else if(findViewById(R.id.measure_options).getVisibility() == View.VISIBLE)
-                    {
-                        ((ToggleButton) findViewById(R.id.buttonMeasure)).setChecked(true);
-                    }
-                }
-                super.onDrawerOpened(drawerView);
-            }
-
-            @SuppressWarnings("ConstantConditions")
-            @Override
-            public void onDrawerClosed(View drawerView)
-            {
-                super.onDrawerClosed(drawerView);
-
-                if(drawerView.getId() == R.id.right_menu)
-                {
-                    ((ToggleButton) findViewById(R.id.buttonCursor)).setChecked(false);
-                    ((ToggleButton) findViewById(R.id.buttonMeasure)).setChecked(false);
-                }
-                //   mLeftDrawer.getMenu().clear();
-                //   mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
-            }
-        };
-    }
-
-    private final NavigationView.OnNavigationItemSelectedListener mLeftDrawerSelectedListener =
-            new NavigationView.OnNavigationItemSelectedListener()
-    {
-        @Override
-        public boolean onNavigationItemSelected(MenuItem item)
-        {
-            switch (item.getItemId())
-            {
-                case R.id.navigation_real:
-                    mDrawerLayout.closeDrawers();
-                    item.setChecked(!item.isChecked());
-                    initScope(true);
-                    startRunnableAndScope();
-                    break;
-                case R.id.navigation_test:
-                    mDrawerLayout.closeDrawers();
-                    item.setChecked(!item.isChecked());
-                    initScope(false);
-                    startRunnableAndScope();
-                    break;
-            }
-            return true;
-        }
-    };
-
-    private final Runnable mRefreshRunnable = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            TimeData timeData = mActiveScope.getTimeData();
-            TriggerData trigData = mActiveScope.getTriggerData();
-
-            WaveData waveData = mActiveScope.getWave(1);
-            mHostView.setChannelData(1, waveData,timeData, trigData);
-
-            waveData = mActiveScope.getWave(2);
-            mHostView.setChannelData(2, waveData,timeData, trigData);
-
-            mRefreshHandler.postDelayed(this, REFRESH_RATE);
-        }
-    };
 
     public void onRunStop(View view)
     {
@@ -492,5 +419,149 @@ public class TouchScopeActivity extends AppCompatActivity
 
     public void onMeasureSource(View view)
     {
+        if(mMeasureStruct.measureSource == MeasureStruct.MeasureSource.CH1)
+        {
+            mMeasureStruct.measureSource = MeasureStruct.MeasureSource.CH2;
+
+            TextView textView = (TextView)findViewById(R.id.measure_source_subtext);
+            assert textView != null;
+            textView.setText(R.string.source_ch2);
+            mMeasurementView.setSource(2);
+        }
+        else
+        {
+            mMeasureStruct.measureSource = MeasureStruct.MeasureSource.CH1;
+
+            TextView textView = (TextView)findViewById(R.id.measure_source_subtext);
+            assert textView != null;
+            textView.setText(R.string.source_ch1);
+            mMeasurementView.setSource(1);
+        }
     }
+
+    public void onMeasureDisplay(View view)
+    {
+        mRefreshHandler.removeCallbacks(mMeasureRunnable);
+
+        if(mMeasureStruct.measureDisplay == MeasureStruct.MeasureDisplay.OFF)
+        {
+            mMeasureStruct.measureDisplay = MeasureStruct.MeasureDisplay.ON;
+
+            TextView textView = (TextView)findViewById(R.id.measure_display_all_subtext);
+            assert textView != null;
+            textView.setText(R.string.measure_display_on);
+
+            mMeasurementView.setVisibility(View.VISIBLE);
+
+            mRefreshHandler.postDelayed(mMeasureRunnable, 0);
+        }
+        else
+        {
+            mMeasureStruct.measureDisplay = MeasureStruct.MeasureDisplay.OFF;
+
+            TextView textView = (TextView)findViewById(R.id.measure_display_all_subtext);
+            assert textView != null;
+            textView.setText(R.string.measure_display_off);
+
+            mMeasurementView.setVisibility(View.GONE);
+        }
+    }
+
+    private void createDrawerToggle(Toolbar toolbar)
+    {
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
+                R.string.drawer_open, R.string.drawer_close)
+        {
+            @SuppressWarnings("ConstantConditions")
+            @Override
+            public void onDrawerOpened(View drawerView)
+            {
+                if(drawerView.getId() == R.id.right_menu)
+                {
+                    if(findViewById(R.id.cursor_options).getVisibility() == View.VISIBLE)
+                    {
+                        ((ToggleButton) findViewById(R.id.buttonCursor)).setChecked(true);
+
+                        setCursorModeState(mCursorStruct.cursorMode);
+                    }
+                    else if(findViewById(R.id.measure_options).getVisibility() == View.VISIBLE)
+                    {
+                        ((ToggleButton) findViewById(R.id.buttonMeasure)).setChecked(true);
+                    }
+                }
+                super.onDrawerOpened(drawerView);
+            }
+
+            @SuppressWarnings("ConstantConditions")
+            @Override
+            public void onDrawerClosed(View drawerView)
+            {
+                super.onDrawerClosed(drawerView);
+
+                if(drawerView.getId() == R.id.right_menu)
+                {
+                    ((ToggleButton) findViewById(R.id.buttonCursor)).setChecked(false);
+                    ((ToggleButton) findViewById(R.id.buttonMeasure)).setChecked(false);
+                }
+                //   mLeftDrawer.getMenu().clear();
+                //   mLeftDrawer.inflateMenu(R.menu.drawer_left_menu);
+            }
+        };
+    }
+
+    private final NavigationView.OnNavigationItemSelectedListener mLeftDrawerSelectedListener =
+            new NavigationView.OnNavigationItemSelectedListener()
+            {
+                @Override
+                public boolean onNavigationItemSelected(MenuItem item)
+                {
+                    switch (item.getItemId())
+                    {
+                        case R.id.navigation_real:
+                            mDrawerLayout.closeDrawers();
+                            item.setChecked(!item.isChecked());
+                            initScope(true);
+                            startRunnableAndScope();
+                            break;
+                        case R.id.navigation_test:
+                            mDrawerLayout.closeDrawers();
+                            item.setChecked(!item.isChecked());
+                            initScope(false);
+                            startRunnableAndScope();
+                            break;
+                    }
+                    return true;
+                }
+            };
+
+    private final Runnable mRefreshRunnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            TimeData timeData = mActiveScope.getTimeData();
+            TriggerData trigData = mActiveScope.getTriggerData();
+
+            WaveData waveData = mActiveScope.getWave(1);
+            mHostView.setChannelData(1, waveData,timeData, trigData);
+
+            waveData = mActiveScope.getWave(2);
+            mHostView.setChannelData(2, waveData,timeData, trigData);
+
+            mRefreshHandler.postDelayed(this, REFRESH_RATE);
+        }
+    };
+
+    private final Runnable mMeasureRunnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            int source = mMeasureStruct.measureSource == MeasureStruct.MeasureSource.CH1 ? 1 : 2;
+            MeasureData measureData = mActiveScope.getMeasureData(source);
+            mMeasurementView.updateMeasurements(measureData);
+
+            mRefreshHandler.postDelayed(this, MEASURE_RATE);
+        }
+    };
 }

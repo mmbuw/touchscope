@@ -27,6 +27,7 @@ package de.uni_weimar.mheinz.androidtouchscope.scope;
 import android.os.Handler;
 import android.util.Log;
 
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -50,6 +51,7 @@ public class BaseScope implements ScopeInterface
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
     protected final TimeData mTimeData = new TimeData();
     protected final TriggerData mTrigData = new TriggerData();
+    protected MeasureData mMeasureData = new MeasureData();
 
     protected final Object mControllerLock = new Object();
     protected boolean mIsConnected = false;
@@ -130,6 +132,11 @@ public class BaseScope implements ScopeInterface
     public TriggerData getTriggerData()
     {
         return mTrigData;
+    }
+
+    public MeasureData getMeasureData(int channel)
+    {
+        return mMeasureData;
     }
 
     //////////////////////////////////////////////////////////////////////////
