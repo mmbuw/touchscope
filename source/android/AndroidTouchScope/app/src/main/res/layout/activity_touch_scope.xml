@@ -56,7 +56,9 @@
                     android:orientation="horizontal"
                     android:id="@+id/button_row"
                     android:paddingLeft="0dp"
-                    android:paddingRight="@dimen/activity_horizontal_margin">
+                    android:paddingStart="0dp"
+                    android:paddingRight="@dimen/activity_horizontal_margin"
+                    android:paddingEnd="@dimen/activity_horizontal_margin">
 
                     <ToggleButton
                         android:layout_width="wrap_content"

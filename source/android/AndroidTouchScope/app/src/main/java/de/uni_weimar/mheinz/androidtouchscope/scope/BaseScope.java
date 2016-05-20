@@ -44,11 +44,6 @@ public class BaseScope implements ScopeInterface
     public static final int SAMPLE_LENGTH = 610;
     protected static final int POOL_SIZE = 2;
 
-    /*protected static final float MAX_VOLTAGE_SCALE = 10f;
-    protected static final float MIN_VOLTAGE_SCALE = 2.0E-3f;
-    protected static final float MAX_TIME_SCALE = 50f;
-    protected static final float MIN_TIME_SCALE = 2.0E-9f;*/
-
     protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
     protected final TimeData mTimeData = new TimeData();
@@ -59,7 +54,6 @@ public class BaseScope implements ScopeInterface
     protected boolean mIsConnected = false;
 
     private OnReceivedName mOnReceivedName;
-   // private byte mSlowerReadCounter = 0;
     private final Handler mReadHandler = new Handler();
 
     @Override
@@ -119,9 +113,6 @@ public class BaseScope implements ScopeInterface
             case 2:
                 waveData = mWaves2.peek();
                 break;
-           // case 3:
-           //     waveData = mWaves3.peek();
-           //     break;
         }
         return waveData;
     }

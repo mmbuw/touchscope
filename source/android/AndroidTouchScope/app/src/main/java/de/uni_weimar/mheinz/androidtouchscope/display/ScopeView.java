@@ -133,7 +133,7 @@ public class ScopeView extends ViewGroup
     private int mHitCursorId = -1;
 
     /**** Cursors ****/
-    private ArrayMap<Integer, CursorView> mCursorArray = new ArrayMap<>();
+    private final ArrayMap<Integer, CursorView> mCursorArray = new ArrayMap<>();
 
 
     public ScopeView(Context context)
@@ -880,8 +880,6 @@ public class ScopeView extends ViewGroup
 
     private class ScopeScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener
     {
-        //TODO: continuous zooming in discrete intervals
-
         private float mFirstSpanX;
         private float mFirstSpanY;
 
@@ -1120,7 +1118,7 @@ public class ScopeView extends ViewGroup
         private int mIndex = -1;
         private CursorStruct mCursorStruct = new CursorStruct();
 
-        private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         public CursorView(Context context)

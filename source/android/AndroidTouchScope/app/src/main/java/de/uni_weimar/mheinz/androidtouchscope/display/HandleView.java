@@ -83,7 +83,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
 
     private HandleDirection mOrientation = HandleDirection.RIGHT;
     private RectF mBounds = new RectF(0, 0, HANDLE_LENGTH, HANDLE_BREADTH);
-    private Rect mTextBounds = new Rect();
+    private final Rect mTextBounds = new Rect();
 
     private float mHandlePos = HANDLE_BREADTH / 2;
     private float mOldHandlePos = 0;

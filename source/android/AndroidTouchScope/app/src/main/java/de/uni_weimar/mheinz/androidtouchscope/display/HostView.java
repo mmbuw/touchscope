@@ -33,7 +33,6 @@ import android.view.ViewGroup;
 import de.uni_weimar.mheinz.androidtouchscope.R;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
-import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;

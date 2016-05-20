@@ -28,6 +28,8 @@ import android.app.Activity;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Locale;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
@@ -39,10 +41,6 @@ public class RigolScope extends BaseScope
 
     private static final String CHAN_1 = "CHAN1";
     private static final String CHAN_2 = "CHAN2";
-  //  private static final String CHAN_MATH = "MATH";
-
-    /*private static final double[] POSSIBLE_VOLT_VALUES =
-            {2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10};*/
 
     private final Activity mActivity;
     private UsbController mUsbController = null;
@@ -168,7 +166,10 @@ public class RigolScope extends BaseScope
     protected void setTimeScale(float value)
     {
         double scale = mTimeData.timeScale / value;
-        String command = String.format(Locale.getDefault(), ":TIM:SCAL %.10f",scale);
+
+        double newScale = getClosestTimeValue(mTimeData.timeScale, scale);
+
+        String command = String.format(Locale.getDefault(), ":TIM:SCAL %.10f", newScale);
 
         mUsbController.write(command);
     }
@@ -323,23 +324,70 @@ public class RigolScope extends BaseScope
         BigDecimal number = BigDecimal.valueOf(value);
         number = number.setScale(scale, BigDecimal.ROUND_HALF_EVEN);
         return number.doubleValue();
+    }
 
+    private double getClosestTimeValue(double oldValue, double newValue)
+    {
+        NumberFormat numberFormat = new DecimalFormat("0.#E0");
+        String asText = numberFormat.format(newValue);
+        String powerStr = asText.substring(asText.indexOf('E'));
 
+        double divisor = Double.valueOf("1.0" + powerStr);
+        double base = newValue / divisor;
+        double closeValue;
 
-
-        /*double minDist = Math.abs(POSSIBLE_VOLT_VALUES[0] - value);
-        int minIndex = 0;
-        for(int i = 1; i < POSSIBLE_VOLT_VALUES.length; i++)
+        if(newValue < oldValue)
         {
-            double dist = Math.abs(POSSIBLE_VOLT_VALUES[i] - value);
-            if(dist < minDist)
+            if(base >= 1 && base < 2)
             {
-                minDist = dist;
-                minIndex = i;
+                if(base < 1.75) //three fourths between
+                    closeValue = 1;
+                else
+                    closeValue = 2;
+            }
+            else if(base >= 2 && base < 5)
+            {
+                if(base < 4.25)
+                    closeValue = 2;
+                else
+                    closeValue = 5;
+            }
+            else //(base >= 5)
+            {
+                if(base < 8.75)
+                    closeValue = 5;
+                else
+                    closeValue = 10;
+            }
+        }
+        else
+        {
+            if(base >= 1 && base < 2)
+            {
+                if(base < 1.25) //three fourths between
+                    closeValue = 1;
+                else
+                    closeValue = 2;
+            }
+            else if(base >= 2 && base < 5)
+            {
+                if(base < 2.75)
+                    closeValue = 2;
+                else
+                    closeValue = 5;
+            }
+            else //(base >= 5)
+            {
+                if(base < 6.25)
+                    closeValue = 5;
+                else
+                    closeValue = 10;
             }
         }
 
-        return POSSIBLE_VOLT_VALUES[minIndex];*/
+        closeValue *= divisor;
+
+        return closeValue;
     }
 
     //////////////////////////////////////////////////////////////////////////

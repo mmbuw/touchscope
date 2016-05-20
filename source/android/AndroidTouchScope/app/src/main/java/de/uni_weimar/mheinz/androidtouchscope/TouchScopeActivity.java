@@ -72,11 +72,11 @@ public class TouchScopeActivity extends AppCompatActivity
 
     private final Handler mRefreshHandler = new Handler();
 
-    CursorStruct mCursorStruct = new CursorStruct(
+    final CursorStruct mCursorStruct = new CursorStruct(
             CursorStruct.CursorMode.OFF,
             CursorStruct.CursorType.X,
             CursorStruct.CursorSource.CH1);
-    MeasureStruct mMeasureStruct = new MeasureStruct(
+    final MeasureStruct mMeasureStruct = new MeasureStruct(
             MeasureStruct.MeasureDisplay.OFF, MeasureStruct.MeasureSource.CH1);
 
     @Override
