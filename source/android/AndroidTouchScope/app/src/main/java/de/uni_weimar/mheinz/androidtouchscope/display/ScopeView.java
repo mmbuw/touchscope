@@ -38,7 +38,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
-//import android.os.Build;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -46,7 +45,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-//import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -921,8 +919,6 @@ public class ScopeView extends ViewGroup
 
             float scaleX = spanX / previousSpanX;
             float scaleY = spanY / previousSpanY;//(float)Math.pow(spanY / previousSpanY, 2);
-
-            Log.d(TAG, "onScale::x:" + scaleX + " y:" + scaleY);
 
             Matrix scaleMatrix = new Matrix();
             RectF rectF = new RectF();

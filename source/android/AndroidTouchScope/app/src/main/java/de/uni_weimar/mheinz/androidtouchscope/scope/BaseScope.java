@@ -35,14 +35,13 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveRequestPool;
 
-// TODO: Change_Flag in wave/time object (possible speed up)
 public class BaseScope implements ScopeInterface
 {
     private static final String TAG = "BaseScope";
 
     protected static final int READ_RATE = 100;
     public static final int SAMPLE_LENGTH = 610;
-    protected static final int POOL_SIZE = 2;
+    protected static final int POOL_SIZE = 1;
 
     protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);

@@ -54,6 +54,8 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
+// TODO: Learning View
+// TODO: settings in left: learnView on, connection type (both or tablet), Read rate
 public class TouchScopeActivity extends AppCompatActivity
 {
     private static final String TAG = "TouchScopeActivity";
