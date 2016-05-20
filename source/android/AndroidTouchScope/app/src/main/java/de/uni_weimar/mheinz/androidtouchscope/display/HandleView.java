@@ -114,7 +114,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         mId = id;
 
         if(mId == HostView.ID_HANDLE_TRIG || mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
-            mPressDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_more_vert_gray);
+            mPressDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_chevron_right_black);
         else
             mPressDrawable = null;
     }
@@ -255,21 +255,25 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         }
         else
         {
-            mShapeDrawable.getPaint().setStyle(Paint.Style.FILL);
+            /*mShapeDrawable.getPaint().setStyle(Paint.Style.FILL);
             mShapeDrawable.getPaint().setColor(Color.WHITE);
             mShapeDrawable.getPaint().setShadowLayer(2,2,2,Color.GRAY);
             mShapeDrawable.draw(canvas);
             mShapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
             mShapeDrawable.getPaint().setColor(Color.BLACK);
+            mShapeDrawable.draw(canvas);*/
+            mShapeDrawable.getPaint().setStyle(Paint.Style.FILL_AND_STROKE);
+            mShapeDrawable.getPaint().setColor(Color.LTGRAY);
+            mShapeDrawable.getPaint().setShadowLayer(2,2,2,Color.GRAY);
             mShapeDrawable.draw(canvas);
         }
 
         PointF center = getCircleCenter();
         mMainTextPaint.getTextBounds(mMainText, 0, mMainText.length(), mTextBounds);
         if(mOrientation == HandleDirection.RIGHT)
-            canvas.drawText(mMainText, center.x + 5, center.y + mTextBounds.height() / 2, mMainTextPaint);
+            canvas.drawText(mMainText, center.x + 5, center.y + mTextBounds.height() / 2 - 1, mMainTextPaint);
         else if(mOrientation == HandleDirection.LEFT)
-            canvas.drawText(mMainText, center.x - 5, center.y + mTextBounds.height() / 2, mMainTextPaint);
+            canvas.drawText(mMainText, center.x - 5, center.y + mTextBounds.height() / 2 - 2, mMainTextPaint);
         else
             canvas.drawText(mMainText, center.x, center.y + mTextBounds.height() / 2, mMainTextPaint);
 
@@ -278,8 +282,8 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             if(mOrientation == HandleDirection.RIGHT)
             {
                 mPressDrawable.setBounds(
-                        5, (int)(center.y - HANDLE_BREADTH / 2),
-                        HANDLE_BREADTH, (int)center.y + HANDLE_BREADTH / 2);
+                        2, (int)(center.y - HANDLE_BREADTH / 2),
+                        HANDLE_BREADTH - 3, (int)center.y + HANDLE_BREADTH / 2);
                 mPressDrawable.draw(canvas);
             }
             else if(mOrientation == HandleDirection.LEFT)
@@ -287,8 +291,8 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 canvas.save();
                 canvas.rotate(180, HANDLE_LENGTH / 2, mHandlePos);
                 mPressDrawable.setBounds(
-                        4, (int)(center.y - HANDLE_BREADTH / 2),
-                        HANDLE_BREADTH, (int)center.y + HANDLE_BREADTH / 2);
+                        1, (int)(center.y - HANDLE_BREADTH / 2),
+                        HANDLE_BREADTH - 5, (int)center.y + HANDLE_BREADTH / 2);
                 mPressDrawable.draw(canvas);
                 canvas.restore();
             }

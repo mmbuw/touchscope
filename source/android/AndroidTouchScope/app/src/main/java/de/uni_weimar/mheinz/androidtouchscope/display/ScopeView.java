@@ -61,7 +61,6 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
-// TODO: dragging and zooming snapping
 public class ScopeView extends ViewGroup
 {
     private static final String TAG = "ScopeView";
@@ -109,6 +108,8 @@ public class ScopeView extends ViewGroup
     private static final String TIME_SCALE_TEXT = "Time: ";
     private static final String TIME_OFFSET_TEXT = "T-> ";
     private static final String TRIGGER_OFFSET_TEXT = "Trig LVL: ";
+    private static final String CHAN1_SCALE_TEXT = "Chan1: ";
+    private static final String CHAN2_SCALE_TEXT = "Chan2: ";
     private String mChan1Text = "";
     private String mChan1OffsetText = "";
     private String mChan2Text = "";
@@ -328,18 +329,20 @@ public class ScopeView extends ViewGroup
             case 1:
             {
                 mPrevChan1 = waveData;
-                if(updatePath(mPathChan1, waveData) > 0)
-                    mChan1Text = updateVoltText("Chan1: ", waveData.voltageScale);
-                else
+                int retValue = updatePath(mPathChan1, waveData);
+                if(retValue > 0)
+                    mChan1Text = updateVoltText(CHAN1_SCALE_TEXT, waveData.voltageScale);
+                else if(retValue < 0)
                     mChan1Text = "";
                 break;
             }
             case 2:
             {
                 mPrevChan2 = waveData;
-                if(updatePath(mPathChan2, waveData) > 0)
-                    mChan2Text = updateVoltText("Chan2: ", waveData.voltageScale);
-                else
+                int retValue = updatePath(mPathChan2, waveData);
+                if(retValue > 0)
+                    mChan2Text = updateVoltText(CHAN2_SCALE_TEXT, waveData.voltageScale);
+                else if(retValue < 0)
                     mChan2Text = "";
                 break;
             }
@@ -395,12 +398,14 @@ public class ScopeView extends ViewGroup
 
     private int updatePath(Path path, WaveData waveData)
     {
+        int retValue = -1;
         if(waveData == null || waveData.data == null || waveData.data.length == 0)
         {
             path.rewind();
-            return 0;
+            return retValue;
         }
 
+        retValue = 0;
         int length = Math.min(BaseScope.SAMPLE_LENGTH, waveData.data.length) - 10;
         float widthRatio = (float)(mContentWidth) / (length * DISPLAY_RATIO);
         double vScale = waveData.voltageScale;
@@ -422,19 +427,20 @@ public class ScopeView extends ViewGroup
         if(new PathMeasure(path,false).getLength() == 0)
         {
             path.set(newPath);
-            return 0;
+            return retValue;
         }
 
         if(mChangeDelay <= 0)
         {
             path.set(newPath);
+            retValue = 1;
         }
         else
         {
             mChangeDelay--;
         }
 
-        return 1;
+        return retValue;
     }
 
     private String updateVoltText(String startText, double volt)
@@ -677,7 +683,8 @@ public class ScopeView extends ViewGroup
                 {
                     mChan1ScreenOffset = mChan1ScreenOffset + dist;
                     double move = fromScreenPosV(mPrevChan1.voltageScale, mChan1ScreenOffset);
-                    mChan1OffsetText = updateVoltText("Offset: ", move);
+                    double rounded = BaseScope.roundValue(move, mPrevChan1.voltageScale, 2);
+                    mChan1OffsetText = updateVoltText("Offset: ", rounded);
                 }
             }
             else if(channel == 2)
@@ -688,7 +695,8 @@ public class ScopeView extends ViewGroup
                 {
                     mChan2ScreenOffset = mChan2ScreenOffset + dist;
                     double move = fromScreenPosV(mPrevChan2.voltageScale, mChan2ScreenOffset);
-                    mChan2OffsetText = updateVoltText("Offset: ", move);
+                    double rounded = BaseScope.roundValue(move, mPrevChan2.voltageScale, 2);
+                    mChan2OffsetText = updateVoltText("Offset: ", rounded);
                 }
             }
         }
@@ -713,7 +721,8 @@ public class ScopeView extends ViewGroup
             {
                 mTimeScreenOffset += dist;
                 double move = fromScreenPosH(mPrevTime.timeScale, mTimeScreenOffset);
-                mTimeOffsetText = updateTimeText(TIME_OFFSET_TEXT, move);
+                double rounded = BaseScope.roundValue(move, mPrevTime.timeScale, 4);
+                mTimeOffsetText = updateTimeText(TIME_OFFSET_TEXT, rounded);
             }
         }
         invalidate();
@@ -733,13 +742,19 @@ public class ScopeView extends ViewGroup
             if(mPrevTrig != null)
             {
                 mTriggerScreenOffset += dist;
-                double move;
+                double move, rounded;
                 if(mPrevTrig.source == TriggerData.TriggerSrc.CHAN1)
+                {
                     move = fromScreenPosV(mPrevChan1.voltageScale, mTriggerScreenOffset) - mPrevChan1.voltageOffset;
+                    rounded = BaseScope.roundValue(move, mPrevChan1.voltageScale, 2);
+                }
                 else
+                {
                     move = fromScreenPosV(mPrevChan2.voltageScale, mTriggerScreenOffset) - mPrevChan1.voltageOffset;
+                    rounded = BaseScope.roundValue(move, mPrevChan2.voltageScale, 2);
+                }
 
-                mTriggerText = updateVoltText(TRIGGER_OFFSET_TEXT, move);
+                mTriggerText = updateVoltText(TRIGGER_OFFSET_TEXT, rounded);
             }
         }
         invalidate();
@@ -811,7 +826,6 @@ public class ScopeView extends ViewGroup
                             moveWave(1, -distanceY, false);
                             if (mOnDataChanged != null)
                             {
-                             //   mChan1ScreenOffset = mChan1ScreenOffset - distanceY;
                                 mOnDataChanged.moveWave(1, (float) mChan1ScreenOffset, true);
                             }
                             break;
@@ -819,7 +833,6 @@ public class ScopeView extends ViewGroup
                             moveWave(2, -distanceY, false);
                             if (mOnDataChanged != null)
                             {
-                            //    mChan2ScreenOffset = mChan2ScreenOffset - distanceY;
                                 mOnDataChanged.moveWave(2, (float) mChan2ScreenOffset, true);
                             }
                             break;
@@ -829,7 +842,6 @@ public class ScopeView extends ViewGroup
 
                     if (mOnDataChanged != null)
                     {
-                       // mTimeScreenOffset = mTimeScreenOffset - distanceX;
                         mOnDataChanged.moveTime((float) mTimeScreenOffset, true);
                     }
 
@@ -873,6 +885,9 @@ public class ScopeView extends ViewGroup
         private float mFirstSpanX;
         private float mFirstSpanY;
 
+        private double mOrgScaleY = 0;
+        private double mOrgScaleX = 0;
+
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector)
         {
@@ -881,6 +896,17 @@ public class ScopeView extends ViewGroup
             mInScaling = true;
             mFirstSpanX = scaleGestureDetector.getCurrentSpanX();
             mFirstSpanY = scaleGestureDetector.getCurrentSpanY();
+
+            if(mSelectedPath == 1 && mPrevChan1 != null)
+            {
+                mOrgScaleY = mPrevChan1.voltageScale;
+            }
+            else if(mSelectedPath == 2 && mPrevChan2 != null)
+            {
+                mOrgScaleY = mPrevChan2.voltageScale;
+            }
+            if(mPrevTime != null)
+                mOrgScaleX = mPrevTime.timeScale;
 
             // stop dragging while zooming
             mFirstTouch = null;
@@ -912,6 +938,10 @@ public class ScopeView extends ViewGroup
                     else
                         scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathChan1.transform(scaleMatrix);
+
+                    mOrgScaleY = mOrgScaleY / scaleY;
+                    mChan1Text = updateVoltText(CHAN1_SCALE_TEXT, mOrgScaleY);
+
                     break;
                 case 2:
                     mPathChan2.computeBounds(rectF, true);
@@ -920,6 +950,10 @@ public class ScopeView extends ViewGroup
                     else
                         scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
                     mPathChan2.transform(scaleMatrix);
+
+                    mOrgScaleY = mOrgScaleY / scaleY;
+                    mChan2Text = updateVoltText(CHAN2_SCALE_TEXT, mOrgScaleY);
+
                     break;
             }
 
@@ -930,6 +964,9 @@ public class ScopeView extends ViewGroup
 
             mPathChan1.transform(scaleMatrix);
             mPathChan2.transform(scaleMatrix);
+
+            mOrgScaleX = mOrgScaleX / scaleX;
+            mTimeText = updateTimeText(TIME_SCALE_TEXT, mOrgScaleX);
 
             invalidate();
 
@@ -1153,16 +1190,19 @@ public class ScopeView extends ViewGroup
             if(mCursorStruct.cursorType == CursorStruct.CursorType.X && mPrevTime != null)
             {
                 mValue = mPrevTime.timeOffset - fromScreenPosH(mPrevTime.timeScale, mPosX);
+                mValue = BaseScope.roundValue(mValue, mPrevTime.timeScale, 4);
                 mText = updateTimeText("", mValue);
             }
             else if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH1 && mPrevChan1 != null)
             {
                 mValue = fromScreenPosV(mPrevChan1.voltageScale, mPosY) - mPrevChan1.voltageOffset;
+                mValue = BaseScope.roundValue(mValue, mPrevChan1.voltageScale, 2);
                 mText = updateVoltText("", mValue);
             }
             else if(mCursorStruct.cursorSource == CursorStruct.CursorSource.CH2 && mPrevChan2 != null)
             {
                 mValue = fromScreenPosV(mPrevChan2.voltageScale, mPosY) - mPrevChan2.voltageOffset;
+                mValue = BaseScope.roundValue(mValue, mPrevChan2.voltageScale, 2);
                 mText = updateVoltText("", mValue);
             }
 

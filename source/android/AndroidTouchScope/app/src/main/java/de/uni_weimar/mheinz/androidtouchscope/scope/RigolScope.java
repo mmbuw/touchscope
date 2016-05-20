@@ -140,7 +140,8 @@ public class RigolScope extends BaseScope
     {
         WaveData data = getWave(channel);
         double offset = (value * data.voltageScale) + data.voltageOffset;
-        String command = String.format(Locale.getDefault(), ":%s:OFFS %f", getChannelName(channel), offset);
+        double rounded = roundValue(offset, data.voltageScale, 2);
+        String command = String.format(Locale.getDefault(), ":%s:OFFS %f", getChannelName(channel), rounded);
 
         mUsbController.write(command);
     }
@@ -148,7 +149,8 @@ public class RigolScope extends BaseScope
     protected void setTimeOffset(float value)
     {
         double offset = (value * mTimeData.timeScale) + mTimeData.timeOffset;
-        String command = String.format(Locale.getDefault(), ":TIM:OFFS %.10f",offset);
+        double rounded = roundValue(offset, mTimeData.timeScale, 4);
+        String command = String.format(Locale.getDefault(), ":TIM:OFFS %.10f", rounded);
 
         mUsbController.write(command);
     }
@@ -181,7 +183,8 @@ public class RigolScope extends BaseScope
 
         WaveData data = getWave(channel);
         double value = (level * data.voltageScale) + mTrigData.level;
-        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:LEV %.10f", value);
+        double rounded = roundValue(value, data.voltageScale, 2);
+        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:LEV %.10f", rounded);
 
         mUsbController.write(command);
     }
@@ -308,11 +311,11 @@ public class RigolScope extends BaseScope
     private double getClosestVoltValue(double value)
     {
         int scale;
-        if(value < 10E-3)
+        if(value < 20E-3)
             scale = 3;
-        else if(value < 100E-3)
+        else if(value < 200E-3)
             scale = 2;
-        else if(value < 1)
+        else if(value < 2)
             scale = 1;
         else
             scale = 0;

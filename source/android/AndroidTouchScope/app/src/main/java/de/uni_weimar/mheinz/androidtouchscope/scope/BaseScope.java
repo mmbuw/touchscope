@@ -27,6 +27,8 @@ package de.uni_weimar.mheinz.androidtouchscope.scope;
 import android.os.Handler;
 import android.util.Log;
 
+import java.math.BigDecimal;
+
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
@@ -392,5 +394,13 @@ public class BaseScope implements ScopeInterface
         // get the actual voltage.
         tPoint = (tPoint - 130.0 - (offset / scale * 25)) / 25 * scale;
         return tPoint;
+    }
+
+    public static double roundValue(double value, double scale, int minScale)
+    {
+        BigDecimal number = BigDecimal.valueOf(value);
+        BigDecimal scaleNumber = BigDecimal.valueOf(scale);
+        number = number.setScale(Math.max(scaleNumber.scale(),minScale), BigDecimal.ROUND_HALF_EVEN);
+        return number.doubleValue();
     }
 }
