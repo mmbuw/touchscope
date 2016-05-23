@@ -152,9 +152,9 @@ public class HostView extends ViewGroup
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh)
+    protected void onSizeChanged(int w, int h, int oldWidth, int oldHeight)
     {
-        super.onSizeChanged(w, h, oldw, oldh);
+        super.onSizeChanged(w, h, oldWidth, oldHeight);
 
         // These are the far left and right edges in which we are performing layout.
         int leftPos = getPaddingLeft();
