@@ -27,6 +27,7 @@ package de.uni_weimar.mheinz.androidtouchscope.display;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.support.graphics.drawable.AnimatedVectorDrawableCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
@@ -60,6 +61,8 @@ public class LearningView extends View
     private void init()
     {
         mDrawable = ContextCompat.getDrawable(getContext(), R.drawable.scope_face);
+        AnimatedVectorDrawableCompat animatedVector = AnimatedVectorDrawableCompat.create(getContext(), R.drawable.dial_avd);
+        animatedVector.start();
     }
 
     @Override
@@ -67,13 +70,12 @@ public class LearningView extends View
     {
         mHeight = height;
         mWidth = width;
-
     }
 
     @Override
     protected void onDraw(Canvas canvas)
     {
-        int imageHeight = 480 * mWidth / 640;
+        int imageHeight = 480 * mWidth / 550;
         int margin = (mHeight - imageHeight) / 2;
         mDrawable.setBounds(0, margin, mWidth, imageHeight + margin);
         mDrawable.draw(canvas);
