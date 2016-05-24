@@ -24,7 +24,6 @@
 
 package de.uni_weimar.mheinz.androidtouchscope.display;
 
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;

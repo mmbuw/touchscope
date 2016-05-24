@@ -45,6 +45,7 @@ public class HostView extends ViewGroup
     private HandleView mTimeHandle;
     private HandleView mTrigHandle;
     private MeasurementsView mMeasurementsView;
+    private LearningView mLearningView;
     private View mMovableView;
 
     static final int ID_HANDLE_1 = 1;
@@ -133,6 +134,10 @@ public class HostView extends ViewGroup
         mMeasurementsView.setVisibility(GONE);
         addView(mMeasurementsView);
 
+        mLearningView = new LearningView(getContext());
+        //mLearningView.setVisibility(GONE);
+        addView(mLearningView);
+
         mMovableView = new View(getContext());
         mMovableView.setVisibility(INVISIBLE);
         addView(mMovableView);
@@ -156,6 +161,7 @@ public class HostView extends ViewGroup
     {
         super.onSizeChanged(w, h, oldWidth, oldHeight);
 
+
         // These are the far left and right edges in which we are performing layout.
         int leftPos = getPaddingLeft();
         int rightPos = w - leftPos - getPaddingRight();
@@ -169,6 +175,15 @@ public class HostView extends ViewGroup
 
         View buttonRow = findViewById(R.id.button_row);
         int buttonHeight = buttonRow.getMeasuredHeight();
+
+        buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos, bottomPos);
+
+        if(mLearningView.getVisibility() == VISIBLE)
+        {
+            int width = (rightPos - leftPos) / 3;
+            mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
+            rightPos -= width;
+        }
 
         int cursorBottom = bottomPos - buttonHeight + cursorBreadth / 2;
 
@@ -226,7 +241,6 @@ public class HostView extends ViewGroup
             }
         });
 
-        buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos - cursorLength, bottomPos);
 
         mMeasurementsView.layout(leftPos + cursorLength, topPos + cursorLength,rightPos - cursorLength, bottomPos - buttonHeight);
         mMeasurementsView.bringToFront();
