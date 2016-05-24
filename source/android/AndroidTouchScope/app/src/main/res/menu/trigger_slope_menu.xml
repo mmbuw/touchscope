@@ -2,12 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/menu_slope_positive"
-          android:title="Positive"
-          app:showAsAction=""/>
+          android:title="@string/slope_positive"
+          app:showAsAction="always"/>
     <item android:id="@+id/menu_slope_negative"
-          android:title="Negative"
+          android:title="@string/slope_negative"
           app:showAsAction="always"/>
     <item android:id="@+id/menu_slope_both"
-          android:title="Both"
+          android:title="@string/slope_both"
           app:showAsAction="always"/>
 </menu>

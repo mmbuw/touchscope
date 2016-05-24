@@ -1,5 +1,28 @@
-package de.uni_weimar.mheinz.androidtouchscope.display;
+/*
+ * MIT License
+ *
+ * Copyright (c) 2016 Matthew Heinz
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
+package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,8 +32,10 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
@@ -26,23 +51,23 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
-import de.uni_weimar.mheinz.androidtouchscope.display.callback.OnDataChangedInterface;
+import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
 //TODO: when offset is off screen, moving handel should offset data back to screen
-//TODO: Voltage handle color match selected channel
 public class HandleView extends View implements HandlePopup.HandlePopupListener
 {
     private static final String TAG = "ScopeView";
 
-    private static final int HANDLE_LENGTH = 50;
+    private static final int HANDLE_LENGTH = 55;
     private static final int HANDLE_BREADTH = 25;
 
     private final ShapeDrawable mShapeDrawable = new ShapeDrawable();
     private final Path mHandlePath = new Path();
     private final Paint mMainTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private Drawable mPressDrawable = null;
 
     private GestureDetectorCompat mGestureDetector;
     private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
@@ -58,7 +83,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
 
     private HandleDirection mOrientation = HandleDirection.RIGHT;
     private RectF mBounds = new RectF(0, 0, HANDLE_LENGTH, HANDLE_BREADTH);
-    private Rect mTextBounds = new Rect();
+    private final Rect mTextBounds = new Rect();
 
     private float mHandlePos = HANDLE_BREADTH / 2;
     private float mOldHandlePos = 0;
@@ -87,6 +112,11 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
     public void setHandleId(int id)
     {
         mId = id;
+
+        if(mId == HostView.ID_HANDLE_TRIG || mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
+            mPressDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_chevron_right_black);
+        else
+            mPressDrawable = null;
     }
 
     public void setOnDoCommand(OnDataChangedInterface.OnDataChanged onDataChanged)
@@ -147,6 +177,15 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
     public void setTriggerData(TriggerData triggerData)
     {
         mTrigData = triggerData;
+        if(mTrigData != null)
+        {
+            if(mTrigData.source == TriggerData.TriggerSrc.CHAN1)
+                mColor = HostView.CHAN1_COLOR;
+            else if(mTrigData.source == TriggerData.TriggerSrc.CHAN2)
+                mColor = HostView.CHAN2_COLOR;
+            else
+                mColor = HostView.TRIGGER_COLOR;
+        }
     }
 
     private void makeHandle()
@@ -216,18 +255,48 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         }
         else
         {
-            mShapeDrawable.getPaint().setStyle(Paint.Style.FILL);
+            /*mShapeDrawable.getPaint().setStyle(Paint.Style.FILL);
             mShapeDrawable.getPaint().setColor(Color.WHITE);
             mShapeDrawable.getPaint().setShadowLayer(2,2,2,Color.GRAY);
             mShapeDrawable.draw(canvas);
             mShapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
             mShapeDrawable.getPaint().setColor(Color.BLACK);
+            mShapeDrawable.draw(canvas);*/
+            mShapeDrawable.getPaint().setStyle(Paint.Style.FILL_AND_STROKE);
+            mShapeDrawable.getPaint().setColor(Color.LTGRAY);
+            mShapeDrawable.getPaint().setShadowLayer(2,2,2,Color.GRAY);
             mShapeDrawable.draw(canvas);
         }
 
         PointF center = getCircleCenter();
         mMainTextPaint.getTextBounds(mMainText, 0, mMainText.length(), mTextBounds);
-        canvas.drawText(mMainText, center.x, center.y + mTextBounds.height() / 2, mMainTextPaint);
+        if(mOrientation == HandleDirection.RIGHT)
+            canvas.drawText(mMainText, center.x + 5, center.y + mTextBounds.height() / 2 - 1, mMainTextPaint);
+        else if(mOrientation == HandleDirection.LEFT)
+            canvas.drawText(mMainText, center.x - 5, center.y + mTextBounds.height() / 2 - 2, mMainTextPaint);
+        else
+            canvas.drawText(mMainText, center.x, center.y + mTextBounds.height() / 2, mMainTextPaint);
+
+        if(mPressDrawable != null)
+        {
+            if(mOrientation == HandleDirection.RIGHT)
+            {
+                mPressDrawable.setBounds(
+                        2, (int)(center.y - HANDLE_BREADTH / 2),
+                        HANDLE_BREADTH - 3, (int)center.y + HANDLE_BREADTH / 2);
+                mPressDrawable.draw(canvas);
+            }
+            else if(mOrientation == HandleDirection.LEFT)
+            {
+                canvas.save();
+                canvas.rotate(180, HANDLE_LENGTH / 2, mHandlePos);
+                mPressDrawable.setBounds(
+                        1, (int)(center.y - HANDLE_BREADTH / 2),
+                        HANDLE_BREADTH - 5, (int)center.y + HANDLE_BREADTH / 2);
+                mPressDrawable.draw(canvas);
+                canvas.restore();
+            }
+        }
     }
 
     @Override
@@ -316,12 +385,6 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
     private class SimpleGestureListener extends GestureDetector.SimpleOnGestureListener
     {
         @Override
-        public void onLongPress(MotionEvent e)
-        {
-            super.onLongPress(e);
-        }
-
-        @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
         {
             if(mTouched)
@@ -386,7 +449,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 {
                     mPopupWindow.setPopupType(HandlePopup.TRIGGER_POPUP, mTrigData);
                     location[1] = (int)mHandlePos;
-                    location[0] -= mPopupWindow.getAproxWidth();
+                    location[0] -= mPopupWindow.getApproxWidth();
                 }
 
                 mPopupWindow.showAtLocation(getRootView(), Gravity.NO_GRAVITY, location[0], location[1]);
@@ -396,7 +459,6 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         }
     }
 
-    //TODO: see if popups can be replaced by list menus
     private PopupMenu createPopupMenu(View view, int menuId)
     {
         int[] pos = new int[2];
@@ -434,58 +496,46 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             public boolean onMenuItemClick(MenuItem item)
             {
                 boolean handled = false;
+                String probe = "";
                 switch (item.getItemId())
                 {
                     case R.id.menu_probe_1:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("1X");
+                        probe = getResources().getString(R.string.probe_1X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1);
                         break;
                     case R.id.menu_probe_5:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 5);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("5X");
+                        probe = getResources().getString(R.string.probe_5X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 5);
                         break;
                     case R.id.menu_probe_10:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 10);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("10X");
+                        probe = getResources().getString(R.string.probe_10X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 10);
                         break;
                     case R.id.menu_probe_50:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 50);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("50X");
+                        probe = getResources().getString(R.string.probe_50X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 50);
                         break;
                     case R.id.menu_probe_100:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 100);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("100X");
+                        probe = getResources().getString(R.string.probe_100X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 100);
                         break;
                     case R.id.menu_probe_500:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 500);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("500X");
+                        probe = getResources().getString(R.string.probe_500X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 500);
                         break;
                     case R.id.menu_probe_1000:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1000);
-
-                        ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText("1000X");
+                        probe = getResources().getString(R.string.probe_1000X);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_PROBE, mId, 1000);
                         break;
                 }
+                ((TextView)view.findViewById(R.id.channel_probe_subtext)).setText(probe);
                 //  mPopupWindow.dismiss();
                 return handled;
             }
@@ -505,31 +555,28 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             public boolean onMenuItemClick(MenuItem item)
             {
                 boolean handled = false;
+                String coup = "";
                 switch (item.getItemId())
                 {
                     case R.id.menu_coupling_ac:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "AC");
+                        coup = getResources().getString(R.string.coupling_ac);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "AC");
 
-                        ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText("AC");
                         break;
                     case R.id.menu_coupling_dc:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "DC");
-
-                        ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText("DC");
+                        coup = getResources().getString(R.string.coupling_dc);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "DC");
                         break;
                     case R.id.menu_coupling_gnd:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "GND");
-
-                        ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText("GND");
+                        coup = getResources().getString(R.string.coupling_gnd);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_COUPLING, mId, "GND");
                         break;
                 }
-              //  mPopupWindow.dismiss();
+                ((TextView)view.findViewById(R.id.channel_coupling_subtext)).setText(coup);
+                //  mPopupWindow.dismiss();
                 return handled;
             }
         });
@@ -548,23 +595,21 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             public boolean onMenuItemClick(MenuItem item)
             {
                 boolean handled = false;
+                String ch = "";
                 switch (item.getItemId())
                 {
                     case R.id.menu_source_ch1:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN1");
-
-                        ((TextView)view.findViewById(R.id.trigger_source_subtext)).setText("CH1");
+                        ch = getResources().getString(R.string.source_ch1);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN1");
                         break;
                     case R.id.menu_source_ch2:
                         handled = true;
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN2");
-
-                        ((TextView)view.findViewById(R.id.trigger_source_subtext)).setText("CH2");
+                        ch = getResources().getString(R.string.source_ch2);
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_TRIGGER_SOURCE, 0, "CHAN2");
                         break;
                 }
+                ((TextView)view.findViewById(R.id.trigger_source_subtext)).setText(ch);
                 //  mPopupWindow.dismiss();
                 return handled;
             }

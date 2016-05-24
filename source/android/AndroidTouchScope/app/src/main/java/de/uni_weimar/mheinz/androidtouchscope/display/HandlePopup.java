@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2016 Matthew Heinz
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
@@ -26,9 +50,9 @@ public class HandlePopup extends PopupWindow
     public static final int CHANNEL_POPUP = 1;
     public static final int TRIGGER_POPUP = 2;
 
-    private Context mContext;
+    private final Context mContext;
     private HandlePopupListener mListener;
-    private int mAproxWidth = 0;
+    private int mApproxWidth = 0;
 
     public HandlePopup(Context context)
     {
@@ -67,7 +91,7 @@ public class HandlePopup extends PopupWindow
                     dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             // Coupling button
             view = (LinearLayout)layout.findViewById(R.id.channel_coupling);
@@ -82,7 +106,7 @@ public class HandlePopup extends PopupWindow
                 }
             });
             if(!hidden)
-                mAproxWidth += buttonWidth;
+                mApproxWidth += buttonWidth;
 
             // Probe button
             view = (LinearLayout)layout.findViewById(R.id.channel_probe);
@@ -98,7 +122,7 @@ public class HandlePopup extends PopupWindow
                 }
             });
             if(!hidden)
-                mAproxWidth += buttonWidth;
+                mApproxWidth += buttonWidth;
 
             if(hidden)
             {
@@ -111,7 +135,9 @@ public class HandlePopup extends PopupWindow
                 imageView.setImageResource(R.drawable.visible_channel);
 
                 ((TextView)layout.findViewById(R.id.channel_coupling_subtext)).setText(waveData.coupling);
-                ((TextView)layout.findViewById(R.id.channel_probe_subtext)).setText(waveData.probe + "X");
+
+                String probe = waveData.probe + "X";
+                ((TextView)layout.findViewById(R.id.channel_probe_subtext)).setText(probe);
             }
         }
         else if(popupType == TRIGGER_POPUP)
@@ -131,7 +157,7 @@ public class HandlePopup extends PopupWindow
                 //    dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             // slope button
             view = (LinearLayout)layout.findViewById(R.id.trigger_slope);
@@ -146,7 +172,7 @@ public class HandlePopup extends PopupWindow
                  //   dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             // 50 button
             Button button = (Button)layout.findViewById(R.id.trigger_50);
@@ -161,7 +187,7 @@ public class HandlePopup extends PopupWindow
                     dismiss();
                 }
             });
-            mAproxWidth += buttonWidth;
+            mApproxWidth += buttonWidth;
 
             if(trigData != null)
             {
@@ -188,9 +214,9 @@ public class HandlePopup extends PopupWindow
 
     }
 
-    public int getAproxWidth()
+    public int getApproxWidth()
     {
-        return mAproxWidth;
+        return mApproxWidth;
     }
 
     public void setHandleListener(HandlePopupListener listener)

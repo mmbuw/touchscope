@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:orientation="vertical"
+              android:id="@+id/right_menu"
+              android:layout_width="wrap_content"
+              android:layout_height="match_parent"
+              android:layout_gravity="end"
+              android:background="#FA585858"
+              android:clickable="true"
+    >
+
+    <LinearLayout
+        android:id="@+id/cursor_options"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:text="@string/cursors_menu"
+            android:background="?attr/colorPrimary"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"/>
+
+        <LinearLayout
+            android:id="@+id/cursor_mode"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:orientation="vertical"
+            style="@style/Widget.AppCompat.Button"
+            tools:ignore="UseCompoundDrawables"
+            android:onClick="onCursorMode">
+
+            <TextView
+                android:id="@+id/cursor_mode_maintext"
+                android:text="@string/cursor_mode"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.AppCompat.Button"/>
+
+            <TextView
+                android:id="@+id/cursor_mode_subtext"
+                android:layout_height="@dimen/handle_dialog_button_sub_height"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:background="@android:color/darker_gray"
+                android:text="@string/cursor_mode_off"
+                style="@style/TextAppearance.AppCompat.Large"
+                android:textColor="@android:color/white"
+                android:paddingBottom="3dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cursor_type"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:orientation="vertical"
+            style="@style/Widget.AppCompat.Button"
+            android:visibility="invisible"
+            android:onClick="onCursorType">
+
+            <TextView
+                android:id="@+id/cursor_type_maintext"
+                android:text="@string/cursor_type"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.AppCompat.Button"/>
+
+            <TextView
+                android:id="@+id/cursor_type_subtext"
+                android:layout_height="@dimen/handle_dialog_button_sub_height"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:background="@android:color/darker_gray"
+                android:text="@string/cursor_type_x"
+                style="@style/TextAppearance.AppCompat.Large"
+                android:textColor="@android:color/white"
+                android:paddingBottom="3dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cursor_source"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:orientation="vertical"
+            style="@style/Widget.AppCompat.Button"
+            android:visibility="invisible"
+            android:onClick="onCursorSource">
+
+            <TextView
+                android:id="@+id/cursor_source_maintext"
+                android:text="@string/cursor_source"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.AppCompat.Button"/>
+
+            <TextView
+                android:id="@+id/cursor_source_subtext"
+                android:layout_height="@dimen/handle_dialog_button_sub_height"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:background="@android:color/darker_gray"
+                android:text="@string/source_ch1"
+                style="@style/TextAppearance.AppCompat.Large"
+                android:textColor="@android:color/white"
+                android:paddingBottom="3dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/measure_options"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:text="@string/menu_measurement"
+            android:background="?attr/colorPrimary"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"/>
+
+        <LinearLayout
+            android:id="@+id/measure_source"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:orientation="vertical"
+            style="@style/Widget.AppCompat.Button"
+            android:onClick="onMeasureSource">
+
+            <TextView
+                android:id="@+id/measure_source_maintext"
+                android:text="@string/cursor_source"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.AppCompat.Button"/>
+
+            <TextView
+                android:id="@+id/measure_source_subtext"
+                android:layout_height="@dimen/handle_dialog_button_sub_height"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:background="@android:color/darker_gray"
+                android:text="@string/source_ch1"
+                style="@style/TextAppearance.AppCompat.Large"
+                android:textColor="@android:color/white"
+                android:paddingBottom="3dp"/>
+        </LinearLayout>
+<!--
+        <Button
+            android:id="@+id/measure_voltage"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:text="@string/measure_voltage"
+            android:textColor="@android:color/white"
+            style="@style/TextAppearance.AppCompat.Medium"/>
+
+        <Button
+            android:id="@+id/measure_time"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:text="@string/measure_time"
+            android:textColor="@android:color/white"
+            style="@style/TextAppearance.AppCompat.Large"/>
+
+        <Button
+            android:id="@+id/measure_clear"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:text="@string/measure_clear"
+            android:textColor="@android:color/white"
+            style="@style/TextAppearance.AppCompat.Large"/>
+-->
+        <LinearLayout
+            android:id="@+id/measure_display_all"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:orientation="vertical"
+            style="@style/Widget.AppCompat.Button"
+            android:onClick="onMeasureDisplay">
+
+            <TextView
+                android:id="@+id/measure_display_all_maintext"
+                android:text="@string/measure_display"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.AppCompat.Button"/>
+
+            <TextView
+                android:id="@+id/measure_display_all_subtext"
+                android:layout_height="@dimen/handle_dialog_button_sub_height"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:background="@android:color/darker_gray"
+                android:text="@string/measure_display_off"
+                style="@style/TextAppearance.AppCompat.Large"
+                android:textColor="@android:color/white"
+                android:paddingBottom="3dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!--
+    <LinearLayout
+        android:id="@+id/base_options"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/measurement_option"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:text="@string/menu_measurement"
+            android:textColor="@android:color/white"
+            style="@style/TextAppearance.AppCompat.Large"/>
+
+        <Button
+            android:id="@+id/cursor_option"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:text="@string/menu_cursor"
+            android:textColor="@android:color/white"
+            style="@style/TextAppearance.AppCompat.Large"/>
+
+        <LinearLayout
+            android:id="@+id/app_settings"
+            android:layout_width="@dimen/handle_dialog_button_width"
+            android:layout_height="@dimen/handle_dialog_button_height"
+            android:orientation="vertical"
+            style="@style/Widget.AppCompat.Button"
+            tools:ignore="UseCompoundDrawables">
+
+            <TextView
+                android:id="@+id/app_settings_maintext"
+                android:text="@string/settings"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.AppCompat.Button"/>
+
+            <ImageView
+                android:id="@+id/app_settings_subImage"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/handle_dialog_button_sub_height"
+                android:background="@android:color/darker_gray"
+                android:src="@drawable/ic_settings_white"
+                android:paddingBottom="3dp"
+                android:contentDescription="@string/description_trig_slope"/>
+        </LinearLayout>
+    </LinearLayout>
+    -->
+
+</LinearLayout>

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:tools="http://schemas.android.com/tools"
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      tools:ignore="AlwaysShowAction">
+
     <item android:id="@+id/menu_coupling_ac"
-          android:title="AC"
+          android:title="@string/coupling_ac"
           app:showAsAction="always"/>
     <item android:id="@+id/menu_coupling_dc"
-          android:title="DC"
+          android:title="@string/coupling_dc"
           app:showAsAction="always"/>
     <item android:id="@+id/menu_coupling_gnd"
-          android:title="GND"
+          android:title="@string/coupling_gnd"
           app:showAsAction="always"/>
 </menu>

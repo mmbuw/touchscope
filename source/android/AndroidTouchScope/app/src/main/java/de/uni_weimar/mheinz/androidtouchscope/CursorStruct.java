@@ -22,31 +22,45 @@
  * SOFTWARE.
  */
 
-package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
+package de.uni_weimar.mheinz.androidtouchscope;
 
-public class WaveData
+public class CursorStruct
 {
-    public int[] data;
-    public double voltageScale;
-    public double voltageOffset;
-    public String coupling;
-    public int probe;
+    public CursorMode cursorMode;
+    public CursorType cursorType;
+    public CursorSource cursorSource;
 
-    public WaveData()
+    public CursorStruct()
     {
-        data = null;
-        voltageScale = 1.0;
-        voltageOffset = 0.0;
-        coupling = "DC";
-        probe = 1;
+        cursorMode = CursorMode.OFF;
+        cursorType = CursorType.Y;
+        cursorSource = CursorSource.CH1;
     }
 
-    public WaveData(int[] data, double voltageScale, double voltageOffset, String coupling, int probe)
+    public CursorStruct(CursorMode cursorMode, CursorType cursorType, CursorSource cursorSource)
     {
-        this.data = data;
-        this.voltageScale = voltageScale;
-        this.voltageOffset = voltageOffset;
-        this.coupling = coupling;
-        this.probe = probe;
+        this.cursorMode = cursorMode;
+        this.cursorType = cursorType;
+        this.cursorSource = cursorSource;
+    }
+
+    public enum CursorMode
+    {
+        OFF,
+        MANUAL,
+        TRACK,
+        AUTO
+    }
+
+    public enum CursorType
+    {
+        X,
+        Y
+    }
+
+    public enum CursorSource
+    {
+        CH1,
+        CH2
     }
 }

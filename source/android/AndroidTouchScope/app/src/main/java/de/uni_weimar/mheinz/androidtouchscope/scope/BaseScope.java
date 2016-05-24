@@ -1,8 +1,35 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2016 Matthew Heinz
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import android.os.Handler;
 import android.util.Log;
 
+import java.math.BigDecimal;
+
+import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
@@ -14,23 +41,18 @@ public class BaseScope implements ScopeInterface
 
     protected static final int READ_RATE = 100;
     public static final int SAMPLE_LENGTH = 610;
-    protected static final int POOL_SIZE = 2;
-
-    /*protected static final float MAX_VOLTAGE_SCALE = 10f;
-    protected static final float MIN_VOLTAGE_SCALE = 2.0E-3f;
-    protected static final float MAX_TIME_SCALE = 50f;
-    protected static final float MIN_TIME_SCALE = 2.0E-9f;*/
+    protected static final int POOL_SIZE = 1;
 
     protected final WaveRequestPool mWaves1 = new WaveRequestPool(POOL_SIZE);
     protected final WaveRequestPool mWaves2 = new WaveRequestPool(POOL_SIZE);
     protected final TimeData mTimeData = new TimeData();
     protected final TriggerData mTrigData = new TriggerData();
+    protected MeasureData mMeasureData = new MeasureData();
 
     protected final Object mControllerLock = new Object();
     protected boolean mIsConnected = false;
 
     private OnReceivedName mOnReceivedName;
-   // private byte mSlowerReadCounter = 0;
     private final Handler mReadHandler = new Handler();
 
     @Override
@@ -90,9 +112,6 @@ public class BaseScope implements ScopeInterface
             case 2:
                 waveData = mWaves2.peek();
                 break;
-           // case 3:
-           //     waveData = mWaves3.peek();
-           //     break;
         }
         return waveData;
     }
@@ -105,6 +124,11 @@ public class BaseScope implements ScopeInterface
     public TriggerData getTriggerData()
     {
         return mTrigData;
+    }
+
+    public MeasureData getMeasureData(int channel)
+    {
+        return mMeasureData;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -234,10 +258,7 @@ public class BaseScope implements ScopeInterface
         Log.d(TAG, "setVoltageScale");
     }
 
-    protected void forceCommand()
-    {
-        Log.d(TAG, "forceCommand");
-    }
+    protected void forceCommand() { }
 
     protected void doAuto()
     {
@@ -363,5 +384,13 @@ public class BaseScope implements ScopeInterface
         // get the actual voltage.
         tPoint = (tPoint - 130.0 - (offset / scale * 25)) / 25 * scale;
         return tPoint;
+    }
+
+    public static double roundValue(double value, double scale, int minScale)
+    {
+        BigDecimal number = BigDecimal.valueOf(value);
+        BigDecimal scaleNumber = BigDecimal.valueOf(scale);
+        number = number.setScale(Math.max(scaleNumber.scale(),minScale), BigDecimal.ROUND_HALF_EVEN);
+        return number.doubleValue();
     }
 }

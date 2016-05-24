@@ -1,9 +1,35 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2016 Matthew Heinz
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package de.uni_weimar.mheinz.androidtouchscope.scope;
 
 import android.app.Activity;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Locale;
 
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.*;
@@ -15,10 +41,6 @@ public class RigolScope extends BaseScope
 
     private static final String CHAN_1 = "CHAN1";
     private static final String CHAN_2 = "CHAN2";
-  //  private static final String CHAN_MATH = "MATH";
-
-    /*private static final double[] POSSIBLE_VOLT_VALUES =
-            {2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10};*/
 
     private final Activity mActivity;
     private UsbController mUsbController = null;
@@ -116,7 +138,8 @@ public class RigolScope extends BaseScope
     {
         WaveData data = getWave(channel);
         double offset = (value * data.voltageScale) + data.voltageOffset;
-        String command = String.format(Locale.getDefault(), ":%s:OFFS %f", getChannelName(channel), offset);
+        double rounded = roundValue(offset, data.voltageScale, 2);
+        String command = String.format(Locale.getDefault(), ":%s:OFFS %f", getChannelName(channel), rounded);
 
         mUsbController.write(command);
     }
@@ -124,7 +147,8 @@ public class RigolScope extends BaseScope
     protected void setTimeOffset(float value)
     {
         double offset = (value * mTimeData.timeScale) + mTimeData.timeOffset;
-        String command = String.format(Locale.getDefault(), ":TIM:OFFS %.10f",offset);
+        double rounded = roundValue(offset, mTimeData.timeScale, 4);
+        String command = String.format(Locale.getDefault(), ":TIM:OFFS %.10f", rounded);
 
         mUsbController.write(command);
     }
@@ -142,7 +166,10 @@ public class RigolScope extends BaseScope
     protected void setTimeScale(float value)
     {
         double scale = mTimeData.timeScale / value;
-        String command = String.format(Locale.getDefault(), ":TIM:SCAL %.10f",scale);
+
+        double newScale = getClosestTimeValue(mTimeData.timeScale, scale);
+
+        String command = String.format(Locale.getDefault(), ":TIM:SCAL %.10f", newScale);
 
         mUsbController.write(command);
     }
@@ -157,7 +184,8 @@ public class RigolScope extends BaseScope
 
         WaveData data = getWave(channel);
         double value = (level * data.voltageScale) + mTrigData.level;
-        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:LEV %.10f", value);
+        double rounded = roundValue(value, data.voltageScale, 2);
+        String command = String.format(Locale.getDefault(), ":TRIG:EDGE:LEV %.10f", rounded);
 
         mUsbController.write(command);
     }
@@ -284,11 +312,11 @@ public class RigolScope extends BaseScope
     private double getClosestVoltValue(double value)
     {
         int scale;
-        if(value < 10E-3)
+        if(value < 20E-3)
             scale = 3;
-        else if(value < 100E-3)
+        else if(value < 200E-3)
             scale = 2;
-        else if(value < 1)
+        else if(value < 2)
             scale = 1;
         else
             scale = 0;
@@ -296,23 +324,70 @@ public class RigolScope extends BaseScope
         BigDecimal number = BigDecimal.valueOf(value);
         number = number.setScale(scale, BigDecimal.ROUND_HALF_EVEN);
         return number.doubleValue();
+    }
 
+    private double getClosestTimeValue(double oldValue, double newValue)
+    {
+        NumberFormat numberFormat = new DecimalFormat("0.#E0");
+        String asText = numberFormat.format(newValue);
+        String powerStr = asText.substring(asText.indexOf('E'));
 
+        double divisor = Double.valueOf("1.0" + powerStr);
+        double base = newValue / divisor;
+        double closeValue;
 
-
-        /*double minDist = Math.abs(POSSIBLE_VOLT_VALUES[0] - value);
-        int minIndex = 0;
-        for(int i = 1; i < POSSIBLE_VOLT_VALUES.length; i++)
+        if(newValue < oldValue)
         {
-            double dist = Math.abs(POSSIBLE_VOLT_VALUES[i] - value);
-            if(dist < minDist)
+            if(base >= 1 && base < 2)
             {
-                minDist = dist;
-                minIndex = i;
+                if(base < 1.75) //three fourths between
+                    closeValue = 1;
+                else
+                    closeValue = 2;
+            }
+            else if(base >= 2 && base < 5)
+            {
+                if(base < 4.25)
+                    closeValue = 2;
+                else
+                    closeValue = 5;
+            }
+            else //(base >= 5)
+            {
+                if(base < 8.75)
+                    closeValue = 5;
+                else
+                    closeValue = 10;
+            }
+        }
+        else
+        {
+            if(base >= 1 && base < 2)
+            {
+                if(base < 1.25) //three fourths between
+                    closeValue = 1;
+                else
+                    closeValue = 2;
+            }
+            else if(base >= 2 && base < 5)
+            {
+                if(base < 2.75)
+                    closeValue = 2;
+                else
+                    closeValue = 5;
+            }
+            else //(base >= 5)
+            {
+                if(base < 6.25)
+                    closeValue = 5;
+                else
+                    closeValue = 10;
             }
         }
 
-        return POSSIBLE_VOLT_VALUES[minIndex];*/
+        closeValue *= divisor;
+
+        return closeValue;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -356,8 +431,7 @@ public class RigolScope extends BaseScope
                 mUsbController.write(":" + getChannelName(channel) + ":COUP?");
                 try
                 {
-                    String strValue = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
-                    waveData.coupling = strValue;
+                    waveData.coupling = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
                 }
                 catch (UnsupportedEncodingException e)
                 {
@@ -429,5 +503,78 @@ public class RigolScope extends BaseScope
             mUsbController.write(":TRIG:EDGE:LEV?");
             mTrigData.level = bytesToDouble(mUsbController.read(20));
         }
+    }
+
+    public MeasureData getMeasureData(int channel)
+    {
+        synchronized(mControllerLock)
+        {
+            MeasureData measureData = new MeasureData();
+            String name = getChannelName(channel);
+
+            try
+            {
+                mUsbController.write(":MEAS:VPP? " + name);
+                measureData.mVPP = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VMAX? " + name);
+                measureData.mVMax = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VMIN? " + name);
+                measureData.mVMin = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VAMP? " + name);
+                measureData.mVAmp = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VTOP? " + name);
+                measureData.mVTop = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VBAS? " + name);
+                measureData.mVBase = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VAV? " + name);
+                measureData.mVAvg = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:VRMS? " + name);
+                measureData.mVRMS = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:OVER? " + name);
+                measureData.mOver = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PRES? " + name);
+                measureData.mPre = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:FREQ? " + name);
+                measureData.mFreq = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:RIS? " + name);
+                measureData.mRise = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:FALL? " + name);
+                measureData.mFall = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PER? " + name);
+                measureData.mPeriod = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PWID? " + name);
+                measureData.mPWidth = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:NWID? " + name);
+                measureData.mNWidth = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:PDUT? " + name);
+                measureData.mPDuty = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+
+                mUsbController.write(":MEAS:NDUT? " + name);
+                measureData.mNDuty = new String(intArrayToByteArray(mUsbController.read(20)), "UTF-8");
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
+
+            mMeasureData = measureData;
+        }
+        return mMeasureData;
     }
 }

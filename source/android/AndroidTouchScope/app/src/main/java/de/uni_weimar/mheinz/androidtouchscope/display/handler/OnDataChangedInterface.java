@@ -22,31 +22,24 @@
  * SOFTWARE.
  */
 
-package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
+package de.uni_weimar.mheinz.androidtouchscope.display.handler;
 
-public class WaveData
+import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
+
+public interface OnDataChangedInterface
 {
-    public int[] data;
-    public double voltageScale;
-    public double voltageOffset;
-    public String coupling;
-    public int probe;
+    void doCommand(ScopeInterface.Command command, int channel, Object specialData);
+    void moveWave(int channel, float pos, boolean moving);
+    void moveTime(float pos, boolean moving);
+    void moveTrigger(float pos, boolean moving);
 
-    public WaveData()
+    class OnDataChanged implements OnDataChangedInterface
     {
-        data = null;
-        voltageScale = 1.0;
-        voltageOffset = 0.0;
-        coupling = "DC";
-        probe = 1;
-    }
-
-    public WaveData(int[] data, double voltageScale, double voltageOffset, String coupling, int probe)
-    {
-        this.data = data;
-        this.voltageScale = voltageScale;
-        this.voltageOffset = voltageOffset;
-        this.coupling = coupling;
-        this.probe = probe;
+        public void doCommand(ScopeInterface.Command command, int channel, Object specialData){}
+        public void moveWave(int channel, float pos, boolean moving){}
+        public void moveTime(float pos, boolean moving){}
+        public void moveTrigger(float pos, boolean moving){}
     }
 }
+
+

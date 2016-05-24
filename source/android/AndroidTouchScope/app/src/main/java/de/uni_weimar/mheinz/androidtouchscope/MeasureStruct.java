@@ -22,31 +22,34 @@
  * SOFTWARE.
  */
 
-package de.uni_weimar.mheinz.androidtouchscope.scope.wave;
+package de.uni_weimar.mheinz.androidtouchscope;
 
-public class WaveData
+public class MeasureStruct
 {
-    public int[] data;
-    public double voltageScale;
-    public double voltageOffset;
-    public String coupling;
-    public int probe;
+    public MeasureDisplay measureDisplay;
+    public MeasureSource measureSource;
 
-    public WaveData()
+    public MeasureStruct()
     {
-        data = null;
-        voltageScale = 1.0;
-        voltageOffset = 0.0;
-        coupling = "DC";
-        probe = 1;
+        measureDisplay = MeasureDisplay.OFF;
+        measureSource = MeasureSource.CH1;
     }
 
-    public WaveData(int[] data, double voltageScale, double voltageOffset, String coupling, int probe)
+    public MeasureStruct(MeasureDisplay measureDisplay, MeasureSource measureSource)
     {
-        this.data = data;
-        this.voltageScale = voltageScale;
-        this.voltageOffset = voltageOffset;
-        this.coupling = coupling;
-        this.probe = probe;
+        this.measureDisplay = measureDisplay;
+        this.measureSource = measureSource;
+    }
+
+    public enum MeasureDisplay
+    {
+        OFF,
+        ON
+    }
+
+    public enum MeasureSource
+    {
+        CH1,
+        CH2
     }
 }
