@@ -49,6 +49,14 @@
                     android:layout_height="wrap_content"
                     android:background="#000"/>
 
+                <de.uni_weimar.mheinz.androidtouchscope.display.LearningView
+                    android:id="@+id/learningView"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:scaleType="fitXY"
+                    android:adjustViewBounds="true"
+                    android:background="@drawable/dial_avd"/>
+
 
                 <LinearLayout
                     android:layout_width="wrap_content"

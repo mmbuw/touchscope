@@ -134,9 +134,9 @@ public class HostView extends ViewGroup
         mMeasurementsView.setVisibility(GONE);
         addView(mMeasurementsView);
 
-        mLearningView = new LearningView(getContext());
+      //  mLearningView = new LearningView(getContext());
         //mLearningView.setVisibility(GONE);
-        addView(mLearningView);
+      //  addView(mLearningView);
 
         mMovableView = new View(getContext());
         mMovableView.setVisibility(INVISIBLE);
@@ -178,6 +178,7 @@ public class HostView extends ViewGroup
 
         buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos, bottomPos);
 
+        mLearningView = (LearningView)findViewById(R.id.learningView);
         if(mLearningView.getVisibility() == VISIBLE)
         {
             int width = (rightPos - leftPos) / 3;
@@ -282,6 +283,8 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTime(pos, !moving);
+
+            mLearningView.doAnim();
         }
 
         @Override
