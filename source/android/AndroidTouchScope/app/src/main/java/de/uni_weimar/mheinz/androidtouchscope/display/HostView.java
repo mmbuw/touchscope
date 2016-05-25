@@ -284,7 +284,8 @@ public class HostView extends ViewGroup
             mScopeView.setInMovement(moving);
             mScopeView.moveTime(pos, !moving);
 
-            mLearningView.doAnim();
+            if(!moving)
+                mLearningView.doAnim(LearningView.Controls.DIAL_KNOB);
         }
 
         @Override
@@ -292,6 +293,9 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTrigger(pos, !moving);
+
+            if(!moving)
+                mLearningView.doAnim(LearningView.Controls.VERT_POS_KNOB);
         }
     };
 

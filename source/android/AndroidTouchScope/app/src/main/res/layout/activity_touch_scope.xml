@@ -53,9 +53,11 @@
                     android:id="@+id/learningView"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:scaleType="fitXY"
+                    android:layout_gravity="center"
+                    android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
-                    android:background="@drawable/dial_avd"/>
+                    app:srcCompat="@drawable/dial_avd"
+                   />
 
 
                 <LinearLayout
