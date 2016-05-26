@@ -56,8 +56,8 @@
                     android:layout_gravity="center"
                     android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
-                    app:srcCompat="@drawable/dial_avd"
-                   />
+                    app:srcCompat="@drawable/avd_dial"
+                    android:visibility="gone"/>
 
 
                 <LinearLayout

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/scope_face" >
+    <target
+        android:name="horizontal_scale"
+        android:animation="@animator/rotation" />
+    <target
+        android:name="vertical_scale"
+        android:animation="@animator/rotation" />
+</animated-vector>

@@ -240,6 +240,12 @@ public class HostView extends ViewGroup
             {
                 mTrigHandle.setHandlePosition(pos + mChan2Handle.getHandleBreadth() / 2);
             }
+
+            @Override
+            public void doAnimation(LearningView.Controls controls)
+            {
+                mLearningView.doAnim(controls);
+            }
         });
 
 
@@ -276,6 +282,7 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveWave(channel, pos, !moving);
+            mLearningView.doAnim(LearningView.Controls.VERT_POS_KNOB);
         }
 
         @Override
@@ -283,9 +290,7 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTime(pos, !moving);
-
-            if(!moving)
-                mLearningView.doAnim(LearningView.Controls.DIAL_KNOB);
+            mLearningView.doAnim(LearningView.Controls.HORZ_POS_KNOB);
         }
 
         @Override
@@ -293,9 +298,12 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTrigger(pos, !moving);
+        }
 
-            if(!moving)
-                mLearningView.doAnim(LearningView.Controls.VERT_POS_KNOB);
+        @Override
+        public void doAnimation(LearningView.Controls controls)
+        {
+            mLearningView.doAnim(controls);
         }
     };
 

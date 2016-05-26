@@ -25,6 +25,7 @@
 package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.support.graphics.drawable.AnimatedVectorDrawableCompat;
 import android.util.AttributeSet;
 import android.support.v7.widget.AppCompatImageView;
@@ -41,36 +42,134 @@ public class LearningView extends AppCompatImageView
         VERT_SCALE_KNOB,
         HORZ_POS_KNOB,
         HORZ_SCALE_KNOB,
-        TRIGGER_KNOB
+        BOTH_POS_KNOBS,
+        BOTH_SCALE_KNOBS,
+        TRIGGER_KNOB,
+        RUN_STOP_BUTTON,
+        AUTO_BUTTON,
+        CURSOR_BUTTON,
+        MEASURE_BUTTON,
+        TRIGGER_MENU_BUTTON,
+        TRIGGER_50_BUTTON,
+        CH1_BUTTON,
+        CH2_BUTTON,
+        OFF_BUTTON
     }
+
+    private final LearningView mLearningView;
+    private Controls mActiveControl = Controls.DIAL_KNOB;
+    private final Object mLock = new Object();
+
+
     public LearningView(Context context)
     {
         super(context);
+
+        mLearningView = this;
     }
 
     public LearningView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
+
+        mLearningView = this;
     }
 
     public LearningView(Context context, AttributeSet attrs, int defStyleAttr)
     {
         super(context, attrs, defStyleAttr);
+
+        mLearningView = this;
     }
 
-    public void doAnim(Controls control)
+    public void doAnim(final Controls control)
     {
-        switch(control)
+        new DoAnimation().execute(control);
+        new DoAnimation().execute(control);
+    }
+
+    private class DoAnimation extends AsyncTask<Controls, Void, Controls>
+    {
+        @Override
+        protected Controls doInBackground(Controls... params)
         {
-            case DIAL_KNOB:
-                setImageResource(R.drawable.dial_avd);
-                break;
-            case VERT_POS_KNOB:
-                setImageResource(R.drawable.vert_pos_avd);
-                break;
+            return params[0];
         }
 
-        AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat)getDrawable();
-        drawable.start();
+        @Override
+        protected void onPostExecute(Controls control)
+        {
+            synchronized(mLock)
+            {
+                if(getVisibility() == VISIBLE)
+                {
+                    AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+                    if(mActiveControl != control)
+                    {
+                        drawable.stop();
+
+                        switch(control)
+                        {
+                            case DIAL_KNOB:
+                                mLearningView.setImageResource(R.drawable.avd_dial);
+                                break;
+                            case VERT_POS_KNOB:
+                                mLearningView.setImageResource(R.drawable.avd_vert_pos);
+                                break;
+                            case HORZ_POS_KNOB:
+                                mLearningView.setImageResource(R.drawable.avd_horz_pos);
+                                break;
+                            case VERT_SCALE_KNOB:
+                                mLearningView.setImageResource(R.drawable.avd_vert_scale);
+                                break;
+                            case HORZ_SCALE_KNOB:
+                                mLearningView.setImageResource(R.drawable.avd_horz_scale);
+                                break;
+                            case TRIGGER_KNOB:
+                                mLearningView.setImageResource(R.drawable.avd_trigger);
+                                break;
+                            case BOTH_POS_KNOBS:
+                                mLearningView.setImageResource(R.drawable.avd_both_pos);
+                                break;
+                            case BOTH_SCALE_KNOBS:
+                                mLearningView.setImageResource(R.drawable.avd_both_scale);
+                                break;
+                            case RUN_STOP_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_run_stop);
+                                break;
+                            case AUTO_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_auto);
+                                break;
+                            case CURSOR_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_cursor);
+                                break;
+                            case MEASURE_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_measure);
+                                break;
+                            case TRIGGER_MENU_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_trigger_menu);
+                                break;
+                            case TRIGGER_50_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_fifty);
+                                break;
+                            case CH1_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_ch1);
+                                break;
+                            case CH2_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_ch2);
+                                break;
+                            case OFF_BUTTON:
+                                mLearningView.setImageResource(R.drawable.avd_off);
+                                break;
+                        }
+                    }
+
+                    mActiveControl = control;
+
+                    if(!drawable.isRunning())
+                        drawable.start();
+                }
+            }
+        }
     }
 }

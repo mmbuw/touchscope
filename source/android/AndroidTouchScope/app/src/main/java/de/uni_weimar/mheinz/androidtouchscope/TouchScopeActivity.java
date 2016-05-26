@@ -45,6 +45,7 @@ import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
 
 import de.uni_weimar.mheinz.androidtouchscope.display.HostView;
+import de.uni_weimar.mheinz.androidtouchscope.display.LearningView;
 import de.uni_weimar.mheinz.androidtouchscope.display.MeasurementsView;
 import de.uni_weimar.mheinz.androidtouchscope.display.ScopeView;
 import de.uni_weimar.mheinz.androidtouchscope.display.handler.OnDataChangedInterface;
@@ -54,7 +55,6 @@ import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.WaveData;
 
-// TODO: Learning View
 // TODO: settings in left: learnView on, connection type (both or tablet), Read rate
 public class TouchScopeActivity extends AppCompatActivity
 {
@@ -66,6 +66,7 @@ public class TouchScopeActivity extends AppCompatActivity
     private HostView mHostView = null;
     private ScopeView mScopeView;
     private MeasurementsView mMeasurementView;
+    private LearningView mLearningView;
 
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
@@ -138,6 +139,8 @@ public class TouchScopeActivity extends AppCompatActivity
 
         mScopeView = (ScopeView) findViewById(R.id.scopeView);
         mMeasurementView = mHostView.getMeasureView();
+
+        mLearningView = (LearningView)findViewById(R.id.learningView);
 
         ToggleButton runStopButton = (ToggleButton) findViewById(R.id.buttonRunStop);
         assert runStopButton != null;
@@ -319,10 +322,14 @@ public class TouchScopeActivity extends AppCompatActivity
                     0,
                     true,
                     isChecked);
+
+        mLearningView.doAnim(LearningView.Controls.RUN_STOP_BUTTON);
     }
 
     public void onAuto(View view)
     {
+        mLearningView.doAnim(LearningView.Controls.AUTO_BUTTON);
+
         final ToggleButton button = (ToggleButton)view;
         Handler handler = new Handler();
         handler.postDelayed(new Runnable()
@@ -352,6 +359,8 @@ public class TouchScopeActivity extends AppCompatActivity
         mRightMenu.findViewById(R.id.measure_options).setVisibility(View.VISIBLE);
         mRightMenu.findViewById(R.id.cursor_options).setVisibility(View.GONE);
         mDrawerLayout.openDrawer(GravityCompat.END);
+
+        mLearningView.doAnim(LearningView.Controls.MEASURE_BUTTON);
     }
 
     public void onCursor(View view)
@@ -359,6 +368,8 @@ public class TouchScopeActivity extends AppCompatActivity
         mRightMenu.findViewById(R.id.measure_options).setVisibility(View.GONE);
         mRightMenu.findViewById(R.id.cursor_options).setVisibility(View.VISIBLE);
         mDrawerLayout.openDrawer(GravityCompat.END);
+
+        mLearningView.doAnim(LearningView.Controls.CURSOR_BUTTON);
     }
 
     public void onCursorMode(View view)
@@ -367,7 +378,6 @@ public class TouchScopeActivity extends AppCompatActivity
         {
             mCursorStruct.cursorMode = CursorStruct.CursorMode.MANUAL;
             setCursorModeState(CursorStruct.CursorMode.MANUAL);
-
         }
         else
         {
@@ -531,6 +541,19 @@ public class TouchScopeActivity extends AppCompatActivity
                             initScope(false);
                             startRunnableAndScope();
                             break;
+                        case R.id.navigation_learner:
+                            item.setChecked(!item.isChecked());
+                            if(item.isChecked())
+                            {
+                                mLearningView.setVisibility(View.VISIBLE);
+                                item.setTitle(R.string.turn_off);
+                            }
+                            else
+                            {
+                                mLearningView.setVisibility(View.GONE);
+                                item.setTitle(R.string.turn_on);
+                            }
+                            mHostView.setTop(1);
                     }
                     return true;
                 }

@@ -753,6 +753,8 @@ public class ScopeView extends ViewGroup
                 }
 
                 mTriggerText = updateVoltText(TRIGGER_OFFSET_TEXT, rounded);
+
+                mOnDataChanged.doAnimation(LearningView.Controls.TRIGGER_KNOB);
             }
         }
         invalidate();
@@ -816,6 +818,11 @@ public class ScopeView extends ViewGroup
                 else
                 {
                     setInMovement(true);
+
+                    if(mSelectedPath > 0)
+                        mOnDataChanged.doAnimation(LearningView.Controls.BOTH_POS_KNOBS);
+                    else
+                        mOnDataChanged.doAnimation(LearningView.Controls.HORZ_POS_KNOB);
 
                     // must have a selected channel for voltage offset
                     switch (mSelectedPath)
@@ -961,6 +968,11 @@ public class ScopeView extends ViewGroup
 
             mOrgScaleX = mOrgScaleX / scaleX;
             mTimeText = updateTimeText(TIME_SCALE_TEXT, mOrgScaleX);
+
+            if(mSelectedPath > 0)
+                mOnDataChanged.doAnimation(LearningView.Controls.BOTH_SCALE_KNOBS);
+            else
+                mOnDataChanged.doAnimation(LearningView.Controls.HORZ_SCALE_KNOB);
 
             invalidate();
 
