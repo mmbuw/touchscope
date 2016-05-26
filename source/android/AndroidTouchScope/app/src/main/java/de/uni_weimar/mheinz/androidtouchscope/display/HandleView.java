@@ -439,17 +439,29 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 mPopupWindow = new HandlePopup(getContext());
                 mPopupWindow.setHandleListener(HandleView.this);
 
-                if(mId == HostView.ID_HANDLE_1 || mId == HostView.ID_HANDLE_2)
+                if(mId == HostView.ID_HANDLE_1)
                 {
                     mPopupWindow.setPopupType(HandlePopup.CHANNEL_POPUP, mWaveData);
                     location[1] = (int)mHandlePos;
                     location[0] += HANDLE_LENGTH;
+
+                    mOnDataChanged.doAnimation(LearningView.Controls.CH1_BUTTON);
+                }
+                else if(mId == HostView.ID_HANDLE_2)
+                {
+                    mPopupWindow.setPopupType(HandlePopup.CHANNEL_POPUP, mWaveData);
+                    location[1] = (int)mHandlePos;
+                    location[0] += HANDLE_LENGTH;
+
+                    mOnDataChanged.doAnimation(LearningView.Controls.CH2_BUTTON);
                 }
                 else if(mId == HostView.ID_HANDLE_TRIG)
                 {
                     mPopupWindow.setPopupType(HandlePopup.TRIGGER_POPUP, mTrigData);
                     location[1] = (int)mHandlePos;
                     location[0] -= mPopupWindow.getApproxWidth();
+
+                    mOnDataChanged.doAnimation(LearningView.Controls.TRIGGER_MENU_BUTTON);
                 }
 
                 mPopupWindow.showAtLocation(getRootView(), Gravity.NO_GRAVITY, location[0], location[1]);
@@ -480,6 +492,8 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         if(mOnDataChanged != null)
         {
             mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_STATE, mId, !mIsOn);
+            if(mIsOn)
+                mOnDataChanged.doAnimation(LearningView.Controls.OFF_BUTTON);
         }
     }
 
@@ -677,6 +691,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         if(mOnDataChanged != null)
         {
             mOnDataChanged.doCommand(ScopeInterface.Command.DO_TRIG_50, 0, 0);
+            mOnDataChanged.doAnimation(LearningView.Controls.TRIGGER_50_BUTTON);
         }
     }
 

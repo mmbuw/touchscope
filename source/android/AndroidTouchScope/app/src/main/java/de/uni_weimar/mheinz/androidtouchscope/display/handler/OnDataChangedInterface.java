@@ -24,6 +24,7 @@
 
 package de.uni_weimar.mheinz.androidtouchscope.display.handler;
 
+import de.uni_weimar.mheinz.androidtouchscope.display.LearningView;
 import de.uni_weimar.mheinz.androidtouchscope.scope.ScopeInterface;
 
 public interface OnDataChangedInterface
@@ -32,6 +33,7 @@ public interface OnDataChangedInterface
     void moveWave(int channel, float pos, boolean moving);
     void moveTime(float pos, boolean moving);
     void moveTrigger(float pos, boolean moving);
+    void doAnimation(LearningView.Controls controls);
 
     class OnDataChanged implements OnDataChangedInterface
     {
@@ -39,6 +41,7 @@ public interface OnDataChangedInterface
         public void moveWave(int channel, float pos, boolean moving){}
         public void moveTime(float pos, boolean moving){}
         public void moveTrigger(float pos, boolean moving){}
+        public void doAnimation(LearningView.Controls controls){}
     }
 }
 

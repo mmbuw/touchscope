@@ -60,4 +60,8 @@
 
     <string name="description_chan_visibility">channel visibility</string>
     <string name="description_trig_slope">trigger slope</string>
+
+    <string name="learning_view">Learning View</string>
+    <string name="turn_on">Turn On</string>
+    <string name="turn_off">Turn Off</string>
 </resources>

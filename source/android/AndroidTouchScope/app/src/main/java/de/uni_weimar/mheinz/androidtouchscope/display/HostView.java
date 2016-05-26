@@ -134,9 +134,9 @@ public class HostView extends ViewGroup
         mMeasurementsView.setVisibility(GONE);
         addView(mMeasurementsView);
 
-        mLearningView = new LearningView(getContext());
+      //  mLearningView = new LearningView(getContext());
         //mLearningView.setVisibility(GONE);
-        addView(mLearningView);
+      //  addView(mLearningView);
 
         mMovableView = new View(getContext());
         mMovableView.setVisibility(INVISIBLE);
@@ -178,6 +178,7 @@ public class HostView extends ViewGroup
 
         buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos, bottomPos);
 
+        mLearningView = (LearningView)findViewById(R.id.learningView);
         if(mLearningView.getVisibility() == VISIBLE)
         {
             int width = (rightPos - leftPos) / 3;
@@ -239,6 +240,12 @@ public class HostView extends ViewGroup
             {
                 mTrigHandle.setHandlePosition(pos + mChan2Handle.getHandleBreadth() / 2);
             }
+
+            @Override
+            public void doAnimation(LearningView.Controls controls)
+            {
+                mLearningView.doAnim(controls);
+            }
         });
 
 
@@ -275,6 +282,7 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveWave(channel, pos, !moving);
+            mLearningView.doAnim(LearningView.Controls.VERT_POS_KNOB);
         }
 
         @Override
@@ -282,6 +290,7 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTime(pos, !moving);
+            mLearningView.doAnim(LearningView.Controls.HORZ_POS_KNOB);
         }
 
         @Override
@@ -289,6 +298,12 @@ public class HostView extends ViewGroup
         {
             mScopeView.setInMovement(moving);
             mScopeView.moveTrigger(pos, !moving);
+        }
+
+        @Override
+        public void doAnimation(LearningView.Controls controls)
+        {
+            mLearningView.doAnim(controls);
         }
     };
 

@@ -740,19 +740,21 @@ public class ScopeView extends ViewGroup
             if(mPrevTrig != null)
             {
                 mTriggerScreenOffset += dist;
-                double move, rounded;
-                if(mPrevTrig.source == TriggerData.TriggerSrc.CHAN1)
+                double move, rounded = 0;
+                if(mPrevChan1 != null && mPrevTrig.source == TriggerData.TriggerSrc.CHAN1)
                 {
                     move = fromScreenPosV(mPrevChan1.voltageScale, mTriggerScreenOffset) - mPrevChan1.voltageOffset;
                     rounded = BaseScope.roundValue(move, mPrevChan1.voltageScale, 2);
                 }
-                else
+                else if(mPrevChan2 != null)
                 {
-                    move = fromScreenPosV(mPrevChan2.voltageScale, mTriggerScreenOffset) - mPrevChan1.voltageOffset;
+                    move = fromScreenPosV(mPrevChan2.voltageScale, mTriggerScreenOffset) - mPrevChan2.voltageOffset;
                     rounded = BaseScope.roundValue(move, mPrevChan2.voltageScale, 2);
                 }
 
                 mTriggerText = updateVoltText(TRIGGER_OFFSET_TEXT, rounded);
+
+                mOnDataChanged.doAnimation(LearningView.Controls.TRIGGER_KNOB);
             }
         }
         invalidate();
@@ -816,6 +818,11 @@ public class ScopeView extends ViewGroup
                 else
                 {
                     setInMovement(true);
+
+                    if(mSelectedPath > 0)
+                        mOnDataChanged.doAnimation(LearningView.Controls.BOTH_POS_KNOBS);
+                    else
+                        mOnDataChanged.doAnimation(LearningView.Controls.HORZ_POS_KNOB);
 
                     // must have a selected channel for voltage offset
                     switch (mSelectedPath)
@@ -961,6 +968,11 @@ public class ScopeView extends ViewGroup
 
             mOrgScaleX = mOrgScaleX / scaleX;
             mTimeText = updateTimeText(TIME_SCALE_TEXT, mOrgScaleX);
+
+            if(mSelectedPath > 0)
+                mOnDataChanged.doAnimation(LearningView.Controls.BOTH_SCALE_KNOBS);
+            else
+                mOnDataChanged.doAnimation(LearningView.Controls.HORZ_SCALE_KNOB);
 
             invalidate();
 

@@ -19,4 +19,11 @@
             android:id="@+id/navigation_test"
             android:title="@string/test_scope"/>
     </group>
+    <item android:title="@string/learning_view">
+        <menu>
+            <item
+                android:id="@+id/navigation_learner"
+                android:title="@string/turn_on"/>
+        </menu>
+    </item>
 </menu>
