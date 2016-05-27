@@ -96,27 +96,27 @@
 
     <!-- knob circles, need to be before the rotation arrows -->
     <!-- horizontal pos knob -->
-    <path android:fillAlpha="1" android:fillColor="#e2e5d4"
+    <path android:name="horizontal_pos_knob" android:fillAlpha="1" android:fillColor="#e2e5d4"
         android:pathData="m331.5,250.4a30,30 0,1 1,-60 0,30 30,0 1,1 60,0z"
         android:strokeColor="#e2e5d4" android:strokeLineJoin="round" android:strokeWidth="1"/>
     <!-- trigger knob -->
-    <path android:fillAlpha="1" android:fillColor="#e2e5d4"
+    <path android:name="trigger_knob" android:fillAlpha="1" android:fillColor="#e2e5d4"
         android:pathData="m477.5,250.4a30,30 0,1 1,-60 0,30 30,0 1,1 60,0z"
         android:strokeColor="#e2e5d4" android:strokeLineJoin="round" android:strokeWidth="1"/>
     <!-- vertical pos knob -->
-    <path android:fillAlpha="1" android:fillColor="#e2e5d4"
+    <path android:name="vertical_pos_knob" android:fillAlpha="1" android:fillColor="#e2e5d4"
         android:pathData="m190.5,250.4a30,30 0,1 1,-60 0,30 30,0 1,1 60,0z"
         android:strokeColor="#e2e5d4" android:strokeLineJoin="round" android:strokeWidth="1"/>
     <!-- horizontal scale knob -->
-    <path android:fillAlpha="1" android:fillColor="#e2e5d4"
+    <path android:name="horizontal_scale_knob" android:fillAlpha="1" android:fillColor="#e2e5d4"
         android:pathData="m341.5,410a40,40 0,1 1,-80 0,40 40,0 1,1 80,0z"
         android:strokeColor="#e2e5d4" android:strokeLineJoin="round" android:strokeWidth="1"/>
     <!-- vertical scale knob -->
-    <path android:fillAlpha="1" android:fillColor="#e2e5d4"
+    <path android:name="vertical_scale_knob" android:fillAlpha="1" android:fillColor="#e2e5d4"
         android:pathData="m200.5,410a40,40 0,1 1,-80 0,40 40,0 1,1 80,0z"
         android:strokeColor="#e2e5d4" android:strokeLineJoin="round" android:strokeWidth="1"/>
     <!-- dial knob -->
-    <path android:fillAlpha="1" android:fillColor="#e2e5d4"
+    <path android:name="dial_knob" android:fillAlpha="1" android:fillColor="#e2e5d4"
         android:pathData="m92,130.7a30,30 0,1 1,-60 0,30 30,0 1,1 60,0z"
         android:strokeColor="#e2e5d4" android:strokeLineJoin="round" android:strokeWidth="1"/>
 
