@@ -814,6 +814,8 @@ public class ScopeView extends ViewGroup
                     float x = MotionEventCompat.getX(e2, index);
                     float y = MotionEventCompat.getY(e2, index);
                     mCursorArray.get(mHitCursorId).changeLocation(x,y);
+
+                    mOnDataChanged.doAnimation(LearningView.Controls.DIAL_KNOB);
                 }
                 else
                 {
@@ -1188,6 +1190,7 @@ public class ScopeView extends ViewGroup
         {
             mPosX = Math.min(Math.max(x,0), mWidth);
             mPosY = Math.min(Math.max(y,0), mHeight);
+
             update();
         }
 

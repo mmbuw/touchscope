@@ -29,6 +29,7 @@ import android.util.Log;
 
 import java.math.BigDecimal;
 
+import de.uni_weimar.mheinz.androidtouchscope.TouchScopeActivity;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.MeasureData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TimeData;
 import de.uni_weimar.mheinz.androidtouchscope.scope.wave.TriggerData;
@@ -39,7 +40,7 @@ public class BaseScope implements ScopeInterface
 {
     private static final String TAG = "BaseScope";
 
-    protected static final int READ_RATE = 100;
+    protected static final int READ_RATE = TouchScopeActivity.REFRESH_RATE - 10;
     public static final int SAMPLE_LENGTH = 610;
     protected static final int POOL_SIZE = 1;
 

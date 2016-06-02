@@ -4,4 +4,7 @@
     <target
         android:name="trigger"
         android:animation="@animator/rotation" />
+    <target
+        android:name="trigger_knob"
+        android:animation="@animator/dial_change_color" />
 </animated-vector>

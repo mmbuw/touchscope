@@ -4,4 +4,7 @@
     <target
         android:name="horizontal_scale"
         android:animation="@animator/rotation" />
+    <target
+        android:name="horizontal_scale_knob"
+        android:animation="@animator/dial_change_color" />
 </animated-vector>

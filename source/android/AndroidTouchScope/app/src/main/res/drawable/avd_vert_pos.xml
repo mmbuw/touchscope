@@ -4,4 +4,7 @@
     <target
         android:name="vertical_pos"
         android:animation="@animator/rotation" />
+    <target
+        android:name="vertical_pos_knob"
+        android:animation="@animator/dial_change_color" />
 </animated-vector>
