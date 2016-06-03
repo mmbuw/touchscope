@@ -2,9 +2,9 @@
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/scope_face" >
     <target
-        android:name="horizontal_pos"
+        android:name="dial"
         android:animation="@animator/rotation" />
     <target
-        android:name="horizontal_pos_knob"
-        android:animation="@animator/dial_change_color" />
+        android:name="vertical_pos"
+        android:animation="@animator/rotation" />
 </animated-vector>

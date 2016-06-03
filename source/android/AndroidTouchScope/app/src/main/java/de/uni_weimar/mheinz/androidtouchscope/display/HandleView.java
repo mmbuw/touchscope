@@ -339,8 +339,8 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
         PointF point = getCircleCenter();
 
         boolean selected = false;
-        if(x >= point.x - HANDLE_LENGTH && x <= point.x + HANDLE_LENGTH &&
-           y >= point.y - HANDLE_LENGTH && y <= point.y + HANDLE_LENGTH)
+        if(x >= point.x - HANDLE_BREADTH && x <= point.x + HANDLE_BREADTH &&
+           y >= point.y - HANDLE_BREADTH && y <= point.y + HANDLE_BREADTH)
         {
             selected = true;
           //  invalidate();
@@ -494,6 +494,17 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_STATE, mId, !mIsOn);
             if(mIsOn)
                 mOnDataChanged.doAnimation(LearningView.Controls.OFF_BUTTON);
+        }
+
+        if(mIsOn)
+        {
+            ImageView imageView = (ImageView)view.findViewById(R.id.channel_visible_subImage);
+            imageView.setImageResource(R.drawable.hidden_channel);
+        }
+        else
+        {
+            ImageView imageView = (ImageView) view.findViewById(R.id.channel_visible_subImage);
+            imageView.setImageResource(R.drawable.visible_channel);
         }
     }
 
