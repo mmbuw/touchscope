@@ -88,14 +88,15 @@ public class HandlePopup extends PopupWindow
                 public void onClick(View v)
                 {
                     mListener.onChannelVisible(v);
-                    dismiss();
+                //    dismiss();
                 }
             });
             mApproxWidth += buttonWidth;
 
             // Coupling button
             view = (LinearLayout)layout.findViewById(R.id.channel_coupling);
-            view.setVisibility(hidden ? View.GONE : View.VISIBLE);
+            view.setVisibility(View.VISIBLE);
+            // view.setVisibility(hidden ? View.GONE : View.VISIBLE);
             view.setClickable(true);
             view.setOnClickListener(new View.OnClickListener()
             {
@@ -105,12 +106,13 @@ public class HandlePopup extends PopupWindow
                     mListener.onChannelCoupling(v);
                 }
             });
-            if(!hidden)
+          //  if(!hidden)
                 mApproxWidth += buttonWidth;
 
             // Probe button
             view = (LinearLayout)layout.findViewById(R.id.channel_probe);
-            view.setVisibility(hidden ? View.GONE : View.VISIBLE);
+            view.setVisibility(View.VISIBLE);
+            // view.setVisibility(hidden ? View.GONE : View.VISIBLE);
             view.setClickable(true);
             view.setOnClickListener(new View.OnClickListener()
             {
@@ -121,7 +123,7 @@ public class HandlePopup extends PopupWindow
                //     dismiss();
                 }
             });
-            if(!hidden)
+         //   if(!hidden)
                 mApproxWidth += buttonWidth;
 
             if(hidden)
@@ -131,13 +133,16 @@ public class HandlePopup extends PopupWindow
             }
             else
             {
-                ImageView imageView = (ImageView)layout.findViewById(R.id.channel_visible_subImage);
+                ImageView imageView = (ImageView) layout.findViewById(R.id.channel_visible_subImage);
                 imageView.setImageResource(R.drawable.visible_channel);
+            }
 
-                ((TextView)layout.findViewById(R.id.channel_coupling_subtext)).setText(waveData.coupling);
+            if(waveData != null)
+            {
+                ((TextView) layout.findViewById(R.id.channel_coupling_subtext)).setText(waveData.coupling);
 
                 String probe = waveData.probe + "X";
-                ((TextView)layout.findViewById(R.id.channel_probe_subtext)).setText(probe);
+                ((TextView) layout.findViewById(R.id.channel_probe_subtext)).setText(probe);
             }
         }
         else if(popupType == TRIGGER_POPUP)
