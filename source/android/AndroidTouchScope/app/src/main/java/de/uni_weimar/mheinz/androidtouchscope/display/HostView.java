@@ -54,7 +54,7 @@ public class HostView extends ViewGroup
     static final int ID_HANDLE_TRIG = 4;
 
     static final int CHAN1_COLOR = Color.YELLOW;
-    static final int CHAN2_COLOR = Color.BLUE;
+    static final int CHAN2_COLOR = Color.CYAN;
     static final int TRIGGER_COLOR = Color.rgb(255,215,0);
 
     private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
@@ -273,7 +273,11 @@ public class HostView extends ViewGroup
         @Override
         public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
         {
-            if(mOnDataChanged != null)
+            if(command == ScopeInterface.Command.SET_ACTIVE_CHANNEL)
+            {
+                mScopeView.setSelectedPath(channel);
+            }
+            else if(mOnDataChanged != null)
                 mOnDataChanged.doCommand(command, channel, specialData);
         }
 

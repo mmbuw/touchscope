@@ -163,6 +163,25 @@ public class ScopeView extends ViewGroup
     @Override
     protected void onDraw(Canvas canvas)
     {
+        mDrawableChan1.getPaint().clearShadowLayer();
+        mDrawableChan1.getPaint().setStrokeWidth(1);
+        mDrawableChan2.getPaint().clearShadowLayer();
+        mDrawableChan2.getPaint().setStrokeWidth(1);
+
+        switch(mSelectedPath)
+        {
+            case 1:
+                mDrawableChan1.getPaint().setShadowLayer(10f,0f,0f,HostView.CHAN1_COLOR);
+                mDrawableChan1.getPaint().setStrokeWidth(1.5f);
+                break;
+            case 2:
+                mDrawableChan2.getPaint().setShadowLayer(10f,0f,0f,HostView.CHAN2_COLOR);
+                mDrawableChan2.getPaint().setStrokeWidth(1.5f);
+                break;
+            default:
+                break;
+        }
+
         mDrawableChan1.draw(canvas);
         mDrawableChan2.draw(canvas);
         mDrawableGridH.draw(canvas);
@@ -391,6 +410,17 @@ public class ScopeView extends ViewGroup
             }
         }
 
+        // Auto select channel (if only one on, it is selected)
+        if(channelOnCount() > 1)
+        {
+            if(mSelectedPath == -1)
+                mSelectedPath = 1;
+        }
+        else if(new PathMeasure(mPathChan1,false).getLength() > 0)
+            mSelectedPath = 1;
+        else if(new PathMeasure(mPathChan2,false).getLength() > 0)
+            mSelectedPath = 2;
+
         postInvalidate();
     }
 
@@ -579,6 +609,11 @@ public class ScopeView extends ViewGroup
     //
     //////////////////////////////////////////////////////////////////////////
 
+    public void setSelectedPath(int path)
+    {
+        mSelectedPath = path;
+    }
+
     private boolean touchSelectPath(MotionEvent event)
     {
         final int pointerIndex = MotionEventCompat.getActionIndex(event);
@@ -594,7 +629,7 @@ public class ScopeView extends ViewGroup
         else
             mSelectedPath = hit;
 
-        mDrawableChan1.getPaint().clearShadowLayer();
+     /*   mDrawableChan1.getPaint().clearShadowLayer();
         mDrawableChan1.getPaint().setStrokeWidth(1);
         mDrawableChan2.getPaint().clearShadowLayer();
         mDrawableChan2.getPaint().setStrokeWidth(1);
@@ -611,7 +646,7 @@ public class ScopeView extends ViewGroup
                 break;
             default:
                 break;
-        }
+        }*/
         return true;
     }
 
@@ -893,14 +928,33 @@ public class ScopeView extends ViewGroup
         private double mOrgScaleY = 0;
         private double mOrgScaleX = 0;
 
+        private final int VERTICAL = 0;
+        private final int HORIZONTAL = 1;
+        private final int BOTH = 2;
+        private int mScaleDir = BOTH;
+
+        private int getMajorScaleDirection(float xDir, float yDir)
+        {
+            double ratio = Math.min(xDir,yDir) / Math.max(xDir,yDir);
+            Log.d(TAG, "ratio " + ratio);
+
+            if(ratio > 0.66)
+                return BOTH;
+            else if(xDir > yDir)
+                return HORIZONTAL;
+            else
+                return VERTICAL;
+        }
+
         @Override
-        public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector)
+        public boolean onScaleBegin(ScaleGestureDetector detector)
         {
             Log.d(TAG, "onScaleBegin");
 
             mInScaling = true;
-            mFirstSpanX = scaleGestureDetector.getCurrentSpanX();
-            mFirstSpanY = scaleGestureDetector.getCurrentSpanY();
+            mFirstSpanX = detector.getCurrentSpanX();
+            mFirstSpanY = detector.getCurrentSpanY();
+            mScaleDir = getMajorScaleDirection(mFirstSpanX, mFirstSpanY);
 
             if(mSelectedPath == 1 && mPrevChan1 != null)
             {
@@ -927,54 +981,63 @@ public class ScopeView extends ViewGroup
             float previousSpanY = detector.getPreviousSpanY();
 
             float scaleX = spanX / previousSpanX;
-            float scaleY = spanY / previousSpanY;//(float)Math.pow(spanY / previousSpanY, 2);
+            float scaleY = spanY / previousSpanY;
+            //float scaleY = (float)Math.pow(spanY / previousSpanY, 2);
 
             Matrix scaleMatrix = new Matrix();
-            RectF rectF = new RectF();
 
-            switch(mSelectedPath)
+            if(mScaleDir == VERTICAL || mScaleDir == BOTH)
             {
-                case 1:
-                    mPathChan1.computeBounds(rectF, true);
-                    if(mPrevChan1.coupling.compareToIgnoreCase("AC") == 0)
-                        scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.centerY());
-                    else
-                        scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
-                    mPathChan1.transform(scaleMatrix);
+                RectF rectF = new RectF();
+                switch(mSelectedPath)
+                {
+                    case 1:
+                        mPathChan1.computeBounds(rectF, true);
+                        if(mPrevChan1.coupling.compareToIgnoreCase("AC") == 0)
+                            scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.centerY());
+                        else
+                            scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
+                        mPathChan1.transform(scaleMatrix);
 
-                    mOrgScaleY = mOrgScaleY / scaleY;
-                    mChan1Text = updateVoltText(CHAN1_SCALE_TEXT, mOrgScaleY);
+                        mOrgScaleY = mOrgScaleY / scaleY;
+                        mChan1Text = updateVoltText(CHAN1_SCALE_TEXT, mOrgScaleY);
 
-                    break;
-                case 2:
-                    mPathChan2.computeBounds(rectF, true);
-                    if(mPrevChan2.coupling.compareToIgnoreCase("AC") == 0)
-                        scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.centerY());
-                    else
-                        scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
-                    mPathChan2.transform(scaleMatrix);
+                        break;
+                    case 2:
+                        mPathChan2.computeBounds(rectF, true);
+                        if(mPrevChan2.coupling.compareToIgnoreCase("AC") == 0)
+                            scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.centerY());
+                        else
+                            scaleMatrix.setScale(1, scaleY, rectF.centerX(), rectF.bottom);
+                        mPathChan2.transform(scaleMatrix);
 
-                    mOrgScaleY = mOrgScaleY / scaleY;
-                    mChan2Text = updateVoltText(CHAN2_SCALE_TEXT, mOrgScaleY);
+                        mOrgScaleY = mOrgScaleY / scaleY;
+                        mChan2Text = updateVoltText(CHAN2_SCALE_TEXT, mOrgScaleY);
 
-                    break;
+                        break;
+                }
             }
 
-            scaleMatrix = new Matrix();
-            Rect drawRect = new Rect();
-            getDrawingRect(drawRect);
-            scaleMatrix.setScale(scaleX, 1, drawRect.centerX(), drawRect.centerY());
+            if(mScaleDir == HORIZONTAL || mScaleDir == BOTH)
+            {
+                scaleMatrix = new Matrix();
+                Rect drawRect = new Rect();
+                getDrawingRect(drawRect);
+                scaleMatrix.setScale(scaleX, 1, drawRect.centerX(), drawRect.centerY());
 
-            mPathChan1.transform(scaleMatrix);
-            mPathChan2.transform(scaleMatrix);
+                mPathChan1.transform(scaleMatrix);
+                mPathChan2.transform(scaleMatrix);
 
-            mOrgScaleX = mOrgScaleX / scaleX;
-            mTimeText = updateTimeText(TIME_SCALE_TEXT, mOrgScaleX);
+                mOrgScaleX = mOrgScaleX / scaleX;
+                mTimeText = updateTimeText(TIME_SCALE_TEXT, mOrgScaleX);
+            }
 
-            if(mSelectedPath > 0)
+            if(mScaleDir == BOTH)
                 mOnDataChanged.doAnimation(LearningView.Controls.BOTH_SCALE_KNOBS);
-            else
+            else if(mScaleDir == HORIZONTAL)
                 mOnDataChanged.doAnimation(LearningView.Controls.HORZ_SCALE_KNOB);
+            else if(mScaleDir == VERTICAL)
+                mOnDataChanged.doAnimation(LearningView.Controls.VERT_SCALE_KNOB);
 
             invalidate();
 
@@ -990,25 +1053,30 @@ public class ScopeView extends ViewGroup
                 float spanY = detector.getCurrentSpanY();
 
                 float scaleX = spanX / mFirstSpanX;
-                float scaleY = spanY / mFirstSpanY;//(float)Math.pow(spanY / mFirstSpanY, 2);
+                float scaleY = spanY / mFirstSpanY;
+               // float scaleY = (float)Math.pow(spanY / mFirstSpanY, 2);
 
                 Log.d(TAG, "onScaleEnd::x:" + scaleX + " y:" + scaleY);
 
                 if (mOnDataChanged != null)
                 {
-                    if (mSelectedPath > 0 && scaleY != 1.0)
+                    if(mScaleDir == VERTICAL || mScaleDir == BOTH)
                     {
-                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_VOLTAGE_SCALE,
-                                mSelectedPath,
-                                scaleY);
+                        if(mSelectedPath > 0 && scaleY != 1.0)
+                        {
+                            mOnDataChanged.doCommand(
+                                    ScopeInterface.Command.SET_VOLTAGE_SCALE,
+                                    mSelectedPath,
+                                    scaleY);
+                        }
                     }
 
-                    if(scaleX != 1.0)
+                    if(mScaleDir == HORIZONTAL || mScaleDir == BOTH)
                     {
-                        mOnDataChanged.doCommand(
-                                ScopeInterface.Command.SET_TIME_SCALE,
-                                0,
-                                scaleX);
+                        if(scaleX != 1.0)
+                        {
+                            mOnDataChanged.doCommand(ScopeInterface.Command.SET_TIME_SCALE, 0, scaleX);
+                        }
                     }
                 }
 

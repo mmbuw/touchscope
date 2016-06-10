@@ -46,7 +46,7 @@ public interface ScopeInterface
     {
         IS_CHANNEL_ON,
         GET_NAME,
-     //   SET_ACTIVE_CHANNEL,
+        SET_ACTIVE_CHANNEL,
         SET_VOLTAGE_OFFSET,
         SET_TIME_OFFSET,
         SET_VOLTAGE_SCALE,
