@@ -443,7 +443,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 if(mId == HostView.ID_HANDLE_1)
                 {
                     mPopupWindow.setPopupType(HandlePopup.CHANNEL_POPUP, mWaveData);
-                    location[1] = (int)mHandlePos;
+                    location[1] = (int)mHandlePos + getTop() - mPopupWindow.getApproxHeight();
                     location[0] += HANDLE_LENGTH;
 
                     mOnDataChanged.doAnimation(LearningView.Controls.CH1_BUTTON);
@@ -452,7 +452,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 else if(mId == HostView.ID_HANDLE_2)
                 {
                     mPopupWindow.setPopupType(HandlePopup.CHANNEL_POPUP, mWaveData);
-                    location[1] = (int)mHandlePos;
+                    location[1] = (int)mHandlePos + getTop() - mPopupWindow.getApproxHeight();
                     location[0] += HANDLE_LENGTH;
 
                     mOnDataChanged.doAnimation(LearningView.Controls.CH2_BUTTON);
@@ -461,7 +461,7 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 else if(mId == HostView.ID_HANDLE_TRIG)
                 {
                     mPopupWindow.setPopupType(HandlePopup.TRIGGER_POPUP, mTrigData);
-                    location[1] = (int)mHandlePos;
+                    location[1] = (int)mHandlePos + getTop() - mPopupWindow.getApproxHeight();
                     location[0] -= mPopupWindow.getApproxWidth();
 
                     mOnDataChanged.doAnimation(LearningView.Controls.TRIGGER_MENU_BUTTON);

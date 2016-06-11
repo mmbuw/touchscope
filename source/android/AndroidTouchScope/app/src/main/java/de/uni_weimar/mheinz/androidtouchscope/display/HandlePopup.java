@@ -224,6 +224,11 @@ public class HandlePopup extends PopupWindow
         return mApproxWidth;
     }
 
+    public int getApproxHeight()
+    {
+        return (int)mContext.getResources().getDimension(R.dimen.handle_dialog_button_height);
+    }
+
     public void setHandleListener(HandlePopupListener listener)
     {
         mListener = listener;

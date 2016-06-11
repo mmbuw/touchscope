@@ -167,7 +167,7 @@ public class HostView extends ViewGroup
         int rightPos = w - leftPos - getPaddingRight();
 
         // These are the top and bottom edges in which we are performing layout.
-        final int topPos = getPaddingTop();
+        int topPos = getPaddingTop();
         final int bottomPos =  h - topPos - getPaddingBottom();
 
         int cursorLength = mChan1Handle.getHandleLength();
@@ -181,9 +181,18 @@ public class HostView extends ViewGroup
         mLearningView = (LearningView)findViewById(R.id.learningView);
         if(mLearningView.getVisibility() == VISIBLE)
         {
-            int width = (rightPos - leftPos) / 3;
-            mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
-            rightPos -= width;
+            if(w > h)
+            {
+                int width = (rightPos - leftPos) / 3;
+                mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
+                rightPos -= width;
+            }
+            else
+            {
+                int height = (bottomPos - topPos) / 3;
+                mLearningView.layout(leftPos, topPos, rightPos, topPos + height);
+                topPos += height;
+            }
         }
 
         int cursorBottom = bottomPos - buttonHeight + cursorBreadth / 2;
