@@ -23,6 +23,7 @@
             android:background="?attr/colorPrimary"
             android:textColor="@android:color/white"
             android:gravity="center"
+            android:onClick="onCloseMenu"
             style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"/>
 
         <LinearLayout
@@ -127,6 +128,7 @@
             android:background="?attr/colorPrimary"
             android:textColor="@android:color/white"
             android:gravity="center"
+            android:onClick="onCloseMenu"
             style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"/>
 
         <LinearLayout

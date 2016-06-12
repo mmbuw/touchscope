@@ -25,7 +25,9 @@
 package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.graphics.drawable.AnimatedVectorDrawableCompat;
 import android.util.AttributeSet;
 import android.support.v7.widget.AppCompatImageView;
@@ -88,6 +90,36 @@ public class LearningView extends AppCompatImageView
         new DoAnimation().execute(control);
     }
 
+    private void stopAnim()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)getDrawable();
+            drawable.stop();
+        }
+        else
+        {
+            AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+            drawable.stop();
+        }
+    }
+
+    private void startAnim()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)getDrawable();
+            if(!drawable.isRunning())
+                drawable.start();
+        }
+        else
+        {
+            AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+            if(!drawable.isRunning())
+                drawable.start();
+        }
+    }
+
     private class DoAnimation extends AsyncTask<Controls, Void, Controls>
     {
         @Override
@@ -103,10 +135,11 @@ public class LearningView extends AppCompatImageView
             {
                 if(getVisibility() == VISIBLE)
                 {
-                    AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+               //     AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
                     if(mActiveControl != control)
                     {
-                        drawable.stop();
+                       // drawable.stop();
+                        stopAnim();
 
                         switch(control)
                         {
@@ -166,8 +199,9 @@ public class LearningView extends AppCompatImageView
 
                     mActiveControl = control;
 
-                    if(!drawable.isRunning())
-                        drawable.start();
+                    startAnim();
+                 //   if(!drawable.isRunning())
+                 //       drawable.start();
                 }
             }
         }

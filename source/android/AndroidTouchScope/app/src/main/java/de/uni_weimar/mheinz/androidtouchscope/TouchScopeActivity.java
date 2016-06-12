@@ -284,6 +284,17 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerToggle.syncState();
     }
 
+    @Override
+    public void onBackPressed()
+    {
+        if(mDrawerLayout.isDrawerOpen(GravityCompat.START))
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        else if(mDrawerLayout.isDrawerOpen(GravityCompat.END))
+            mDrawerLayout.closeDrawer(GravityCompat.END);
+        else
+            super.onBackPressed();
+    }
+
     private void setCursorModeState(CursorStruct.CursorMode cursorMode)
     {
         View typeView = findViewById(R.id.cursor_type);
@@ -368,6 +379,11 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerLayout.openDrawer(GravityCompat.END);
 
         mLearningView.doAnim(LearningView.Controls.CURSOR_BUTTON);
+    }
+
+    public void onCloseMenu(View view)
+    {
+        mDrawerLayout.closeDrawer(GravityCompat.END);
     }
 
     public void onCursorMode(View view)
