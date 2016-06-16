@@ -54,7 +54,7 @@ public class HostView extends ViewGroup
     static final int ID_HANDLE_TRIG = 4;
 
     static final int CHAN1_COLOR = Color.YELLOW;
-    static final int CHAN2_COLOR = Color.BLUE;
+    static final int CHAN2_COLOR = Color.CYAN;
     static final int TRIGGER_COLOR = Color.rgb(255,215,0);
 
     private OnDataChangedInterface.OnDataChanged mOnDataChanged = null;
@@ -167,7 +167,7 @@ public class HostView extends ViewGroup
         int rightPos = w - leftPos - getPaddingRight();
 
         // These are the top and bottom edges in which we are performing layout.
-        final int topPos = getPaddingTop();
+        int topPos = getPaddingTop();
         final int bottomPos =  h - topPos - getPaddingBottom();
 
         int cursorLength = mChan1Handle.getHandleLength();
@@ -181,9 +181,18 @@ public class HostView extends ViewGroup
         mLearningView = (LearningView)findViewById(R.id.learningView);
         if(mLearningView.getVisibility() == VISIBLE)
         {
-            int width = (rightPos - leftPos) / 3;
-            mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
-            rightPos -= width;
+            if(w > h)
+            {
+                int width = (rightPos - leftPos) / 3;
+                mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
+                rightPos -= width;
+            }
+            else
+            {
+                int height = (bottomPos - topPos) / 3;
+                mLearningView.layout(leftPos, topPos, rightPos, topPos + height);
+                topPos += height;
+            }
         }
 
         int cursorBottom = bottomPos - buttonHeight + cursorBreadth / 2;
@@ -273,7 +282,11 @@ public class HostView extends ViewGroup
         @Override
         public void doCommand(ScopeInterface.Command command, int channel, Object specialData)
         {
-            if(mOnDataChanged != null)
+            if(command == ScopeInterface.Command.SET_ACTIVE_CHANNEL)
+            {
+                mScopeView.setSelectedPath(channel);
+            }
+            else if(mOnDataChanged != null)
                 mOnDataChanged.doCommand(command, channel, specialData);
         }
 

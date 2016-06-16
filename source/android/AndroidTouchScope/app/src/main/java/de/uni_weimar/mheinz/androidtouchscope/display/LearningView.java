@@ -25,10 +25,13 @@
 package de.uni_weimar.mheinz.androidtouchscope.display;
 
 import android.content.Context;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.graphics.drawable.AnimatedVectorDrawableCompat;
 import android.util.AttributeSet;
 import android.support.v7.widget.AppCompatImageView;
+import android.util.Log;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
 
@@ -55,6 +58,8 @@ public class LearningView extends AppCompatImageView
         CH2_BUTTON,
         OFF_BUTTON
     }
+
+    private static final String TAG = "LearningView";
 
     private final LearningView mLearningView;
     private Controls mActiveControl = Controls.DIAL_KNOB;
@@ -88,6 +93,60 @@ public class LearningView extends AppCompatImageView
         new DoAnimation().execute(control);
     }
 
+    private void stopAnim()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            try
+            {
+                AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getDrawable();
+                drawable.stop();
+                return;
+            }
+            catch(ClassCastException ex)
+            {
+                Log.d(TAG, "Can't cast AnimatedVectorDrawableCompat to AnimatedVectorDrawable");
+            }
+        }
+        try
+        {
+            AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+            drawable.stop();
+        }
+        catch(ClassCastException ex)
+        {
+            Log.e(TAG, "AnimatedVectorDrawable not working!");
+        }
+    }
+
+    private void startAnim()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            try
+            {
+                AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getDrawable();
+                if(!drawable.isRunning())
+                    drawable.start();
+                return;
+            }
+            catch(ClassCastException ex)
+            {
+                Log.d(TAG, "Can't cast AnimatedVectorDrawableCompat to AnimatedVectorDrawable");
+            }
+        }
+        try
+        {
+            AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+            if(!drawable.isRunning())
+                drawable.start();
+        }
+        catch(ClassCastException ex)
+        {
+            Log.e(TAG, "AnimatedVectorDrawable not working!");
+        }
+    }
+
     private class DoAnimation extends AsyncTask<Controls, Void, Controls>
     {
         @Override
@@ -103,10 +162,11 @@ public class LearningView extends AppCompatImageView
             {
                 if(getVisibility() == VISIBLE)
                 {
-                    AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
+               //     AnimatedVectorDrawableCompat drawable = (AnimatedVectorDrawableCompat) getDrawable();
                     if(mActiveControl != control)
                     {
-                        drawable.stop();
+                       // drawable.stop();
+                        stopAnim();
 
                         switch(control)
                         {
@@ -166,8 +226,9 @@ public class LearningView extends AppCompatImageView
 
                     mActiveControl = control;
 
-                    if(!drawable.isRunning())
-                        drawable.start();
+                    startAnim();
+                 //   if(!drawable.isRunning())
+                 //       drawable.start();
                 }
             }
         }

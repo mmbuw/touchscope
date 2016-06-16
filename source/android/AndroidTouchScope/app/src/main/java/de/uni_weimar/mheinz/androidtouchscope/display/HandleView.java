@@ -35,6 +35,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -442,23 +443,25 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
                 if(mId == HostView.ID_HANDLE_1)
                 {
                     mPopupWindow.setPopupType(HandlePopup.CHANNEL_POPUP, mWaveData);
-                    location[1] = (int)mHandlePos;
+                    location[1] = (int)mHandlePos + getTop() - mPopupWindow.getApproxHeight();
                     location[0] += HANDLE_LENGTH;
 
                     mOnDataChanged.doAnimation(LearningView.Controls.CH1_BUTTON);
+                    mOnDataChanged.doCommand(ScopeInterface.Command.SET_ACTIVE_CHANNEL, 1, null);
                 }
                 else if(mId == HostView.ID_HANDLE_2)
                 {
                     mPopupWindow.setPopupType(HandlePopup.CHANNEL_POPUP, mWaveData);
-                    location[1] = (int)mHandlePos;
+                    location[1] = (int)mHandlePos + getTop() - mPopupWindow.getApproxHeight();
                     location[0] += HANDLE_LENGTH;
 
                     mOnDataChanged.doAnimation(LearningView.Controls.CH2_BUTTON);
+                    mOnDataChanged.doCommand(ScopeInterface.Command.SET_ACTIVE_CHANNEL, 2, null);
                 }
                 else if(mId == HostView.ID_HANDLE_TRIG)
                 {
                     mPopupWindow.setPopupType(HandlePopup.TRIGGER_POPUP, mTrigData);
-                    location[1] = (int)mHandlePos;
+                    location[1] = (int)mHandlePos + getTop() - mPopupWindow.getApproxHeight();
                     location[0] -= mPopupWindow.getApproxWidth();
 
                     mOnDataChanged.doAnimation(LearningView.Controls.TRIGGER_MENU_BUTTON);
@@ -494,6 +497,17 @@ public class HandleView extends View implements HandlePopup.HandlePopupListener
             mOnDataChanged.doCommand(ScopeInterface.Command.SET_CHANNEL_STATE, mId, !mIsOn);
             if(mIsOn)
                 mOnDataChanged.doAnimation(LearningView.Controls.OFF_BUTTON);
+            else
+            {
+                new Handler().postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        mOnDataChanged.doCommand(ScopeInterface.Command.SET_ACTIVE_CHANNEL, mId, null);
+                    }
+                }, 1000);
+            }
         }
 
         if(mIsOn)

@@ -5,7 +5,8 @@
     <string name="settings">Settings</string>
 
     <string name="auto_button">Auto</string>
-    <string name="run_stop_button">Run/Stop</string>
+    <string name="run_button">Run</string>
+    <string name="stop_button">Stop</string>
 
     <string name="real_scope">Real Scope</string>
     <string name="test_scope">Test Scope</string>

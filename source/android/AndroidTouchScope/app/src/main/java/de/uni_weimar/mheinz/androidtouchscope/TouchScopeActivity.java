@@ -24,7 +24,6 @@
 
 package de.uni_weimar.mheinz.androidtouchscope;
 
-import android.graphics.Color;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -91,8 +90,8 @@ public class TouchScopeActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        assert mDrawerLayout != null;
-        mDrawerLayout.setScrimColor(Color.TRANSPARENT);
+   //     assert mDrawerLayout != null;
+   //     mDrawerLayout.setScrimColor(Color.TRANSPARENT);
 
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null)
@@ -106,7 +105,7 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerLayout.addDrawerListener(mDrawerToggle);
 
         // disables touch-to-open
-        /*mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         assert toolbar != null;
         toolbar.setNavigationOnClickListener(new View.OnClickListener()
         {
@@ -115,7 +114,7 @@ public class TouchScopeActivity extends AppCompatActivity
             {
                 mDrawerLayout.openDrawer(GravityCompat.START);
             }
-        });*/
+        });
 
         mLeftDrawer = (NavigationView) findViewById(R.id.left_drawer);
         assert mLeftDrawer != null;
@@ -285,6 +284,17 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerToggle.syncState();
     }
 
+    @Override
+    public void onBackPressed()
+    {
+        if(mDrawerLayout.isDrawerOpen(GravityCompat.START))
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        else if(mDrawerLayout.isDrawerOpen(GravityCompat.END))
+            mDrawerLayout.closeDrawer(GravityCompat.END);
+        else
+            super.onBackPressed();
+    }
+
     private void setCursorModeState(CursorStruct.CursorMode cursorMode)
     {
         View typeView = findViewById(R.id.cursor_type);
@@ -369,6 +379,11 @@ public class TouchScopeActivity extends AppCompatActivity
         mDrawerLayout.openDrawer(GravityCompat.END);
 
         mLearningView.doAnim(LearningView.Controls.CURSOR_BUTTON);
+    }
+
+    public void onCloseMenu(View view)
+    {
+        mDrawerLayout.closeDrawer(GravityCompat.END);
     }
 
     public void onCursorMode(View view)
