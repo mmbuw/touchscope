@@ -117,10 +117,34 @@
 
     <android.support.design.widget.NavigationView
         android:id="@+id/left_drawer"
-        android:layout_width="175dp"
+        android:layout_width="210dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/drawer_left_menu"/>
+        app:menu="@menu/drawer_left_menu">
+
+        <RadioGroup
+            android:id="@+id/hand_group"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom"
+            android:visibility="gone">
+            <RadioButton
+                android:id="@+id/left_hand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/left_hand"
+                android:onClick="onHandClick"/>
+            <RadioButton
+                android:id="@+id/right_hand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/right_hand"
+                android:checked="true"
+                android:onClick="onHandClick"/>
+        </RadioGroup>
+
+    </android.support.design.widget.NavigationView>
 
     <include layout="@layout/right_menu_layout"/>
 

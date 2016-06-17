@@ -33,12 +33,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import android.os.Handler;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v7.widget.Toolbar;
@@ -493,6 +495,30 @@ public class TouchScopeActivity extends AppCompatActivity
         }
     }
 
+    public void onHandClick(View view)
+    {
+        if(mLeftDrawer.getMenu().findItem(R.id.navigation_learner).isChecked())
+        {
+            boolean isChecked = ((RadioButton)view).isChecked();
+            switch(view.getId())
+            {
+                case R.id.right_hand:
+                    if(isChecked)
+                        mLearningView.setGravity(Gravity.START);
+                    else
+                        mLearningView.setGravity(Gravity.END);
+                    break;
+                case R.id.left_hand:
+                    if(isChecked)
+                        mLearningView.setGravity(Gravity.END);
+                    else
+                        mLearningView.setGravity(Gravity.START);
+                    break;
+            }
+            mHostView.setTop(1); //forces a onSizeChange event
+        }
+    }
+
     private void createDrawerToggle(Toolbar toolbar)
     {
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar,
@@ -560,14 +586,21 @@ public class TouchScopeActivity extends AppCompatActivity
                             if(item.isChecked())
                             {
                                 mLearningView.setVisibility(View.VISIBLE);
+                                mLeftDrawer.findViewById(R.id.hand_group).setVisibility(View.VISIBLE);
+
+                                if(((RadioButton)mLeftDrawer.findViewById(R.id.right_hand)).isChecked())
+                                    mLearningView.setGravity(Gravity.START);
+                                else
+                                    mLearningView.setGravity(Gravity.END);
                                 item.setTitle(R.string.turn_off);
                             }
                             else
                             {
                                 mLearningView.setVisibility(View.GONE);
+                                mLeftDrawer.findViewById(R.id.hand_group).setVisibility(View.GONE);
                                 item.setTitle(R.string.turn_on);
                             }
-                            mHostView.setTop(1);
+                            mHostView.setTop(1); //forces a onSizeChange event
                     }
                     return true;
                 }

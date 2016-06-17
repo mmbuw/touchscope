@@ -27,6 +27,7 @@ package de.uni_weimar.mheinz.androidtouchscope.display;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -176,7 +177,6 @@ public class HostView extends ViewGroup
         View buttonRow = findViewById(R.id.button_row);
         int buttonHeight = buttonRow.getMeasuredHeight();
 
-        buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos, bottomPos);
 
         mLearningView = (LearningView)findViewById(R.id.learningView);
         if(mLearningView.getVisibility() == VISIBLE)
@@ -184,8 +184,17 @@ public class HostView extends ViewGroup
             if(w > h)
             {
                 int width = (rightPos - leftPos) / 3;
-                mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
-                rightPos -= width;
+                if(mLearningView.getGravity() == Gravity.END)
+                {
+                    mLearningView.layout(rightPos - width, topPos + cursorLength, rightPos, bottomPos - buttonHeight);
+                    rightPos -= width;
+                }
+                else
+                {
+                    mLearningView.layout(leftPos, topPos + cursorLength, leftPos + width, bottomPos - buttonHeight);
+                    leftPos += width;
+                }
+
             }
             else
             {
@@ -195,6 +204,7 @@ public class HostView extends ViewGroup
             }
         }
 
+        buttonRow.layout(leftPos + cursorLength, bottomPos - buttonHeight, rightPos, bottomPos);
         int cursorBottom = bottomPos - buttonHeight + cursorBreadth / 2;
 
         mChan1Handle.layout(
