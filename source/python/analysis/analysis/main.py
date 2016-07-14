@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy import stats as stat
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 import re
 import datetime
@@ -9,68 +10,109 @@ TIME_COLUMNS = ['time1', 'time2', 'time3']
 
 
 def to_seconds(t):
-    m,s = re.split(':',t)
-    seconds = int(datetime.timedelta(minutes=int(m),seconds=int(s)).total_seconds())
+    m, s = re.split(':', t)
+    seconds = int(datetime.timedelta(minutes=int(m), seconds=int(s)).total_seconds())
     return seconds
 
 
-def basic_stats(data):
+def trim_outliers(data):
+    # trim outliers that are more than three standard deviations above the mean (Measuring the User Experience p.78)
     for t in TIME_COLUMNS:
-        mean = np.mean(data[t])
-        median = np.median(data[t])
-        min_value = data[t].min()
-        max_value = data[t].max()
-        rng = max_value - min_value
-        var = np.var(data[t])
-        std = np.std(data[t])
-        print(t)
-        print('min = {0}, max = {1}, range = {2}, var = {3:.3f}, std = {4:.3f}'.format(min_value,max_value,rng,var,std))
-        print('mean = {0:.3f}, median = {1}'.format(mean, median))
+        mn = np.mean(data.loc[:, t])
+        std = np.std(data.loc[:, t])
+        # data.loc[data[t] > (mn + std * 3), t] = mn # fill in with mean
+        data.loc[data[t] > (mn + std * 3), t] = np.nan
+    return data.dropna(how='any')
 
 
-def better(data):
+def show_distributions(data):
+    fig = 1
+    for t in TIME_COLUMNS:
+        d = sorted(data.loc[:, t])
+        mn = np.mean(d)
+        std = np.std(d)
+        fit = stat.norm.pdf(d, mn, std)
+
+        plt.figure(fig)
+        fig += 1
+        count, bins, ignored = plt.hist(d, 15, normed=True)
+        plt.plot(bins, 1 / (std * np.sqrt(2 * np.pi)) * np.exp(- (bins - mn) ** 2 / (2 * std ** 2)), \
+                 linewidth = 2, color = 'r')
+        # plt.plot(d, fit, '-o')
+        # plt.hist(d, normed=True)
+    plt.draw()
+
+
+def confidence_interval(data):
+    confs = []
+    for t in TIME_COLUMNS:
+        se = stat.sem(data.loc[:, t])
+        n = data.loc[:, t].count()
+        mn = np.mean(data.loc[:, t])
+        conf = stat.t.interval(0.95, n - 1, loc=mn, scale=se)
+        confs.append(conf[1] - mn)
+
+    return confs
+
+
+def basic_stats(data):
     mn = list(np.mean(data.loc[:, TIME_COLUMNS]))
-    mn.insert(0, 'mean')
     md = list(data.loc[:, TIME_COLUMNS].apply(np.median))
-    md.insert(0, 'median')
     small = list(np.min(data.loc[:, TIME_COLUMNS]))
-    small.insert(0, 'min')
     big = list(np.max(data.loc[:, TIME_COLUMNS]))
-    big.insert(0, 'max')
     rng = list(data.loc[:, TIME_COLUMNS].apply(lambda x: x.max() - x.min()))
-    rng.insert(0, 'range')
     std = list(np.std(data.loc[:, TIME_COLUMNS]))
-    std.insert(0, 'std')
     var = list(np.var(data.loc[:, TIME_COLUMNS]))
+    conf = confidence_interval(data)
+
+    mn.insert(0, 'mean')
+    md.insert(0, 'median')
+    small.insert(0, 'min')
+    big.insert(0, 'max')
+    rng.insert(0, 'range')
+    std.insert(0, 'std')
     var.insert(0, 'var')
-    print(tabulate([small, big, rng, mn, md, std, var], headers=['test 1', 'test 2', 'test 3'], numalign="right", floatfmt=".2f"))
+    conf.insert(0,'95% confidence')
+
+    print(tabulate([small, big, rng, mn, md, var, std, conf], \
+                   headers=['time 1', 'time 2', 'time 3'], numalign="right", floatfmt=".2f"))
 
 
+def main():
+    results = pd.read_csv('results.csv')
+    for ti in TIME_COLUMNS:
+        results[ti] = results[ti].apply(to_seconds)
 
-results = pd.read_csv('results.csv')
-for t in TIME_COLUMNS:
-    results[t] = results[t].apply(to_seconds)
+    results = trim_outliers(results)
 
-#m = np.array(np.mean(results.loc[:, TIME_COLUMNS]).values)
-#n = np.array(results.loc[:, TIME_COLUMNS].apply(np.median).values)
-#print(m)
-#print(n)
+    # skew and kurtosis are combined in the normality test
+    print(stat.normaltest(results.loc[:, TIME_COLUMNS])[1])
+    show_distributions(results)
+    basic_stats(results)
 
-oscope_results = results[results.device_coded == 0]
-tablet_results = results[results.device_coded == 1]
+    print()
 
-print('Oscilloscope')
-#basic_stats(oscope_results)
-better(oscope_results)
+    oscope_results = results[results.device_coded == 0]
+    tablet_results = results[results.device_coded == 1]
 
-print()
+    print('Oscilloscope ' + str(len(oscope_results)))
+    basic_stats(oscope_results)
 
-print('Tablet')
-#basic_stats(tablet_results)
-better(tablet_results)
+    print()
 
-#mean1 = np.mean(results['task1_coded'])
-#mean1 = stat.t.stats(results['task1_coded'].size, moments='m')
-#t_result, p_value = stat.ttest_1samp(results['task1_coded'], mean1)
+    print('Tablet ' + str(len(tablet_results)))
+    basic_stats(tablet_results)
 
+    print()
+
+    t, p = list(stat.ttest_ind(oscope_results.loc[:, TIME_COLUMNS], tablet_results.loc[:, TIME_COLUMNS], equal_var=False))
+    t = list(t)
+    p = list(p)
+    t.insert(0, 't')# (' + str(len(results) - 1) + ')')
+    p.insert(0, 'p-value')
+    print(tabulate([t, p], headers=['time 1', 'time 2', 'time 3'], numalign="right", floatfmt=".3f"))
+
+    plt.show()
+
+main()
 
