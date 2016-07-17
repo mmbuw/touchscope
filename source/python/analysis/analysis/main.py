@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import re
 import datetime
+from matplotlib import colors
 
 TIME_COLUMNS = ['time1', 'time2', 'time3']
+RESULTS_COLUMNS = ['task1_coded', 'task2_coded', 'task3_coded']
 
 
 def to_seconds(t):
@@ -16,7 +18,10 @@ def to_seconds(t):
 
 
 def trim_outliers(data):
-    # trim outliers that are more than three standard deviations above the mean (Measuring the User Experience p.78)
+    ''' trim outliers that are more than three standard deviations above the mean 
+     (Measuring the User Experience p.78)
+     '''
+    
     for t in TIME_COLUMNS:
         mn = np.mean(data.loc[:, t])
         std = np.std(data.loc[:, t])
@@ -62,6 +67,7 @@ def confidence_interval(data):
 def basic_stats(data, headers):
     mn = list(np.mean(data))
     md = list(data.apply(np.median))
+    mo = stat.mode(data)[0].tolist()[0]
     small = list(np.min(data))
     big = list(np.max(data))
     rng = list(data.apply(lambda x: x.max() - x.min()))
@@ -71,6 +77,7 @@ def basic_stats(data, headers):
 
     mn.insert(0, 'mean')
     md.insert(0, 'median')
+    mo.insert(0, 'mode')
     small.insert(0, 'min')
     big.insert(0, 'max')
     rng.insert(0, 'range')
@@ -78,8 +85,9 @@ def basic_stats(data, headers):
     var.insert(0, 'var')
     conf.insert(0, '95% confidence')
 
-    print(tabulate([small, big, rng, mn, md, var, std, conf],
+    print(tabulate([small, big, rng, mn, md, mo, var, std, conf],
                    headers=[h for h in headers], numalign="right", floatfmt=".2f"))
+    print()
 
 
 def t_test_ind(data1, data2, headers):
@@ -89,6 +97,7 @@ def t_test_ind(data1, data2, headers):
     t.insert(0, 't')  # (' + str(len(results) - 1) + ')')
     p.insert(0, 'p-value')
     print(tabulate([t, p], headers=[h for h in headers], numalign="right", floatfmt=".3f"))
+    print()
 
 
 def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
@@ -98,7 +107,7 @@ def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
     mn2 = list(np.mean(t_data))
     conf2 = confidence_interval(t_data)
 
-    index = np.arange(3)  # 0, 3 * 2, 2)
+    index = np.arange(3)
     bar_width = 0.20
     error_config = {'ecolor': '0'}
 
@@ -119,6 +128,71 @@ def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
 
     plt.tight_layout()
     plt.draw()
+    
+    
+def chi_square(a_data, o_data, t_data, expected, headers):
+    a_total = [sum(1 for x in a_data.loc[:, col] if x == expected) for col in a_data]
+    t_total = [sum(1 for x in t_data.loc[:, col] if x == expected) for col in t_data]
+    o_total = [sum(1 for x in o_data.loc[:, col] if x == expected) for col in o_data]
+    
+    a_total = np.array([x / 2 for x in a_total])
+    
+    obs = np.array([t_total, o_total])
+    chisq, p = stat.chisquare(obs, f_exp=a_total)
+    
+    chisq = list(chisq)
+    p = list(p)
+    chisq.insert(0, 'chi-squared')
+    p.insert(0, 'p-value')
+    
+    print(tabulate([chisq, p], headers=[h for h in headers], numalign="right", floatfmt=".3f"))
+    print()
+    
+    
+def show_stacked_graph(o_data, t_data):
+    t_count = len(t_data)
+    t_com = [sum(1 for x in t_data.loc[:, col] if x == 1) for col in t_data]
+    t_fail = [sum(1 for x in t_data.loc[:, col] if x == 0) for col in t_data]
+    t_part = [t_count - t_com[i] - t_fail[i] for i in range(3)]
+            
+    o_count = len(o_data)      
+    o_com = [sum(1 for x in o_data.loc[:, col] if x == 1) for col in o_data]
+    o_fail = [sum(1 for x in o_data.loc[:, col] if x == 0) for col in o_data]
+    o_part = [o_count - o_com[i] - o_fail[i] for i in range(3)]
+    
+    t_com = [x / t_count * 100.0 for x in t_com]
+    t_part = [x / t_count * 100.0 for x in t_part]
+    t_fail = [x / t_count * 100.0 for x in t_fail]
+    
+    o_com = [x / o_count * 100.0 for x in o_com]
+    o_part = [x / o_count * 100.0 for x in o_part]
+    o_fail = [x / o_count * 100.0 for x in o_fail]
+    
+    index = np.arange(3)
+    bar_width = 0.35
+    
+    fig, ax = plt.subplots()
+    plt.bar(index + bar_width, o_com, bar_width, color='#347A2A', 
+            label='Complete')
+    plt.bar(index + 2 * bar_width, t_com, bar_width, color='#347A2A',)
+    plt.bar(index + bar_width, o_part, bar_width, color='#B3C87A', 
+            bottom=o_com, label='Partial')
+    plt.bar(index + 2 * bar_width, t_part, bar_width, color='#B3C87A', 
+            bottom=t_com )
+    plt.bar(index + bar_width, o_fail, bar_width, color='#EBE8BE',
+            bottom=[i+j for i,j in zip(o_com, o_part)], label='Fail')
+    plt.bar(index + 2 * bar_width, t_fail, bar_width, color='#EBE8BE', 
+            bottom=[i+j for i,j in zip(t_com, t_part)])
+    
+    plt.ylabel('% of Participants')
+    plt.title('Levels of Success')
+    plt.xticks(index + bar_width*2, 
+               ('Scope   Tablet \nTask 1', 'Scope   Tablet \nTask 2', 'Scope   Tablet \nTask 3'))
+    plt.yticks(np.arange(0, 101, 10))
+    plt.legend(loc='upper right', bbox_to_anchor=(1.0, 1.08), fancybox=True, shadow=True)
+   
+    plt.tight_layout()
+    plt.draw()
 
 
 def main():
@@ -129,29 +203,21 @@ def main():
     results = trim_outliers(results)
 
     # skew and kurtosis are combined in the normality test
-    print('normal distribution:')
+    print('normal distribution for time:')
     print(stat.normaltest(results.loc[:, TIME_COLUMNS])[1])
     #show_distributions(results.loc[:, TIME_COLUMNS])
 
-    print()
-
-    print('Overall - testers: ' + str(len(results)))
+    print('Time: Overall - testers: ' + str(len(results)))
     basic_stats(results.loc[:, TIME_COLUMNS], ('time 1', 'time 2', 'time 3'))
-
-    print()
 
     oscope_results = results[results.device_coded == 0]
     tablet_results = results[results.device_coded == 1]
 
-    print('Oscilloscope - testers: ' + str(len(oscope_results)))
+    print('Time: Oscilloscope - testers: ' + str(len(oscope_results)))
     basic_stats(oscope_results.loc[:, TIME_COLUMNS], ('time 1', 'time 2', 'time 3'))
 
-    print()
-
-    print('Tablet - testers: ' + str(len(tablet_results)))
+    print('Time: Tablet - testers: ' + str(len(tablet_results)))
     basic_stats(tablet_results.loc[:, TIME_COLUMNS], ('time 1', 'time 2', 'time 3'))
-
-    print()
 
     print('t-test independent samples:')
     t_test_ind(oscope_results.loc[:, TIME_COLUMNS], tablet_results.loc[:, TIME_COLUMNS], ('time 1', 'time 2', 'time 3'))
@@ -164,6 +230,25 @@ def main():
                    'Tasks',
                    'Mean Time on Task \n(Error bars represents 95% confidence interval)',
                    ('Task 1', 'Task 2', 'Task 3'))
+        
+    print('Levels of Success: Overall')
+    basic_stats(results.loc[:, RESULTS_COLUMNS], ('task 1', 'task 2', 'task 3'))
+    
+    print('Levels of Success: Oscilloscope')
+    basic_stats(oscope_results.loc[:, RESULTS_COLUMNS], ('task 1', 'task 2', 'task 3'))
+    
+    print('Levels of Success: Tablet')
+    basic_stats(tablet_results.loc[:, RESULTS_COLUMNS], ('task 1', 'task 2', 'task 3'))
+    
+    print('Complete Success')
+    chi_square(results.loc[:, RESULTS_COLUMNS], 
+               oscope_results.loc[:, RESULTS_COLUMNS], 
+               tablet_results.loc[:, RESULTS_COLUMNS],
+               1,
+               ('Task 1', 'Task 2', 'Task 3'))
+    
+    show_stacked_graph(oscope_results.loc[:, RESULTS_COLUMNS], 
+                       tablet_results.loc[:, RESULTS_COLUMNS])
 
     plt.show()
 
