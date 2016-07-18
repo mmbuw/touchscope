@@ -32,6 +32,7 @@ import android.support.graphics.drawable.AnimatedVectorDrawableCompat;
 import android.util.AttributeSet;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
+import android.view.Gravity;
 
 import de.uni_weimar.mheinz.androidtouchscope.R;
 
@@ -64,7 +65,7 @@ public class LearningView extends AppCompatImageView
     private final LearningView mLearningView;
     private Controls mActiveControl = Controls.DIAL_KNOB;
     private final Object mLock = new Object();
-
+    private int mGravity = Gravity.START;
 
     public LearningView(Context context)
     {
@@ -91,6 +92,16 @@ public class LearningView extends AppCompatImageView
     {
         new DoAnimation().execute(control);
         new DoAnimation().execute(control);
+    }
+
+    public int getGravity()
+    {
+        return mGravity;
+    }
+
+    public void setGravity(int gravity)
+    {
+        mGravity = gravity;
     }
 
     private void stopAnim()

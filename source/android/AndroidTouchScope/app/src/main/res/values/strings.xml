@@ -65,4 +65,7 @@
     <string name="learning_view">Learning View</string>
     <string name="turn_on">Turn On</string>
     <string name="turn_off">Turn Off</string>
+
+    <string name="right_hand">Right Hand</string>
+    <string name="left_hand">Left Hand</string>
 </resources>
