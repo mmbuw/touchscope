@@ -10,22 +10,29 @@ TIME_COLUMNS = ['time1', 'time2', 'time3']
 RESULTS_COLUMNS = ['task1_coded', 'task2_coded', 'task3_coded']
 ASSISTANCE_COLUMNS = ['task1_assistance_count', 'task2_assistance_count', 'task3_assistance_count']
 
+QUESTIONNAIRE_COLUMNS = ['after pre-test', 'after post-test']
+
+BACKGROUND_COLUMNS = ['In which field? (engineering, arts, architecture, etc)',
+                      'What is your age?',
+                      'What is your gender?']
+
+
 def to_seconds(t):
     m, s = re.split(':', t)
     seconds = int(datetime.timedelta(minutes=int(m), seconds=int(s)).total_seconds())
     return seconds
 
 
-def trim_outliers(data):
+def trim_outliers(data, columns):
     ''' trim outliers that are more than three standard deviations above the mean 
      (Measuring the User Experience p.78)
      '''
     
-    for t in TIME_COLUMNS:
-        mn = np.mean(data.loc[:, t])
-        std = np.std(data.loc[:, t])
+    for col in columns:
+        mn = np.mean(data.loc[:, col])
+        std = np.std(data.loc[:, col])
         # data.loc[data[t] > (mn + std * 3), t] = mn # fill in with mean
-        data.loc[data[t] > (mn + std * 3), t] = np.nan
+        data.loc[data[col] > (mn + std * 3), col] = np.nan
     before = len(data)
     data = data.dropna(how='any')
     after = len(data)
@@ -39,34 +46,29 @@ def show_distributions(data):
 
 
 def bell_curve(data):
-    fig = 1
     for col in data:
         d = sorted(data.loc[:, col])
         mn = np.mean(d)
         std = np.std(d)
         # fit = stat.norm.pdf(d, mn, std)
 
-        plt.figure(fig)
-        fig += 1
+        plt.subplots()
         count, bins, ignored = plt.hist(d, 15, normed=True)
         plt.plot(bins, 1 / (std * np.sqrt(2 * np.pi)) * np.exp(- (bins - mn) ** 2 / (2 * std ** 2)),
                  linewidth=2, color='r')
         plt.title(col)
         # plt.plot(d, fit, '-o')
         # plt.hist(d, normed=True)
-    plt.draw()
+        plt.draw()
 
 
 def qq_plot(data):
-    fig = 4
     for col in data:
         d = sorted(data.loc[:, col])
-        plt.figure(fig)
-        fig += 1
+        plt.subplots()
         stat.probplot(d, plot=plt)
-
-    plt.draw()
-
+        plt.title(col)
+        plt.draw()
 
 
 def confidence_interval(data):
@@ -109,10 +111,12 @@ def basic_stats(data, headers):
     print()
 
 
-def t_test_ind(data1, data2, headers):
-    t, p = list(stat.ttest_ind(data1, data2, equal_var=False))
+def t_test_ind(o_data, t_data, headers, tailed=2):
+    t, p = list(stat.ttest_ind(o_data, t_data, equal_var=False))
     t = list(t)
     p = list(p)
+    if tailed == 1:
+        p = [x / 2 for x in p]
     t.insert(0, 't')  # (' + str(len(results) - 1) + ')')
     p.insert(0, 'p-value')
     print(tabulate([t, p], headers=[h for h in headers], numalign="right", floatfmt=".3f"))
@@ -126,7 +130,7 @@ def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
     mn2 = list(np.mean(t_data))
     conf2 = confidence_interval(t_data)
 
-    index = np.arange(3)
+    index = np.arange(len(ticks))
     bar_width = 0.20
     error_config = {'ecolor': '0'}
 
@@ -140,12 +144,23 @@ def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
     plt.ylabel(ylabel)
     plt.title(title)
     plt.xticks(index + bar_width*2, ticks)
-    plt.legend(loc=2)
+    plt.legend(loc='best')
     ax.grid(axis='y', linestyle='-', linewidth=1)
     ax.set_axisbelow(True)
+    ax.set_xlim((0.0, len(ticks)))
 
     plt.tight_layout()
     plt.draw()
+
+
+def show_box_plot(o_data, t_data, ylabel, title):
+    for col in o_data:
+        fig, ax = plt.subplots()
+        plt.boxplot([o_data.loc[:, col], t_data.loc[:, col]])
+        ax.set_xticklabels(["Scope", "Tablet"])
+        plt.ylabel(ylabel)
+        plt.title(title + ' - ' + col)
+        plt.draw()
     
 
 ''' wrong implementation '''
@@ -181,6 +196,7 @@ def levels_of_success(o_data, t_data):
 
     zipped = np.array(list(zip(t_com, t_part, t_fail, o_com, o_part, o_fail)))
     print_chisquared(zipped, 3)
+    print_mannwhitneyu(o_data, t_data)
 
     
 def show_stacked_graph(o_data, t_data):
@@ -240,6 +256,7 @@ def assistance_count(o_data, t_data):
 
     zipped = np.array(list(zip(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)))
     print_chisquared(zipped, 3)
+    print_mannwhitneyu(o_data, t_data)
 
     assistance_pie_chart(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)
 
@@ -299,6 +316,20 @@ def print_chisquared(zipped, columns):
     print()
 
 
+def print_mannwhitneyu(o_data, t_data):
+    wvalues = ['w-value']
+    pvalues = ['p-values']
+    for col in o_data:
+        wvalue, pvalue = stat.mannwhitneyu(o_data.loc[:, col], t_data.loc[:, col])
+        wvalues.append(wvalue)
+        pvalues.append(pvalue * 2) # to make two-sided
+
+    print('Mann-Whitney rank test')
+    print(tabulate([wvalues, pvalues],
+                   headers=('Task 1', 'Task 2', 'Task 3'), numalign="right", floatfmt=".2f"))
+    print()
+
+
 def normal_distribution_test(data):
     # skew and kurtosis are combined in the normality test
     print('skew and kurtosis Test:')
@@ -325,12 +356,27 @@ def normal_distribution_test(data):
     print('----------------------------------------------------------------------\n')
 
 
-def main():
+def frequencies(o_data, t_data):
+    for col in o_data:
+        o = pd.Series(list(o_data.loc[:, col]))
+        t = pd.Series(list(t_data.loc[:, col]))
+        o_count = o.value_counts()
+        t_count = t.value_counts()
+
+        join = pd.DataFrame({'scope' : o_count, 'tablet' : t_count})
+        join = join.fillna(0)
+        print(col)
+        print(join)
+
+    print()
+
+
+def results_data():
     results = pd.read_csv('results.csv')
     for ti in TIME_COLUMNS:
         results[ti] = results[ti].apply(to_seconds)
 
-    results = trim_outliers(results)
+    results = trim_outliers(results, TIME_COLUMNS)
 
     print('normal distribution for time:')
     normal_distribution_test(results.loc[:, TIME_COLUMNS])
@@ -349,7 +395,7 @@ def main():
     print('Time: Tablet - testers: ' + str(len(tablet_results)))
     basic_stats(tablet_results.loc[:, TIME_COLUMNS], ('time 1', 'time 2', 'time 3'))
 
-    print('t-test independent samples:')
+    print('t-test independent samples: 2-tailed')
     t_test_ind(oscope_results.loc[:, TIME_COLUMNS], tablet_results.loc[:, TIME_COLUMNS], ('time 1', 'time 2', 'time 3'))
 
     show_bar_graph(oscope_results.loc[:, TIME_COLUMNS], tablet_results.loc[:, TIME_COLUMNS],
@@ -357,6 +403,10 @@ def main():
                    'Tasks',
                    'Mean Time on Task \n(Error bars represents 95% confidence interval)',
                    ('Task 1', 'Task 2', 'Task 3'))
+
+    show_box_plot(oscope_results.loc[:, TIME_COLUMNS], tablet_results.loc[:, TIME_COLUMNS],
+                  'Time (sec) to Complete Task',
+                  'Time on Task')
 
     print('----------------------------------------------------------------------\n')
     # print('Levels of Success: Overall')
@@ -379,7 +429,56 @@ def main():
     assistance_count(oscope_results.loc[:, ASSISTANCE_COLUMNS], tablet_results.loc[:, ASSISTANCE_COLUMNS])
 
 
+def questionnaire_data():
+    results = pd.read_csv('questionnaire_results.csv')
+
+    print('normal distribution for questionnaire:')
+    normal_distribution_test(results.loc[:, QUESTIONNAIRE_COLUMNS])
+
+    show_distributions(results.loc[:, QUESTIONNAIRE_COLUMNS])
+
+    print('Questionnaires: Overall - testers: ' + str(len(results)))
+    basic_stats(results.loc[:, QUESTIONNAIRE_COLUMNS], ('After pre-test', 'After post-test'))
+
+    oscope_results = results[results.device_coded == 0]
+    tablet_results = results[results.device_coded == 1]
+
+    print('Questionnaires: Oscilloscope - testers: ' + str(len(oscope_results)))
+    basic_stats(oscope_results.loc[:, QUESTIONNAIRE_COLUMNS], ('After pre-test', 'After post-test'))
+
+    print('Questionnaires: Tablet - testers: ' + str(len(tablet_results)))
+    basic_stats(tablet_results.loc[:, QUESTIONNAIRE_COLUMNS], ('After pre-test', 'After post-test'))
+
+    print('t-test independent samples : 1-tailed')
+    t_test_ind(oscope_results.loc[:, QUESTIONNAIRE_COLUMNS],
+               tablet_results.loc[:, QUESTIONNAIRE_COLUMNS],
+               ('After pre-test', 'After post-test'),
+               tailed=1)
+
+    show_bar_graph(oscope_results.loc[:, QUESTIONNAIRE_COLUMNS], tablet_results.loc[:, QUESTIONNAIRE_COLUMNS],
+                   'SUS Score',
+                   'Questionnaire',
+                   'Mean SUS Score \n(Error bars represents 95% confidence interval)',
+                   ('After pre-test', 'After post-test'))
+
+    show_box_plot(oscope_results.loc[:, QUESTIONNAIRE_COLUMNS], tablet_results.loc[:, QUESTIONNAIRE_COLUMNS],
+                  'SUS Score',
+                  'SUS Scores')
+
+
+def background_data():
+    results = pd.read_csv('background.csv')
+    oscope_results = results[results.device_coded == 0]
+    tablet_results = results[results.device_coded == 1]
+    frequencies(oscope_results.loc[:, BACKGROUND_COLUMNS], tablet_results.loc[:, BACKGROUND_COLUMNS])
+
+
+def main():
+    results_data()
+    questionnaire_data()
+    background_data()
     plt.show()
+
 
 main()
 
