@@ -1,0 +1,236 @@
+######################################################################
+# Time, Levels of Success, Assistance Data
+######################################################################
+
+2 outliers removed
+
+normal distribution for time:
+Skew Test:
+             time 1    time 2    time 3
+---------  --------  --------  --------
+skew stat      1.70      0.40      0.71
+p-value        0.09      0.69      0.48
+
+Kurtosis Test:
+                 time 1    time 2    time 3
+-------------  --------  --------  --------
+kurtosis stat      0.12      0.01      1.08
+p-value            0.91      0.99      0.28
+
+Shapiro-Wilk Test:
+           time 1    time 2    time 3
+-------  --------  --------  --------
+w-value      0.92      0.98      0.98
+p-value      0.06      0.86      0.86
+----------------------------------------------------------------------
+
+Time: Overall - testers: 26
+                  time 1    time 2    time 3
+--------------  --------  --------  --------
+min                34.00     34.00     81.00
+max               273.00    146.00    479.00
+range             239.00    112.00    398.00
+mean              111.31     89.73    248.92
+median             97.50     85.00    244.00
+mode               38.00    105.00     81.00
+geometric mean     92.71     85.12    232.15
+var              4217.29    760.43   7422.92
+std                64.94     27.58     86.16
+95% confidence     26.75     11.36     35.49
+
+Time: Oscilloscope - testers: 13
+                  time 1    time 2    time 3
+--------------  --------  --------  --------
+min                34.00     34.00     81.00
+max               190.00    141.00    357.00
+range             156.00    107.00    276.00
+mean               88.85     80.85    221.23
+median             84.00     82.00    223.00
+mode               34.00     34.00     81.00
+geometric mean     75.26     75.35    201.69
+var              2398.44    869.67   7301.56
+std                48.97     29.49     85.45
+95% confidence     30.80     18.55     53.74
+
+Time: Tablet - testers: 13
+                  time 1    time 2    time 3
+--------------  --------  --------  --------
+min                38.00     62.00    176.00
+max               273.00    146.00    479.00
+range             235.00     84.00    303.00
+mean              133.77     98.62    276.62
+median            117.00    103.00    257.00
+mode               38.00    105.00    176.00
+geometric mean    114.20     96.16    267.20
+var              5027.10    493.31   6010.54
+std                70.90     22.21     77.53
+95% confidence     44.60     13.97     48.76
+
+t-test independent samples: 2-tailed
+           time 1    time 2    time 3
+-------  --------  --------  --------
+t          -1.806    -1.667    -1.663
+p-value     0.085     0.109     0.109
+
+----------------------------------------------------------------------
+
+Level of Success
+Task 1
+           scope    tablet
+-------  -------  --------
+Success       11        11
+Partial        2         2
+Failed         0         0
+
+Task 2
+           scope    tablet
+-------  -------  --------
+Success        5         2
+Partial        7        10
+Failed         1         1
+
+Task 3
+           scope    tablet
+-------  -------  --------
+Success       12        11
+Partial        0         0
+Failed         1         2
+
+Mann-Whitney rank test
+            Task 1    Task 2    Task 3
+--------  --------  --------  --------
+w-value      84.50     53.50     78.00
+p-values      0.97      0.10      0.58
+
+----------------------------------------------------------------------
+
+Assistance Count
+Task 1
+              scope    tablet
+----------  -------  --------
+0 times           9         5
+1 time            4         5
+>= 2 times        0         3
+
+Task 2
+              scope    tablet
+----------  -------  --------
+0 times          11         9
+1 time            2         4
+>= 2 times        0         0
+
+Task 3
+              scope    tablet
+----------  -------  --------
+0 times           1         0
+1 time            8         7
+>= 2 times        4         6
+
+Mann-Whitney rank test
+            Task 1    Task 2    Task 3
+--------  --------  --------  --------
+w-value      52.50     71.50     71.00
+p-values      0.07      0.38      0.45
+
+######################################################################
+# Questionnaire Data
+######################################################################
+
+normal distribution for questionnaire:
+Skew Test:
+             After Learning Phase    After Test Phase
+---------  ----------------------  ------------------
+skew stat                   -1.51                0.59
+p-value                      0.13                0.56
+
+Kurtosis Test:
+                 After Learning Phase    After Test Phase
+-------------  ----------------------  ------------------
+kurtosis stat                    1.00               -1.82
+p-value                          0.32                0.07
+
+Shapiro-Wilk Test:
+           After Learning Phase    After Test Phase
+-------  ----------------------  ------------------
+w-value                    0.97                0.95
+p-value                    0.48                0.22
+----------------------------------------------------------------------
+
+Questionnaires: Overall - testers: 29
+                  After Learning Phase    After Test Phase
+--------------  ----------------------  ------------------
+min                              21.88               27.50
+max                              90.62               92.50
+range                            68.75               65.00
+mean                             64.55               56.98
+median                           65.62               52.50
+mode                             65.62               45.00
+geometric mean                   62.28               54.32
+var                             235.91              298.01
+std                              15.36               17.26
+95% confidence                    5.95                6.68
+
+Questionnaires: Oscilloscope - testers: 14
+                  After Learning Phase    After Test Phase
+--------------  ----------------------  ------------------
+min                              21.88               32.50
+max                              90.62               92.50
+range                            68.75               60.00
+mean                             58.71               57.32
+median                           60.94               60.00
+mode                             65.62               37.50
+geometric mean                   55.63               54.56
+var                             304.38              312.91
+std                              17.45               17.69
+95% confidence                   10.45               10.60
+
+Questionnaires: Tablet - testers: 15
+                  After Learning Phase    After Test Phase
+--------------  ----------------------  ------------------
+min                              53.12               27.50
+max                              90.62               85.00
+range                            37.50               57.50
+mean                             70.00               56.67
+median                           71.88               52.50
+mode                             75.00               45.00
+geometric mean                   69.19               54.09
+var                             110.42              283.89
+std                              10.51               16.85
+95% confidence                    6.02                9.66
+
+t-test independent samples : 1-tailed
+           After Learning Phase    After Test Phase
+-------  ----------------------  ------------------
+t                        -2.019               0.098
+p-value                   0.028               0.461
+
+######################################################################
+# Background Data
+######################################################################
+
+What is your occupation? 
+         scope  tablet
+student     14      15
+
+
+In which field? (engineering, arts, architecture, etc)
+                    scope  tablet
+Computer Science       11      12
+HCI                     1       2
+Media Architecture      0       1
+geology                 1       0
+urbanism                1       0
+
+
+What is your age?
+         scope  tablet
+21 - 30     14      14
+31 - 40      0       1
+
+
+What is your gender?
+        scope  tablet
+Male        8       9
+Female      6       6
+
+
