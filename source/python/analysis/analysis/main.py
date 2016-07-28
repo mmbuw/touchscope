@@ -203,10 +203,11 @@ def levels_of_success(o_data, t_data):
         print(tabulate([success, part, fail], headers=['scope', 'tablet'], numalign="right", floatfmt=".3f"))
         print()
 
-    # zipped = np.array(list(zip(t_com, t_part, t_fail, o_com, o_part, o_fail)))
-    # print_chisquared(zipped, 3)
+    zipped = np.array(list(zip(t_com, t_part, t_fail, o_com, o_part, o_fail)))
+    print_chisquared(zipped, 3)
 
-    print_mannwhitneyu(o_data, t_data)
+    # Mann-Whitney NOT for categorical data
+    # print_mannwhitneyu(o_data, t_data)
 
     
 def show_stacked_graph(o_data, t_data):
@@ -272,10 +273,11 @@ def assistance_count(o_data, t_data):
         print(tabulate([zero, one, twoup], headers=['scope', 'tablet'], numalign="right", floatfmt=".3f"))
         print()
 
-    # zipped = np.array(list(zip(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)))
-    # print_chisquared(zipped, 3)
+    zipped = np.array(list(zip(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)))
+    print_chisquared(zipped, 3)
 
-    print_mannwhitneyu(o_data, t_data)
+    # Mann-Whitney NOT for categorical data
+    # print_mannwhitneyu(o_data, t_data)
 
     assistance_pie_chart(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)
 
@@ -326,6 +328,12 @@ def print_chisquared(zipped, columns):
         for i in range(columns):
             if sums[i] == 0:
                 t = np.delete(t, i, 1)
+        # if t.shape == (33, 2):
+        #    odds, p = stat.fisher_exact(t)
+        #    chs.append(odds)
+        #    ps.append(p)
+        #    dofs.append('-')
+        # else:
         chi2, p, dof, ex = stat.chi2_contingency(t)
         chs.append(chi2)
         ps.append(p)
