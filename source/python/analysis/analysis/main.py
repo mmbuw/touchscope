@@ -16,6 +16,7 @@ BACKGROUND_COLUMNS = ['What is your occupation? ',
                       'In which field? (engineering, arts, architecture, etc)',
                       'What is your age?',
                       'What is your gender?']
+EXPERIENCE_COLUMNS = ['experience_score', 'tablet_experience']
 
 
 def to_seconds(t):
@@ -509,6 +510,17 @@ def background_data():
     oscope_results = results[results.device_coded == 0]
     tablet_results = results[results.device_coded == 1]
     frequencies(oscope_results.loc[:, BACKGROUND_COLUMNS], tablet_results.loc[:, BACKGROUND_COLUMNS])
+
+    print('Total Experience: ' + str(len(results)))
+    basic_stats(results.loc[:, EXPERIENCE_COLUMNS], ('with oscilloscope', 'with tablet'))
+
+    print('Oscilloscope Experience: ' + str(len(oscope_results)))
+    basic_stats(oscope_results.loc[:, EXPERIENCE_COLUMNS], ('with oscilloscope', 'with tablet'))
+
+    print('Tablet Experience: ' + str(len(tablet_results)))
+    basic_stats(tablet_results.loc[:, EXPERIENCE_COLUMNS], ('with oscilloscope', 'with tablet'))
+
+    frequencies(oscope_results.loc[:, EXPERIENCE_COLUMNS], tablet_results.loc[:, EXPERIENCE_COLUMNS])
 
 
 def main():
