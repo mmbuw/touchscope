@@ -16,6 +16,7 @@ BACKGROUND_COLUMNS = ['What is your occupation? ',
                       'In which field? (engineering, arts, architecture, etc)',
                       'What is your age?',
                       'What is your gender?']
+EXPERIENCE_COLUMNS = ['experience_score', 'tablet_experience']
 
 
 def to_seconds(t):
@@ -203,10 +204,11 @@ def levels_of_success(o_data, t_data):
         print(tabulate([success, part, fail], headers=['scope', 'tablet'], numalign="right", floatfmt=".3f"))
         print()
 
-    # zipped = np.array(list(zip(t_com, t_part, t_fail, o_com, o_part, o_fail)))
-    # print_chisquared(zipped, 3)
+    zipped = np.array(list(zip(t_com, t_part, t_fail, o_com, o_part, o_fail)))
+    print_chisquared(zipped, 3)
 
-    print_mannwhitneyu(o_data, t_data)
+    # Mann-Whitney NOT for categorical data
+    # print_mannwhitneyu(o_data, t_data)
 
     
 def show_stacked_graph(o_data, t_data):
@@ -272,10 +274,11 @@ def assistance_count(o_data, t_data):
         print(tabulate([zero, one, twoup], headers=['scope', 'tablet'], numalign="right", floatfmt=".3f"))
         print()
 
-    # zipped = np.array(list(zip(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)))
-    # print_chisquared(zipped, 3)
+    zipped = np.array(list(zip(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)))
+    print_chisquared(zipped, 3)
 
-    print_mannwhitneyu(o_data, t_data)
+    # Mann-Whitney NOT for categorical data
+    # print_mannwhitneyu(o_data, t_data)
 
     assistance_pie_chart(o_zero, o_one, o_twoup, t_zero, t_one, t_twoup)
 
@@ -326,6 +329,12 @@ def print_chisquared(zipped, columns):
         for i in range(columns):
             if sums[i] == 0:
                 t = np.delete(t, i, 1)
+        # if t.shape == (33, 2):
+        #    odds, p = stat.fisher_exact(t)
+        #    chs.append(odds)
+        #    ps.append(p)
+        #    dofs.append('-')
+        # else:
         chi2, p, dof, ex = stat.chi2_contingency(t)
         chs.append(chi2)
         ps.append(p)
@@ -501,6 +510,17 @@ def background_data():
     oscope_results = results[results.device_coded == 0]
     tablet_results = results[results.device_coded == 1]
     frequencies(oscope_results.loc[:, BACKGROUND_COLUMNS], tablet_results.loc[:, BACKGROUND_COLUMNS])
+
+    print('Total Experience: ' + str(len(results)))
+    basic_stats(results.loc[:, EXPERIENCE_COLUMNS], ('with oscilloscope', 'with tablet'))
+
+    print('Oscilloscope Experience: ' + str(len(oscope_results)))
+    basic_stats(oscope_results.loc[:, EXPERIENCE_COLUMNS], ('with oscilloscope', 'with tablet'))
+
+    print('Tablet Experience: ' + str(len(tablet_results)))
+    basic_stats(tablet_results.loc[:, EXPERIENCE_COLUMNS], ('with oscilloscope', 'with tablet'))
+
+    frequencies(oscope_results.loc[:, EXPERIENCE_COLUMNS], tablet_results.loc[:, EXPERIENCE_COLUMNS])
 
 
 def main():
