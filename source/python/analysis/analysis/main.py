@@ -70,7 +70,7 @@ def qq_plot(data, titles):
         stat.probplot(d, plot=plt)
         plt.title(title)
         plt.draw()
-
+    
 
 def confidence_interval(data):
     confs = []
@@ -133,13 +133,19 @@ def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
 
     index = np.arange(len(ticks))
     bar_width = 0.20
-    error_config = {'ecolor': '0'}
+    error_config = {'ecolor': 'white',
+                    'lw': 2,
+                    'capsize': 5, 
+                    'capthick': 2
+                    }
 
     fig, ax = plt.subplots()
     plt.bar(index + bar_width, mn1, bar_width,
-            color='lightskyblue', yerr=conf1, error_kw=error_config, label='Oscilloscope')
+            color='lightskyblue', yerr=conf1, error_kw=error_config, 
+            label='Oscilloscope', edgecolor='white')
     plt.bar(index + bar_width*2, mn2, bar_width,
-            color='lightcoral', yerr=conf2, error_kw=error_config, label='Tablet')
+            color='lightcoral', yerr=conf2, error_kw=error_config, 
+            label='Tablet',edgecolor='white')
 
     if len(xlabel) > 0:
         plt.xlabel(xlabel)
@@ -158,8 +164,16 @@ def show_bar_graph(o_data, t_data, ylabel, xlabel, title, ticks):
 def show_box_plot(o_data, t_data, ylabel, titles):
     for col, title in zip(o_data, titles):
         fig, ax = plt.subplots()
-        plt.boxplot([o_data.loc[:, col], t_data.loc[:, col]])
+        bp = plt.boxplot([o_data.loc[:, col], t_data.loc[:, col]])
         ax.set_xticklabels(["Scope", "Tablet"])
+        
+        for whisker in bp['whiskers']:
+            whisker.set(color='white')
+        for cap in bp['caps']:
+            cap.set(color='white')
+        for flier in bp['fliers']:
+            flier.set(marker='o', color='white')
+    
         plt.ylabel(ylabel)
         plt.title(title)
         plt.draw()
@@ -235,16 +249,16 @@ def show_stacked_graph(o_data, t_data):
     
     fig, ax = plt.subplots()
     plt.bar(index + bar_width, o_com, bar_width, color='#347A2A',
-            label='Complete')
-    plt.bar(index + 2 * bar_width, t_com, bar_width, color='#347A2A')
+            label='Complete',edgecolor='white')
+    plt.bar(index + 2 * bar_width, t_com, bar_width, color='#347A2A',edgecolor='white')
     plt.bar(index + bar_width, o_part, bar_width, color='#B3C87A', 
-            bottom=o_com, label='Partial')
+            bottom=o_com, label='Partial',edgecolor='white')
     plt.bar(index + 2 * bar_width, t_part, bar_width, color='#B3C87A',
-            bottom=t_com)
+            bottom=t_com,edgecolor='white')
     plt.bar(index + bar_width, o_fail, bar_width, color='#EBE8BE',
-            bottom=[i+j for i, j in zip(o_com, o_part)], label='Fail')
+            bottom=[i+j for i, j in zip(o_com, o_part)], label='Fail',edgecolor='white')
     plt.bar(index + 2 * bar_width, t_fail, bar_width, color='#EBE8BE', 
-            bottom=[i+j for i, j in zip(t_com, t_part)])
+            bottom=[i+j for i, j in zip(t_com, t_part)],edgecolor='white')
     
     plt.ylabel('% of Participants')
     plt.title('Levels of Success')
@@ -524,6 +538,19 @@ def background_data():
 
 
 def main():
+    style = {'text.color': 'white', 
+             'axes.labelcolor': 'white',
+             'axes.facecolor': 'black',
+             'axes.edgecolor': 'white',
+             'xtick.color': 'white',
+             'ytick.color': 'white',
+             'grid.color': 'white',
+             'figure.facecolor': 'black',
+             'figure.edgecolor': 'white',
+             'patch.edgecolor': 'white',
+             'savefig.facecolor': 'black'
+             }
+    plt.rcParams.update(style)
     results_data()
     questionnaire_data()
     background_data()
