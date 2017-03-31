@@ -1,5 +1,7 @@
 # touchscope
 
+Source code and thesis document for Master's thesis at Bauhaus-Universität Weimar, (C) 2016 by Matthew Heinz
+
 ## Related Work
 [OsciPrime](http://www.osciprime.com/index.php?p=specs) ([google play](https://play.google.com/store/apps/details?id=ch.nexuscomputing.android.osciprimeics&hl=en))
 
