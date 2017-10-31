@@ -13,3 +13,5 @@ Bug reports, pull requests etc. very welcome.
 Demonstration video: 
 
 [![Alt text](https://img.youtube.com/vi/YB4eOkOXHog/0.jpg)](https://www.youtube.com/watch?v=YB4eOkOXHog)
+
+Academic paper with user study, background info etc. will be published at ICMI 2017 in mid-November.
