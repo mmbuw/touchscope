@@ -1,19 +1,9 @@
 # touchscope
 
-Source code and thesis document for Master's thesis at Bauhaus-Universität Weimar, (C) 2016 by Matthew Heinz
+Source code and Master's thesis at Bauhaus-Universität Weimar, (c) 2016 by Matthew Heinz
 
-## Related Work
-[OsciPrime](http://www.osciprime.com/index.php?p=specs) ([google play](https://play.google.com/store/apps/details?id=ch.nexuscomputing.android.osciprimeics&hl=en))
+Currently, TouchScope has only been successfully tested with a Rigol DS1102 scope, although most other Rigol scopes should work, too. After building and installing the app with Android Studio, connect your scope to your tablet with a USB-OTG adaptor and enjoy your new intuitive touch-based interface :-)
 
-[Micsig Tablet osciloscope](http://www.batronix.com/pdf/Micsig/tBook-quick-guide-and-safety-information.pdf)
+Bug reports, pull requests etc. very welcome.
 
-[SmartScope](https://www.lab-nation.com/)
-
-
-## helpful links
-[build android kernel module](https://rechtzeit.wordpress.com/2011/03/21/77/)
-
-[python with sudo](http://esmithy.net/2015/05/05/rundebug-as-root-in-pycharm/)
-
-## doodle
-[doodle schedule](http://doodle.com/poll/9439ycntbfzaqw4uzk2v4dfy/admin#table)
+Demonstration video: [![Alt text](https://img.youtube.com/vi/YB4eOkOXHog/0.jpg)](https://www.youtube.com/watch?v=YB4eOkOXHog)
