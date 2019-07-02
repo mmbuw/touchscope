@@ -10,8 +10,8 @@ Currently, TouchScope has only been successfully tested with a Rigol DS1102 scop
 
 Bug reports, pull requests etc. very welcome.
 
-Demonstration video: 
+Demonstration video (https://www.youtube.com/watch?v=YB4eOkOXHog):
 
 [![Alt text](https://img.youtube.com/vi/YB4eOkOXHog/0.jpg)](https://www.youtube.com/watch?v=YB4eOkOXHog)
 
-Academic paper with user study, background info etc. will be published at ICMI 2017 in mid-November.
+Academic paper with user study, background info etc. published at ICMI 2017 (see https://dl.acm.org/citation.cfm?id=3136765).
